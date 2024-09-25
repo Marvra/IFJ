@@ -1,0 +1,18 @@
+#ifndef ERROR_H
+#define ERROR_H
+
+typedef enum Error{
+    ERROR_LEXER = 1,
+    ERROR_PARSER = 2,
+    ERROR_UNDEFINED = 3,
+    ERROR_PARAMTERS = 4,
+    ERROR_REDEFINITION = 5,
+    ERROR_BAD_RETURN = 6,
+    ERROR_TYPE_COMPABILITY = 7,
+    ERROR_TYPE_NOT_DEFINED = 8,
+    ERROR_VARIABLE_NOT_USED = 9,
+    ERROR_SEMANTIC_OTHERS = 10,
+    INTERNAL_ERROR = 99,
+} Error;
+
+#endif
