@@ -2,7 +2,41 @@
 #include <stdlib.h>
 #include "token.h"
 
-void GetNextToken(struct Token** token)
+TokenList* InitTokenList()
+{
+    TokenList* list = (TokenList*)malloc(sizeof(TokenList));
+    if (list == NULL) {
+        fprintf(stderr, "TOKEN LIST: Memory allocation failed\n");
+        exit(1);
+    }
+    list->currToken = NULL;
+    list->firstToken = NULL;
+    return list;
+}
+
+Token* InitToken()
+{
+    Token* token = (Token*)malloc(sizeof(Token));
+    if (token == NULL) {
+        fprintf(stderr, "TOKEN: Memory allocation failed\n");
+        exit(1);
+    }
+    token->data=NULL;
+    token->nextToken=NULL;
+    token->prevToken=NULL;
+    token->type=TOKEN_UNKOWN;
+    token->dataLength=0;
+    return token;
+}
+
+void DataToToken(char c, Token* token)
+{
+    token->dataLength++;
+    token->data = (char*)realloc(token->data, token->dataLength*sizeof(char));
+    token->data[token->dataLength-1] = c;
+}
+
+void GetNextToken(Token** token)
 {
     Token* nextToken = InitToken();
     (*token)->nextToken = nextToken;
@@ -10,7 +44,7 @@ void GetNextToken(struct Token** token)
     *token = nextToken;
 }
 
-void GetPrevToken(struct Token** token)
+void GetPrevToken(Token** token)
 {
     Token* prevToken = InitToken();
     (*token)->prevToken = prevToken;
@@ -18,9 +52,31 @@ void GetPrevToken(struct Token** token)
     *token = prevToken;
 }
 
-void PrintTokenList(struct TokenList* list)
+
+void freeToken(Token* token)
 {
-    struct Token* current = list->firstToken;
+    free(token->data);
+    free(token);
+}
+
+void freeTokenList(TokenList* list)
+{
+    Token* current = list->firstToken;
+    Token* next;
+
+    while (current != NULL) {
+        next = current->nextToken;
+        free(current);
+        current = next;
+
+    }
+
+    free(list);
+}
+
+void PrintTokenList(TokenList* list)
+{
+    Token* current = list->firstToken;
 
     while (current != NULL) {
         printf("Token Type: %s, Data: %s\n", TokenTypeString(current->type), current->data);
@@ -29,7 +85,7 @@ void PrintTokenList(struct TokenList* list)
     }
 }
 
-void PrintToken(struct Token* token)
+void PrintToken(Token* token)
 {
     printf("Token Type: %s, Data: %s\n", TokenTypeString(token->type), token->data);
 }
@@ -44,6 +100,34 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_UNKOWN";
     case TOKEN_VARIABLE:
         return "TOKEN_VARIABLE";
+    case TOKEN_UNDERSCORE:
+        return "TOKEN_UNDERSCORE";
+    case TOKEN_const:
+        return "TOKEN_const";
+    case TOKEN_else:
+        return "TOKEN_else";
+    case TOKEN_fn:
+        return "TOKEN_fn";
+    case TOKEN_if:
+        return "TOKEN_if";
+    case TOKEN_i32:
+        return "TOKEN_i32";
+    case TOKEN_f64:
+        return "TOKEN_f64";
+    case TOKEN_null:
+        return "TOKEN_null";
+    case TOKEN_pub:
+        return "TOKEN_pub";
+    case TOKEN_return:
+        return "TOKEN_return";
+    case TOKEN_u8:
+        return "TOKEN_u8";
+    case TOKEN_var:
+        return "TOKEN_var";
+    case TOKEN_void:
+        return "TOKEN_void";
+    case TOKEN_while:
+        return "TOKEN_while";
     case TOKEN_INTEGER:
         return "TOKEN_INTEGER";
     case TOKEN_FLOAT:
@@ -84,7 +168,7 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_CURLY_LEFT_PAR";
     case TOKEN_CURLY_RIGHT_PAR:
         return "TOKEN_CURLY_RIGHT_PAR";
-    case TOKE_SEMICOLON:
+    case TOKEN_SEMICOLON:
         return "TOKE_SEMICOLON";
     case TOKEN_COLON:
         return "TOKEN_COLON";
@@ -101,59 +185,4 @@ char* TokenTypeString(Tokentype type)
     default:
         return "UNKNOWN";
     }
-}
-
-struct TokenList* InitTokenList()
-{
-    TokenList* list = (TokenList*)malloc(sizeof(TokenList));
-    if (list == NULL) {
-        fprintf(stderr, "TOKEN LIST: Memory allocation failed\n");
-        exit(1);
-    }
-    list->currToken = NULL;
-    list->firstToken = NULL;
-    return list;
-}
-
-struct Token* InitToken()
-{
-    Token* token = (Token*)malloc(sizeof(Token));
-    if (token == NULL) {
-        fprintf(stderr, "TOKEN: Memory allocation failed\n");
-        exit(1);
-    }
-    token->data=NULL;
-    token->nextToken=NULL;
-    token->prevToken=NULL;
-    token->type=TOKEN_UNKOWN;
-    token->dataLength=0;
-    return token;
-}
-
-void DataToToken(char c, Token* token)
-{
-    token->dataLength++;
-    token->data = (char*)realloc(token->data, token->dataLength*sizeof(char));
-    token->data[token->dataLength-1] = c;
-}
-
-void freeToken(Token* token)
-{
-    free(token->data);
-    free(token);
-}
-
-void freeTokenList(TokenList* list)
-{
-    Token* current = list->firstToken;
-    Token* next;
-
-    while (current != NULL) {
-        next = current->nextToken;
-        free(current);
-        current = next;
-
-    }
-
-    free(list);
 }

@@ -1,12 +1,23 @@
 #ifndef TOKEN_H
 #define TOKEN_H
-
-#include <stdio.h>
-
 typedef enum Tokentype{
     TOKEN_ERROR,
     TOKEN_UNKOWN,
+    TOKEN_UNDERSCORE,
     TOKEN_VARIABLE,
+    TOKEN_const,
+    TOKEN_else,
+    TOKEN_fn,
+    TOKEN_if,
+    TOKEN_i32,
+    TOKEN_f64,
+    TOKEN_null,
+    TOKEN_pub,
+    TOKEN_return,
+    TOKEN_u8,
+    TOKEN_var,
+    TOKEN_void,
+    TOKEN_while,
     TOKEN_INTEGER,
     TOKEN_STRING,
     TOKEN_QUESTIONMARK,
@@ -26,10 +37,13 @@ typedef enum Tokentype{
     TOKEN_RIGHT_PAR,
     TOKEN_CURLY_LEFT_PAR,
     TOKEN_CURLY_RIGHT_PAR,
-    TOKE_SEMICOLON,
+    TOKEN_SQUARE_LEFT_PAR,
+    TOKEN_SQUARE_RIGHT_PAR,
+    TOKEN_SEMICOLON,
     TOKEN_COLON,
     TOKEN_BAR,
     TOKEN_COMMA,
+    TOKEN_DOT,
     TOKEN_SPACE,
     TOKEN_FLOAT,
     TOKEN_EOL,
@@ -51,15 +65,15 @@ typedef struct TokenList
     struct Token *firstToken;
 }TokenList;
 
-void GetNextToken(struct Token** token);
-void GetPrevToken(struct Token** token);
-void PrintTokenList(struct TokenList* list);
-void PrintToken(struct Token* token);
-char* TokenTypeString(Tokentype type);
-struct TokenList* InitTokenList();
-struct Token* InitToken();
+TokenList* InitTokenList();
+Token* InitToken();
 void DataToToken(char c, Token* token);
+void GetNextToken(Token** token);
+void GetPrevToken(Token** token);
 void freeToken(Token* token);
 void freeTokenList(TokenList* list);
+void PrintTokenList(TokenList* list);
+void PrintToken(Token* token);
+char* TokenTypeString(Tokentype type);
 
 #endif

@@ -53,8 +53,13 @@ int FSM(FILE* file, Token* token)
             case STATE_START:
                 state = GetFirstState(c);
             break;
+            case STATE_UNDERSCORE:
+                if(isalnum(c) || c == '_') state = STATE_VARIABLE;
+                else token->type = TOKEN_UNDERSCORE;
+            break;
+
             case STATE_VARIABLE:
-                if(isalpha(c)) state = STATE_VARIABLE;
+                if(isalnum(c) || c == '_') state = STATE_VARIABLE; // pridaj aj _ a cisla pozri FSM zmen podla fsm
                 else token->type = TOKEN_VARIABLE;
             break;
 
@@ -186,8 +191,14 @@ int FSM(FILE* file, Token* token)
             case STATE_CURLY_RIGHT_PAR:
                 token->type = TOKEN_CURLY_RIGHT_PAR;
             break;
+            case STATE_SQUARE_LEFT_PAR:
+                token->type = TOKEN_SQUARE_LEFT_PAR;
+            break;
+            case STATE_SQUARE_RIGHT_PAR:
+                token->type = TOKEN_SQUARE_RIGHT_PAR;
+            break;
             case STATE_SEMICOLON:
-                token->type = TOKE_SEMICOLON;
+                token->type = TOKEN_SEMICOLON;
             break;
             case STATE_COLON:
                 token->type = TOKEN_COLON;
@@ -197,6 +208,9 @@ int FSM(FILE* file, Token* token)
             break;
             case STATE_COMMA:
                 token->type = TOKEN_COMMA;
+            break;
+            case STATE_DOT:
+                token->type = TOKEN_DOT;
             break;
             case STATE_EOF:
                 token->type = TOKEN_EOF;
@@ -214,6 +228,11 @@ int FSM(FILE* file, Token* token)
 
         if(token->type != TOKEN_UNKOWN) 
         {
+            if(token->type == TOKEN_VARIABLE)
+            {
+                CheckKeyword(token);
+            }
+
             ungetc(c,file);
             return STATE_OK;
         }
@@ -222,10 +241,10 @@ int FSM(FILE* file, Token* token)
     }
     return STATE_OK;
 }
-
 State GetFirstState(char c)
 {
     if(isalpha(c)) return STATE_VARIABLE;
+    else if(c=='_') return STATE_UNDERSCORE;
     else if(isdigit(c)) return STATE_INTEGER;
     else if(c=='"') return STATE_STRING_START;
     else if(c=='?') return STATE_QUESTIONMARK;
@@ -241,12 +260,84 @@ State GetFirstState(char c)
     else if(c==')') return STATE_RIGHT_PAR;
     else if(c=='{') return STATE_CURLY_LEFT_PAR;
     else if(c=='}') return STATE_CURLY_RIGHT_PAR;
+    else if(c=='[') return STATE_SQUARE_LEFT_PAR;
+    else if(c==']') return STATE_SQUARE_RIGHT_PAR;
     else if(c==';') return STATE_SEMICOLON;
     else if(c==':') return STATE_COLON;
     else if(c=='|') return STATE_BAR;
     else if(c==',') return STATE_COMMA;
+    else if(c=='.') return STATE_DOT;
     else if(c=='\n') return STATE_EOL;
     else if(isspace(c)) return STATE_SPACE;
     else if(c==EOF) return STATE_EOF;
     else return STATE_ERROR;
+}
+
+void CheckKeyword(Token* token)
+{
+    if(!strcmp(token->data, "const"))
+    {
+        token->type = TOKEN_const;
+        return;
+    }
+    if(!strcmp(token->data, "else"))
+    {
+        token->type = TOKEN_else;
+        return;
+    }
+    if(!strcmp(token->data, "fn"))
+    {
+        token->type = TOKEN_fn;
+        return;
+    }
+    if(!strcmp(token->data, "if"))
+    {
+        token->type = TOKEN_if;
+        return;
+    }
+    if(!strcmp(token->data, "i32"))
+    {
+        token->type = TOKEN_i32;
+        return;
+    }
+    if(!strcmp(token->data, "f64"))
+    {
+        token->type = TOKEN_f64;
+        return;
+    }
+    if(!strcmp(token->data, "null"))
+    {
+        token->type = TOKEN_null;
+        return;
+    }
+    if(!strcmp(token->data, "pub"))
+    {
+        token->type = TOKEN_pub;
+        return;
+    }
+    if(!strcmp(token->data, "return"))
+    {
+        token->type = TOKEN_return;
+        return;
+    }
+    if(!strcmp(token->data, "u8"))
+    {
+        token->type = TOKEN_u8;
+        return;
+    }
+    if(!strcmp(token->data, "var"))
+    {
+        token->type = TOKEN_var;
+        return;
+    }
+    if(!strcmp(token->data, "void"))
+    {
+        token->type = TOKEN_void;
+        return;
+    }
+    if(!strcmp(token->data, "while"))
+    {
+        token->type = TOKEN_while;
+        return;
+    }
 }
