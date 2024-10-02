@@ -1,0 +1,51 @@
+<body> -> <eol> <body>
+<body> -> EOF 			!!! NEVIEM AKO MOC JE LEGIT PRAZDNY SUBOR/POPRIPADE LEN S PROLOGOM
+<body> -> CONST ID = @IMPORT(STRING); <after_body>
+
+<after_body> -> <eol> <after_body>
+<after_body> -> PUB FN ID (<params>) <return_type> <eol> { <function_body> } <after_body>
+<after_body> -> EOF
+
+<function_body> -> <var_or_const> ID : <type> = expression; <function_body>
+<function_body> -> ID <id_continue>;  <function_body>
+<function_body> -> IF (expression) <bars> <eol> {<function_body>} <else> <function_body>
+<function_body> -> WHILE (expression) <bars> <eol> {<function_body>} <function_body>
+<function_body> -> RETURN expression; <function_body>
+<function_body> -> <eol> <function_body>
+<function_body> -> ε
+
+<id_continue> -> = expression        !!! NEJSOM SI ISTY AKO TO MA BYT PRI FUNCTION CALLS 
+<id_continue> -> .ID(<params_enter>)
+<id_continue> -> (<params_enter>)
+
+<params_enter> -> <term> <next_params_enter>
+<next_params_enter> -> , <term>
+
+<var_or_const> -> VAR
+<var_or_const> -> CONST
+
+<bars> -> |ID|
+<bars> -> ε
+<else> -> ELSE {<function_body>}
+<else> -> ε
+
+<params> -> ε
+<params> -> ID : <type> <next_params>
+<next_params> -> , <params>
+<next_params> -> ε
+
+<eol> -> EOL <eol>
+<eol> -> ε
+
+<return_type> -> <type>
+<return_type> -> VOID
+
+<type> -> INT
+<type> -> FLOAT
+<type> -> STRING 
+
+<term> -> ID
+<term> -> VALUE_INT
+<term> -> VALUE_FLOAT
+<term> -> VALUE_STRING
+<term> -> ε
