@@ -1,4 +1,5 @@
 #include "symtable.h"
+#include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,8 +8,8 @@ TNode* CreateNode(char *key){
     TNode *newPtr = (TNode *) malloc(sizeof(TNode));
 
     if(newPtr == NULL){
-        fprintf(stderr, "TREE NODE: Memory allocation failed\n");
-        exit(1);
+        fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
+        exit(INTERNAL_ERROR);
     }
 
     newPtr->key = strdup(key);
@@ -16,6 +17,8 @@ TNode* CreateNode(char *key){
     newPtr->data.isConstant = false;
     newPtr->data.isNullable = false;
     newPtr->data.functionReturnType = TYPE_DEFAULT;
+    newPtr->data.paramCount = 0;
+    newPtr->data.paramTypes = NULL;
     newPtr->lPtr = NULL;
     newPtr->rPtr = NULL;
     return newPtr;
@@ -77,12 +80,13 @@ TNode* SearchNode(TNode *rootPtr, char *key){
 
     int comparison = strcmp(rootPtr->key, key);
     if(comparison > 0){
-        rootPtr->lPtr = SearchNode(rootPtr->lPtr, key);
+        rootPtr = SearchNode(rootPtr->lPtr, key);
     }else if(comparison < 0){
-        rootPtr->rPtr = SearchNode(rootPtr->rPtr, key);
+        rootPtr = SearchNode(rootPtr->rPtr, key);
     }else{
         return rootPtr;
     }
+    return rootPtr;
 }
 
 int SetType(TNode *rootPtr, char *key, NType type){
@@ -121,45 +125,84 @@ int SetIsConstant(TNode *rootPtr, char *key, bool b){
     return -1;
 }
 
-
-NType GetType(TNode *rootPtr, char *key){
+int SetParameter(TNode *rootPtr, char *key, NType type){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        return rootPtr->type;
+        temp->data.paramTypes = (NType *)realloc(temp->data.paramTypes, (temp->data.paramCount + 1) * (sizeof(NType)));
+        if(temp->data.paramTypes == NULL){
+            fprintf(stderr, "NODE PARAMETERS: Memory allocation failed\n");
+            exit(INTERNAL_ERROR);
+        }
+        temp->data.paramTypes[temp->data.paramCount] = type;
+        temp->data.paramCount++;
+        return 0;
     }
-    return TYPE_DEFAULT;
+    return -1;
 }
 
-NType GetFunctionReturnType(TNode *rootPtr, char *key){
+int GetType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        return rootPtr->data.functionReturnType;
+        *value = temp->type;
+        return 0;
     }
-    return TYPE_DEFAULT;
+    return -1;
 }
 
-//Lepsie by bolo predavat hodnotu cez argument a funkciou vraciat ci bola Node najdena alebo nie
-bool IsNullable(TNode *rootPtr, char *key){
+int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        return rootPtr->data.isNullable;
+        *value = rootPtr->data.functionReturnType;
+        return 0;
     }
-    return false;
+    return -1;
 }
 
-//Lepsie by bolo predavat hodnotu cez argument a funkciou vraciat ci bola Node najdena alebo nie
-bool IsConstant(TNode *rootPtr, char *key){
+int GetIsNullable(TNode *rootPtr, char *key, bool *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        return rootPtr->data.isConstant;
+        *value = rootPtr->data.isNullable;
+        return 0;
     }
-    return false;
+    return -1;
+}
+
+int GetIsConstant(TNode *rootPtr, char *key, bool *value){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        *value = rootPtr->data.isConstant;
+        return 0;
+    }
+    return -1;
+}
+
+int GetParameters(TNode *rootPtr, char *key, NType *params){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        for(int i = 0; i < temp->data.paramCount; i++){
+            params[i] = temp->data.paramTypes[i];
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int GetParameterCount(TNode *rootPtr, char *key, int *count){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        *count = temp->data.paramCount;
+        return 0;
+    }
+    return -1;
 }
 
 void FreeTree(TNode *rootPtr){
     if(rootPtr != NULL){
         FreeTree(rootPtr->lPtr);
         FreeTree(rootPtr->rPtr);
+        if(rootPtr->data.paramCount != NULL){
+            free(rootPtr->data.paramTypes);
+        }
         free(rootPtr->key);
         free(rootPtr);
     }
