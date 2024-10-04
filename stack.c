@@ -10,7 +10,7 @@
 Stack* InitStack()
 {
     Stack* stack = (Stack*) malloc(sizeof(Stack));
-    stack->capacity = 1; // daj na size of non_terminal / toketype alebo podla struct ktorou ich budes nahradzovat
+    stack->capacity = 1;
     stack->top = -1;
     stack->items = (StackItem**) malloc(sizeof(StackItem*) * stack->capacity);
     return stack;
@@ -18,7 +18,7 @@ Stack* InitStack()
 
 StackItem* InitStackItem() {
     StackItem* item = (StackItem*) malloc(sizeof(StackItem)); 
-    item->nonTerminal = NON_TERMINAL_UNKOWN; // !!! POZOR ASSIGN NULL DO NECEHO CO NENI POINTER
+    item->nonTerminal = NON_TERMINAL_UNKOWN;
     item->tokenType = TOKEN_UNKOWN;
     return item;
 }
