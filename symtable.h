@@ -16,7 +16,8 @@ typedef struct{
     bool isNullable;
     bool isConstant;
     NType functionReturnType;
-    //PARAMETRE FUNKCIE
+    int paramCount;
+    NType *paramTypes;
 } NData;
 
 typedef struct tnode{
@@ -36,10 +37,13 @@ int SetType(TNode *rootPtr, char *key, NType type);
 int SetFunctionReturnType(TNode *rootPtr, char *key, NType type);
 int SetIsNullable(TNode *rootPtr, char *key, bool b);
 int SetIsConstant(TNode *rootPtr, char *key, bool b);
-NType GetType(TNode *rootPtr, char *key);
-NType GetFunctionReturnType(TNode *rootPtr, char *key);
-bool IsNullable(TNode *rootPtr, char *key);
-bool IsConstant(TNode *rootPtr, char *key);
+int SetParameter(TNode *rootPtr, char *key, NType type);
+int GetType(TNode *rootPtr, char *key, NType *value);
+int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value);
+int GetIsNullable(TNode *rootPtr, char *key, bool *value);
+int GetIsConstant(TNode *rootPtr, char *key, bool *value);
+int GetParameters(TNode *rootPtr, char *key, NType *params);
+int GetParameterCount(TNode *rootPtr, char *key, int *count);
 void FreeTree(TNode *rootPtr);
 int Max(int a, int b);
 int Height(TNode *rootPtr);
