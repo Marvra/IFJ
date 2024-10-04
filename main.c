@@ -5,7 +5,7 @@
 
 #include "token.h"
 #include "lexer.h"
-
+#include "parser.h"
 
 int main(int argc, char *argv[])
 {
@@ -20,10 +20,20 @@ int main(int argc, char *argv[])
     FILE *file = fopen(argv[1], "r");
 
     returnCode = Lexer(file ,list);
+    list->currToken = list->firstToken;
 
     if(returnCode != 0)
     {
         printf("Error in lexer : %d\n", returnCode);
+        return returnCode;
+    }
+
+    printf("STARTING PARSER\n");
+    returnCode = Parser(list);
+
+    if(returnCode != 0)
+    {
+        printf("Error in Parser : %d\n", returnCode);
         return returnCode;
     }
 

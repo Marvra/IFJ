@@ -31,9 +31,10 @@ int Lexer(FILE* file, TokenList* list)
             printf("Error in FSM\n");
             return ERROR_LEXER;
         }
-        
+
         GetNextToken(&token);
     }
+
     PrintTokenList(list);
     return 0;
     
@@ -59,7 +60,7 @@ int FSM(FILE* file, Token* token)
             break;
 
             case STATE_VARIABLE:
-                if(isalnum(c) || c == '_') state = STATE_VARIABLE; // pridaj aj _ a cisla pozri FSM zmen podla fsm
+                if(isalnum(c) || c == '_') state = STATE_VARIABLE;
                 else token->type = TOKEN_VARIABLE;
             break;
 
