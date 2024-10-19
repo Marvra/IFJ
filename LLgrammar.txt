@@ -1,6 +1,6 @@
 <body> -> <eol> <body>
 <body> -> EOF 			!!! NEVIEM AKO MOC JE LEGIT PRAZDNY SUBOR/POPRIPADE LEN S PROLOGOM
-<body> -> CONST ID = @IMPORT(STRING); <after_body>
+<body> -> CONST ID = IMPORT(STRING); <after_body>
 
 <after_body> -> <eol> <after_body>
 <after_body> -> PUB FN ID (<params>) <return_type> <eol> { <function_body> } <after_body>
@@ -20,6 +20,7 @@
 
 <params_enter> -> <term> <next_params_enter>
 <next_params_enter> -> , <params_enter>
+<next_param_enter> -> ε
 
 <var_or_const> -> VAR
 <var_or_const> -> CONST
