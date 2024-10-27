@@ -13,6 +13,10 @@ TNode* CreateNode(char *key){
     }
 
     newPtr->key = strdup(key);
+    if(newPtr->key == NULL){
+        fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
+        exit(INTERNAL_ERROR);
+    }
     newPtr->type = TYPE_DEFAULT;
     newPtr->data.isConstant = false;
     newPtr->data.isNullable = false;
