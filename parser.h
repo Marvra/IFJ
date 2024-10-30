@@ -5,6 +5,7 @@
 #include "stack.h"
 
 
+
 int Parser(TokenList* list);
 int LLGrammar(Stack* stack, Tokentype type);
 int NonTerminalBodyPush(Stack* stack, Tokentype type);

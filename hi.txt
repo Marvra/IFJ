@@ -1,7 +1,7 @@
 
-const ifj = .("ifj24.zig");
+const ifj = @import("ifj24.zig");
 
-pub fn hey(c:i32) void {
+pub fn hey(c:i32, a:i32, b:i32) void {
 
     if(+)
     {

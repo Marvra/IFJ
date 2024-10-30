@@ -5,6 +5,7 @@ typedef enum Tokentype{
     TOKEN_UNKOWN,
     TOKEN_UNDERSCORE,
     TOKEN_VARIABLE,
+    TOKEN_PROLOG,
     TOKEN_const,
     TOKEN_else,
     TOKEN_fn,

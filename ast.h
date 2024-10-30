@@ -83,8 +83,9 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type);
 
 /// added chagpt print shits
 void DisplayAST(ASTNode *node);
-void DisplayASTHelper(ASTNode *node, int depth);
+void DisplayASTHelper(ASTNode *node, int depth, const char* prefix);
 const char* OperatorToString(Operator op);
 const char* NodeTypeToString(ASTNodeType type);
 void PrintIndent(int depth);
+void DisplayDataType(DataType dataType);
 #endif
