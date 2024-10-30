@@ -37,14 +37,14 @@ typedef struct Stack{
 
 Stack* InitStack();
 StackItem* InitStackItem();
+StackItem* Pop(Stack* stack);
+StackItem* Top(Stack* stack);
 int Empty(Stack* stack);
 void ResizeStack(Stack* stack);
 void Push(Stack* stack, StackItem* item); 
 void PushItem(Stack* stack, Tokentype type, NonTerminal nonTerminal); 
-StackItem* Pop(Stack* stack);
-StackItem* Top(Stack* stack);
 void FreeStack(Stack* stack);
-char* NonTerminalToString(NonTerminal nonTerminal);
 void PrintStack(Stack* stack);
+char* NonTerminalToString(NonTerminal nonTerminal);
 
 #endif

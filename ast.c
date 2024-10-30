@@ -4,13 +4,13 @@
 #include <string.h>
 
 ASTNode* CreateAST(){
-    return CreateNode(TYPE_PROGRAM);
+    return CreateAstNode(TYPE_PROGRAM);
 }
 
-ASTNode* CreateNode(ASTNodeType type){
+ASTNode* CreateAstNode(ASTNodeType type){
     ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
     if(node == NULL){
-        printf("error");
+        printf(" CreateAstNode error");
         return NULL;
     }
 
@@ -31,14 +31,14 @@ ASTNode* CreateNode(ASTNodeType type){
 
 ASTNode* CreateCodeNode(ASTNode *node){
     if(node == NULL){
-        printf("error");
+        printf(" CreateCodeNode error");
         return NULL;
     }
 
     ASTNode *temp = NULL;
     if(node->type == TYPE_FUN_DECL || node->type == TYPE_WHILE){
         if(node->right == NULL){
-            node->right = CreateNode(TYPE_CODE);
+            node->right = CreateAstNode(TYPE_CODE);
             return node->right;
         }else{
             temp = node->right;
@@ -49,12 +49,12 @@ ASTNode* CreateCodeNode(ASTNode *node){
         }else if(node->left != NULL){
             temp = node->left;
         }else{
-            printf("error");
+            printf(" CreateCodeNode error");
             return NULL;
         }
     }else{
         if(node->left == NULL){
-            node->left = CreateNode(TYPE_CODE);
+            node->left = CreateAstNode(TYPE_CODE);
             return node->left;
         }else{
             temp = node->left;
@@ -65,36 +65,36 @@ ASTNode* CreateCodeNode(ASTNode *node){
         temp = temp->left;
     }
 
-    temp->left = CreateNode(TYPE_CODE);
+    temp->left = CreateAstNode(TYPE_CODE);
     return temp->left;
 }
 
 ASTNode* CreateVarDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateVarDeclNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_VAR_DECL);
+    node->right = CreateAstNode(TYPE_VAR_DECL);
     return node->right;
 }
 
 ASTNode* CreateFunDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateFunDeclNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_FUN_DECL);
+    node->right = CreateAstNode(TYPE_FUN_DECL);
     return node->right;
 }
 
 ASTNode* CreateIdNode(ASTNode *node, char *id){
     if(node == NULL){
-        printf("error");
+        printf("CreateIdNode error");
         return NULL;
     }
 
     if(node->type == TYPE_VAR_DECL || node->type == TYPE_ASSIGNMENT || node->type == TYPE_FUN_DECL || node->type == TYPE_FUN_CALL){
-        node->left = CreateNode(TYPE_ID);
+        node->left = CreateAstNode(TYPE_ID);
         node->left->data.str = strdup(id);      
         if(node->left->data.str == NULL){
             fprintf(stderr, "AST NODE: Memory allocation failed\n");
@@ -106,7 +106,7 @@ ASTNode* CreateIdNode(ASTNode *node, char *id){
             printf("error");
             return NULL;
         }else{
-            node->left->left = CreateNode(TYPE_ID);
+            node->left->left = CreateAstNode(TYPE_ID);
             node->left->left->data.str = strdup(id);      
             if(node->left->left->data.str == NULL){
                 fprintf(stderr, "AST NODE: Memory allocation failed\n");
@@ -115,71 +115,71 @@ ASTNode* CreateIdNode(ASTNode *node, char *id){
             return node;
         }
     }else{
-        printf("error");
+        printf("CreateIdNode error");
         return NULL;
     }
 }
 
 ASTNode* CreateIfElseNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateIfElseNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_IF_ELSE);
-    node->right->right = CreateNode(TYPE_IF_ELSE1);
-    node->right->left = CreateNode(TYPE_BLOCK);
+    node->right = CreateAstNode(TYPE_IF_ELSE);
+    node->right->right = CreateAstNode(TYPE_IF_ELSE1);
+    node->right->left = CreateAstNode(TYPE_BLOCK);
     return node->right;
 }
 
 ASTNode* CreateIfNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE){
-        printf("error");
+        printf("CreateIfNode error");
         return NULL;
     }
-    node->right->left = CreateNode(TYPE_IF);
+    node->right->left = CreateAstNode(TYPE_IF);
     return node->right;
 }
 
 ASTNode* CreateElseNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE1){
-        printf("error");
+        printf("CreateElseNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_ELSE);
+    node->right = CreateAstNode(TYPE_ELSE);
     return node;
 }
 
 ASTNode* CreateWhileNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateWhileNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_WHILE);
-    node->right->left = CreateNode(TYPE_WHILE1);
+    node->right = CreateAstNode(TYPE_WHILE);
+    node->right->left = CreateAstNode(TYPE_WHILE1);
     return node->right;
 }
 
 ASTNode* CreateReturnNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateReturnNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_RETURN);
+    node->right = CreateAstNode(TYPE_RETURN);
     return node->right;
 }
 
 ASTNode* CreateFunCallNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("error");
+        printf("CreateFunCallNode error");
         return NULL;
     }
-    node->right = CreateNode(TYPE_FUN_CALL);
+    node->right = CreateAstNode(TYPE_FUN_CALL);
     return node->right;
 }
 
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_CALL){
-        printf("error");
+        printf("CreateArgumentNode error");
         return NULL;
     }
 
@@ -187,7 +187,7 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     while(temp->right != NULL){
         temp = temp->right;
     }
-    temp->right = CreateNode(TYPE_ARGUMENT);
+    temp->right = CreateAstNode(TYPE_ARGUMENT);
     temp->right->data.str = strdup(id);
     if(temp->right->data.str == NULL){
         fprintf(stderr, "AST NODE: Memory allocation failed\n");
@@ -198,7 +198,7 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
 
 ASTNode* CreateParamNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_DECL || node->left == NULL){
-        printf("error");
+        printf("CreateParamNode error");
         return NULL;
     }
 
@@ -206,7 +206,7 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
     while(temp->left != NULL){
         temp = temp->left;
     }
-    temp->left = CreateNode(TYPE_PARAMETER);
+    temp->left = CreateAstNode(TYPE_PARAMETER);
     temp->left->data.str = strdup(id);
     if(temp->left->data.str == NULL){
         fprintf(stderr, "AST NODE: Memory allocation failed\n");
@@ -216,21 +216,112 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
     
 }
 
-int main(){
-    //test
-    ASTNode *ast = CreateAST();
-    ASTNode *temp = CreateCodeNode(ast);
-    ASTNode *temp1 = CreateCodeNode(ast);
-    ASTNode *temp2 = CreateCodeNode(ast);
-    ASTNode *temp3 = CreateCodeNode(temp1);
-    temp3 = CreateIfElseNode(temp1);
-    temp3 = CreateIdNode(temp3, "a");
-    temp3 = CreateFunCallNode(temp);
-    temp3 = CreateArgumentNode(temp3, "a");
-    temp3 = CreateArgumentNode(temp3, "b");
-    temp3 = CreateArgumentNode(temp3, "c");
-    temp3 = CreateFunDeclNode(temp2);
-    temp3 = CreateIdNode(temp3, "aaa");
-    temp3 = CreateParamNode(temp3, "ab");
-    temp3 = CreateParamNode(temp3, "abc");
+// int main(){
+//     //test
+//     ASTNode *ast = CreateAST();
+//     ASTNode *temp = CreateCodeNode(ast);
+//     ASTNode *temp1 = CreateCodeNode(ast);
+//     ASTNode *temp2 = CreateCodeNode(ast);
+//     ASTNode *temp3 = CreateCodeNode(temp1);
+//     temp3 = CreateIfElseNode(temp1);
+//     temp3 = CreateIdNode(temp3, "a");
+//     temp3 = CreateFunCallNode(temp);
+//     temp3 = CreateArgumentNode(temp3, "a");
+//     temp3 = CreateArgumentNode(temp3, "b");
+//     temp3 = CreateArgumentNode(temp3, "c");
+//     temp3 = CreateFunDeclNode(temp2);
+//     temp3 = CreateIdNode(temp3, "aaa");
+//     temp3 = CreateParamNode(temp3, "ab");
+//     temp3 = CreateParamNode(temp3, "abc");
+// }
+
+// ADDDED CHATGPT CREATED PRINT SHIT
+
+// Helper function to print spaces for indentation
+void PrintIndent(int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("   ");
+    }
 }
+
+// Helper function to display the AST node type as a string
+const char* NodeTypeToString(ASTNodeType type) {
+    switch (type) {
+        case TYPE_PROGRAM: return "Program";
+        case TYPE_CODE: return "Code";
+        case TYPE_VAR_DECL: return "VarDecl";
+        case TYPE_FUN_DECL: return "FunDecl";
+        case TYPE_ASSIGNMENT: return "Assignment";
+        case TYPE_RETURN: return "Return";
+        case TYPE_IF_ELSE: return "IfElse";
+        case TYPE_IF_ELSE1: return "IfElse1";
+        case TYPE_IF: return "If";
+        case TYPE_ELSE: return "Else";
+        case TYPE_BLOCK: return "Block";
+        case TYPE_WHILE: return "While";
+        case TYPE_WHILE1: return "While1";
+        case TYPE_FUN_CALL: return "FunCall";
+        case TYPE_ARGUMENT: return "Argument";
+        case TYPE_PARAMETER: return "Parameter";
+        case TYPE_ID: return "ID";
+        case TYPE_OPERATOR: return "Operator";
+        case TYPE_VALUE: return "Value";
+        case TYPE_STRING: return "String";
+        case TYPE_REL_OPERATOR: return "RelOperator";
+        default: return "Unknown";
+    }
+}
+
+// Helper function to display operator type as a string
+const char* OperatorToString(Operator op) {
+    switch (op) {
+        case OP_ADD: return "ADD (+)";
+        case OP_SUB: return "SUB (-)";
+        case OP_MUL: return "MUL (*)";
+        case OP_DIV: return "DIV (/)";
+        case OP_EQ: return "EQ (==)";
+        case OP_NEQ: return "NEQ (!=)";
+        case OP_GREATER: return "GREATER (>)";
+        case OP_LESS: return "LESS (<)";
+        case OP_GE: return "GE (>=)";
+        case OP_LE: return "LE (<=)";
+        case OP_DEFAULT: return "DEFAULT";
+        default: return "Unknown";
+    }
+}
+
+// Recursive function to display the AST, with internal depth management
+void DisplayASTHelper(ASTNode *node, int depth) {
+    if (node == NULL) return;
+
+    // Print indentation for the current depth
+    PrintIndent(depth);
+    
+    // Print the node type
+    printf("%s", NodeTypeToString(node->type));
+
+    // Print additional node information if it exists
+    if (node->type == TYPE_ID || node->type == TYPE_STRING || node->type == TYPE_PARAMETER || node->type == TYPE_ARGUMENT) {
+        printf(": %s", node->data.str);
+    } else if (node->type == TYPE_OPERATOR || node->type == TYPE_REL_OPERATOR) {
+        printf(": %s", OperatorToString(node->data.op));
+    } else if (node->type == TYPE_VALUE) {
+        printf(": %f", node->data.value);
+    }
+
+    printf("\n");
+
+    // Recurse for left and right children, increasing depth for each level
+    if (node->left != NULL) {
+        DisplayASTHelper(node->left, depth + 1);
+    }
+    if (node->right != NULL) {
+        DisplayASTHelper(node->right, depth + 1);
+    }
+}
+
+// Wrapper function that starts the AST display from depth 0
+void DisplayAST(ASTNode *node) {
+    DisplayASTHelper(node, 0);
+}
+// ADDDED CHATGPT CREATED PRINT SHIT

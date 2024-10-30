@@ -53,7 +53,7 @@ typedef struct ASTNode{
 }ASTNode;
 
 ASTNode* CreateAST();
-ASTNode* CreateNode(ASTNodeType type);
+ASTNode* CreateAstNode(ASTNodeType type);
 ASTNode* CreateCodeNode(ASTNode *node);
 ASTNode* CreateVarDeclNode(ASTNode *node);
 ASTNode* CreateFunDeclNode(ASTNode *node);
@@ -66,4 +66,11 @@ ASTNode* CreateReturnNode(ASTNode *node);
 ASTNode* CreateFunCallNode(ASTNode *node);
 ASTNode* CreateArgumentNode(ASTNode *node, char *id);
 ASTNode* CreateParamNode(ASTNode *node, char *id);
+
+/// added chagpt print shits
+void DisplayAST(ASTNode *node);
+void DisplayASTHelper(ASTNode *node, int depth);
+const char* OperatorToString(Operator op);
+const char* NodeTypeToString(ASTNodeType type);
+void PrintIndent(int depth);
 #endif

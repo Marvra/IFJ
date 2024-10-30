@@ -4,19 +4,27 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <ctype.h>
-
 #include "stack.h"
 #include "parser.h"
 #include "token.h"
+#include "symtable.h"
+#include "ast.h"
 #include "error.h"
+
+NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
 
 int Parser(TokenList* list)
 {
     Stack* stack = InitStack();
     Error error = 0;
+    ASTNode *ast = CreateAST(); 
+    ASTNode *funcDec;
+    ASTNode *funcBodyDec;
+    Tokentype lastInteresingToken = TOKEN_UNKOWN;
     PushItem(stack, TOKEN_UNKOWN, NON_T_BODY);
 
     StackItem* item = InitStackItem();
+    StackItem* item_popped = InitStackItem();
 
     while (!Empty(stack))
     {
@@ -47,15 +55,48 @@ int Parser(TokenList* list)
             printf(" Top: %s\n Current: %s\n", TokenTypeString(Top(stack)->tokenType), TokenTypeString(list->currToken->type));
             return ERROR_PARSER;
         }
-        PrintStack(stack);
+        //PrintStack(stack);
         printf("Popping from stack : %s\n", TokenTypeString(list->currToken->type));
-        Pop(stack);
+        item_popped = Pop(stack);
+
+        //SEMANTICS
+        if(lastNonTerminal == NON_T_AFTER_BODY && list->currToken->type == TOKEN_pub)
+        {
+            funcDec = CreateCodeNode(ast);
+        }
+        else if(lastNonTerminal == NON_T_AFTER_BODY && list->currToken->type == TOKEN_fn)
+        {
+            funcDec = CreateFunDeclNode(funcDec);
+            // last intersting token
+            lastInteresingToken = list->currToken->type; 
+            funcBodyDec = CreateCodeNode(funcDec); // hadam ze toto vytvory function body na pravo od fundec
+        }
+        else if(lastInteresingToken == TOKEN_fn && list->currToken->type == TOKEN_VARIABLE)
+        {
+            //printf("SME TUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUu");
+            funcDec = CreateIdNode(funcDec, list->currToken->data); 
+            lastInteresingToken = TOKEN_RIGHT_PAR;
+        }
+        else if(lastNonTerminal == NON_T_PARAMS && list->currToken->type == TOKEN_VARIABLE)
+        {
+            funcDec = CreateParamNode(funcDec, list->currToken->data); // neviem ako pridat typ id A
+        }
+        else if(lastNonTerminal == NON_T_NEXT_PARAMS && list->currToken->type == TOKEN_VARIABLE)
+        {
+            funcDec = CreateParamNode(funcDec, list->currToken->data); // neviem ako pridat typ id B
+        }
+
+        DisplayAST(ast);
+        //SEMANTICS
 
         Token* nextToken = list->currToken->nextToken;
         list->currToken = nextToken;
 
     }
     printf("Parser finished successfully\n");
+    FreeStack(stack);
+    
+
     return 0;
 }
 
@@ -67,6 +108,7 @@ int LLGrammar(Stack* stack, Tokentype type)
     while (Top(stack)->tokenType == TOKEN_UNKOWN)
     {
         Pop(stack); // pop pre neterminal na vrchu stacku 
+        lastNonTerminal = nonterminal;
         switch (nonterminal)
         {
             case NON_T_BODY:

@@ -1,0 +1,12 @@
+
+const ifj = .("ifj24.zig");
+
+pub fn hey(c:i32) void {
+
+    if(+)
+    {
+        
+    }
+
+    return +;
+}
