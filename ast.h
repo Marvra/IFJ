@@ -5,6 +5,7 @@ typedef enum{
     TYPE_PROGRAM,
     TYPE_CODE,
     TYPE_VAR_DECL,
+    TYPE_CON_DECL,
     TYPE_FUN_DECL,
     TYPE_ASSIGNMENT,
     TYPE_RETURN,
@@ -23,6 +24,8 @@ typedef enum{
     TYPE_VALUE,
     TYPE_STRING,
     TYPE_REL_OPERATOR,
+    TYPE_DATA_TYPE,
+    TYPE_RETURN_TYPE
 }ASTNodeType;
 
 typedef enum{
@@ -39,10 +42,19 @@ typedef enum{
     OP_DEFAULT         // <=
 }Operator;
 
+typedef enum{
+    T_DEFAULT,
+    T_VOID,
+    T_I32,
+    T_F64,
+    T_U8
+}DataType;
+
 typedef union{
     Operator op;
     char *str;
     float value;
+    DataType type;
 }ASTData;
 
 typedef struct ASTNode{
@@ -56,6 +68,7 @@ ASTNode* CreateAST();
 ASTNode* CreateAstNode(ASTNodeType type);
 ASTNode* CreateCodeNode(ASTNode *node);
 ASTNode* CreateVarDeclNode(ASTNode *node);
+ASTNode* CreateConDeclNode(ASTNode *node);
 ASTNode* CreateFunDeclNode(ASTNode *node);
 ASTNode* CreateIdNode(ASTNode *node, char *id);
 ASTNode* CreateIfElseNode(ASTNode *node);
@@ -66,6 +79,7 @@ ASTNode* CreateReturnNode(ASTNode *node);
 ASTNode* CreateFunCallNode(ASTNode *node);
 ASTNode* CreateArgumentNode(ASTNode *node, char *id);
 ASTNode* CreateParamNode(ASTNode *node, char *id);
+ASTNode* CreateTypeNode(ASTNode *node, DataType type);
 
 /// added chagpt print shits
 void DisplayAST(ASTNode *node);

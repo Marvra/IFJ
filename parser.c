@@ -85,6 +85,14 @@ int Parser(TokenList* list)
         {
             funcDec = CreateParamNode(funcDec, list->currToken->data); // neviem ako pridat typ id B
         }
+        else if(lastNonTerminal == NON_T_TYPE && list->currToken->type == TOKEN_i32) //--------------------
+        {
+            funcDec = CreateTypeNode(funcDec, T_I32);
+        }
+        else if(lastNonTerminal == NON_T_RETURN_TYPE && list->currToken->type == TOKEN_void)
+        {
+            funcDec = CreateTypeNode(funcDec, T_VOID);
+        }
 
         DisplayAST(ast);
         //SEMANTICS

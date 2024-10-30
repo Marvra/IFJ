@@ -20,6 +20,8 @@ ASTNode* CreateAstNode(ASTNodeType type){
         node->data.value = 0;
     }else if(type == TYPE_OPERATOR || type == TYPE_REL_OPERATOR){
         node->data.op = OP_DEFAULT;
+    }else if(type == TYPE_DATA_TYPE || type == TYPE_RETURN_TYPE){
+        node->data.type = T_DEFAULT;
     }else{
         node->data.str = NULL;
     }
@@ -75,6 +77,15 @@ ASTNode* CreateVarDeclNode(ASTNode *node){
         return NULL;
     }
     node->right = CreateAstNode(TYPE_VAR_DECL);
+    return node->right;
+}
+
+ASTNode* CreateConDeclNode(ASTNode *node){
+    if(node->type != TYPE_CODE || node->right != NULL){
+        printf("CreateConDeclNode error");
+        return NULL;
+    }
+    node->right = CreateAstNode(TYPE_CON_DECL);
     return node->right;
 }
 
@@ -216,6 +227,31 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
     
 }
 
+ASTNode* CreateTypeNode(ASTNode *node, DataType type){
+    if((node->type != TYPE_FUN_DECL && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL) || node->left == NULL ){
+        printf("CreateTypeNode error");
+        return NULL;
+    }
+
+    ASTNode *temp = node->left;
+    while(temp->left != NULL){
+        temp = temp->left;
+    }
+
+    if(temp->right != NULL){
+        temp = node->left;
+        if(node->type == TYPE_FUN_DECL){
+            temp->right = CreateAstNode(TYPE_RETURN_TYPE);
+            temp->right->data.type = type;
+            return node;
+        }
+    }
+
+    temp->right = CreateAstNode(TYPE_DATA_TYPE);
+    temp->right->data.type = type;
+    return node;
+}
+
 // int main(){
 //     //test
 //     ASTNode *ast = CreateAST();
@@ -250,6 +286,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_PROGRAM: return "Program";
         case TYPE_CODE: return "Code";
         case TYPE_VAR_DECL: return "VarDecl";
+        case TYPE_CON_DECL: return "ConDecl";
         case TYPE_FUN_DECL: return "FunDecl";
         case TYPE_ASSIGNMENT: return "Assignment";
         case TYPE_RETURN: return "Return";
@@ -268,6 +305,8 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_VALUE: return "Value";
         case TYPE_STRING: return "String";
         case TYPE_REL_OPERATOR: return "RelOperator";
+        case TYPE_DATA_TYPE: return "DataType";
+        case TYPE_RETURN_TYPE: return "ReturnType";
         default: return "Unknown";
     }
 }
@@ -307,6 +346,8 @@ void DisplayASTHelper(ASTNode *node, int depth) {
         printf(": %s", OperatorToString(node->data.op));
     } else if (node->type == TYPE_VALUE) {
         printf(": %f", node->data.value);
+    } else if (node->type == TYPE_DATA_TYPE || node->type == TYPE_RETURN_TYPE) {
+        printf(": %d", node->data.type);
     }
 
     printf("\n");
