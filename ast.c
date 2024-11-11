@@ -104,7 +104,7 @@ ASTNode* CreateIdNode(ASTNode *node, char *id){
         return NULL;
     }
 
-    if(node->type == TYPE_VAR_DECL || node->type == TYPE_ASSIGNMENT || node->type == TYPE_FUN_DECL || node->type == TYPE_FUN_CALL){
+    if(node->type == TYPE_VAR_DECL || node->type == TYPE_CON_DECL || node->type == TYPE_ASSIGNMENT || node->type == TYPE_FUN_DECL || node->type == TYPE_FUN_CALL){
         node->left = CreateAstNode(TYPE_ID);
         node->left->data.str = strdup(id);      
         if(node->left->data.str == NULL){
