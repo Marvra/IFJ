@@ -9,6 +9,7 @@ typedef enum{
     TYPE_I32,
     TYPE_F64,
     TYPE_U8,
+    TYPE_PARAMS,
     TYPE_VOID
 } NType;
 

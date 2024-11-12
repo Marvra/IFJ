@@ -1,0 +1,22 @@
+
+const ifj = @import("ifj24.zig");
+
+pub fn hnoj(c:i32, b:i32) f64 {
+
+    const as:i32 = +;  //POZOR pozri gramatiku ci toto moze byt alebo nie
+    if(+)
+    {
+        const as:i32 = +;
+    }
+    return +;
+}
+
+pub fn hnoj(c:i32, b:i32) f64 {
+
+    const as:i32 = +;  //POZOR pozri gramatiku ci toto moze byt alebo nie
+    if(+)
+    {
+        const as:i32 = +;
+    }
+    return +;
+}

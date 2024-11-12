@@ -47,7 +47,7 @@ int FSM(FILE* file, Token* token)
 
     while(token->type == TOKEN_UNKOWN)
     {
-        char c = getc(file);
+        c = getc(file);
 
         switch (state)
         {
@@ -107,7 +107,8 @@ int FSM(FILE* file, Token* token)
             case STATE_STRING_START:
                 if(c == '"') state = STATE_STRING_END;
                 else if(c == '\\') state = STATE_STRING_SLASH;
-                else if(c >=32 && c <= 127)  state = STATE_STRING_START;
+                //else if(c >=32 && c <= 127)  state = STATE_STRING_START;
+                else if(c >=32)  state = STATE_STRING_START;
                 else return STATE_ERROR;
             break;
 
@@ -132,6 +133,35 @@ int FSM(FILE* file, Token* token)
             break;
             // STRING END
 
+            // PROLOG START
+            case STATE_PROLOG:
+                if(c == 'i') state = STATE_PROLOG_i;
+                else return STATE_ERROR;
+            break;
+            case STATE_PROLOG_i:
+                if(c == 'm') state = STATE_PROLOG_m;
+                else return STATE_ERROR;
+            break;
+            case STATE_PROLOG_m:
+                if(c == 'p') state = STATE_PROLOG_p;
+                else return STATE_ERROR;
+            break;  
+            case STATE_PROLOG_p:
+                if(c == 'o') state = STATE_PROLOG_o;
+                else return STATE_ERROR;
+            break;
+            case STATE_PROLOG_o:
+                if(c == 'r') state = STATE_PROLOG_r;
+                else return STATE_ERROR;
+            break;
+            case STATE_PROLOG_r:
+                if(c == 't') state = STATE_PROLOG_t;
+                else return STATE_ERROR;
+            break;
+            case STATE_PROLOG_t:
+                token->type = TOKEN_PROLOG;
+            break;
+            // PROLOG END
             case STATE_QUESTIONMARK:
                 token->type = TOKEN_QUESTIONMARK;
             break;
@@ -149,8 +179,9 @@ int FSM(FILE* file, Token* token)
                 else token->type = TOKEN_DIV;
             break;
             case STATE_COMMENT:
-                if(!(c == '\n' || c==EOF)) state == STATE_COMMENT;
-                else token->type = TOKEN_COMMENT;
+                // if(!(c == '\n' || c==EOF)) state == STATE_COMMENT;
+                // else token->type = TOKEN_COMMENT;
+                if(c == '\n' || c==EOF) token->type = TOKEN_COMMENT;
             break;
             case STATE_ASSIGN:
                 if(c == '=') state = STATE_EQUAL;
@@ -268,6 +299,7 @@ State GetFirstState(char c)
     else if(c=='|') return STATE_BAR;
     else if(c==',') return STATE_COMMA;
     else if(c=='.') return STATE_DOT;
+    else if(c=='@') return STATE_PROLOG;
     else if(c=='\n') return STATE_EOL;
     else if(isspace(c)) return STATE_SPACE;
     else if(c==EOF) return STATE_EOF;

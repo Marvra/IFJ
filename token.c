@@ -102,6 +102,8 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_VARIABLE";
     case TOKEN_UNDERSCORE:
         return "TOKEN_UNDERSCORE";
+    case TOKEN_PROLOG:
+        return "TOKEN_PROLOG";
     case TOKEN_const:
         return "TOKEN_const";
     case TOKEN_else:

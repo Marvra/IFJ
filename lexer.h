@@ -51,6 +51,13 @@ typedef enum State{
     STATE_STRING_HEX1,
     STATE_STRING_HEX2,
     STATE_STRING_END,
+    STATE_PROLOG,
+    STATE_PROLOG_i,
+    STATE_PROLOG_m,
+    STATE_PROLOG_p,
+    STATE_PROLOG_o,
+    STATE_PROLOG_r,
+    STATE_PROLOG_t,
     STATE_EOL,
     STATE_EOF
 } State;
@@ -61,4 +68,4 @@ int FSM(FILE* file, Token* token);
 State GetFirstState(char c);
 void CheckKeyword(Token* token); // ASI DOUBLE PPOINTER
 
-#endif
+#endif // LEXER_H 

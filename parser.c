@@ -4,19 +4,26 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <ctype.h>
-
-#include "stack.h"
 #include "parser.h"
 #include "token.h"
+#include "symtable.h"
+#include "ast.h"
 #include "error.h"
+
+NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
 
 int Parser(TokenList* list)
 {
     Stack* stack = InitStack();
     Error error = 0;
+    ASTNode *ast = CreateAST(); 
+    ASTNode *root = ast; // potom sa bude posielat do semantiky
+    ASTNode *baseCode = CreateCodeNode(ast);
+    // ASTNode *funcDec;
+    // ASTNode *funcBodyDec;
+    Tokentype lastInteresingToken = TOKEN_UNKOWN;
     PushItem(stack, TOKEN_UNKOWN, NON_T_BODY);
 
-    StackItem* item = InitStackItem();
 
     while (!Empty(stack))
     {
@@ -38,7 +45,7 @@ int Parser(TokenList* list)
             }
 
         }
-        item = Top(stack);
+        Top(stack);
 
         if(Top(stack)->tokenType != list->currToken->type)
         {
@@ -47,15 +54,32 @@ int Parser(TokenList* list)
             printf(" Top: %s\n Current: %s\n", TokenTypeString(Top(stack)->tokenType), TokenTypeString(list->currToken->type));
             return ERROR_PARSER;
         }
-        PrintStack(stack);
+        //PrintStack(stack);
         printf("Popping from stack : %s\n", TokenTypeString(list->currToken->type));
         Pop(stack);
+
+        if(InterestingTokens(list->currToken->type))
+        {
+            lastInteresingToken = list->currToken->type;
+        }
+
+        // build ast
+        // mozno by bolo fajn spravit nieco ze by to rekurzivne hladalo kde by sa mal pridat další node
+        // napr ak mame zakladal a prisla  by pub ze by sa snazilo najst prazdny code ak by nasle tak by sa pridal funcDec k nemu
+        // prisli by paramtere tak by sa pridal parametre a tak dalej
+        if (lastInteresingToken != TOKEN_UNKOWN )
+        {
+            BuildAST(&ast, lastInteresingToken, list->currToken);
+            ast = root;
+        }
 
         Token* nextToken = list->currToken->nextToken;
         list->currToken = nextToken;
 
     }
     printf("Parser finished successfully\n");
+    FreeStack(stack);
+
     return 0;
 }
 
@@ -66,6 +90,7 @@ int LLGrammar(Stack* stack, Tokentype type)
 
     while (Top(stack)->tokenType == TOKEN_UNKOWN)
     {
+        lastNonTerminal = nonterminal;
         Pop(stack); // pop pre neterminal na vrchu stacku 
         switch (nonterminal)
         {
@@ -144,7 +169,7 @@ int NonTerminalBodyPush(Stack* stack,Tokentype type)
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_STRING, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_DOT, NON_TERMINAL_UNKOWN);  // -------- PRIDAJ TOKEN IMPORT 
+        PushItem(stack, TOKEN_PROLOG, NON_TERMINAL_UNKOWN);  // -------- PRIDAJ TOKEN IMPORT 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_const, NON_TERMINAL_UNKOWN);
@@ -207,7 +232,7 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_UNKOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_PLUS, NON_TERMINAL_UNKOWN); // EXPRESION NESKOR zatial tam dam token_plus
-        PushItem(stack, TOKEN_EQUAL, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKOWN, NON_T_TYPE);
         PushItem(stack, TOKEN_COLON,NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
@@ -272,10 +297,10 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 {
     // <id_continue> -> = expression
-    if(type == TOKEN_EQUAL)
+    if(type == TOKEN_ASSIGN)
     {
         PushItem(stack, TOKEN_PLUS, NON_TERMINAL_UNKOWN); // EXPRESION NESKOR zatial tam dam token_plus
-        PushItem(stack, TOKEN_EQUAL, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
     }
     // <id_continue> -> .ID(<params_enter>)    // BUILD IN FUNCTIONS IG IDK
     else if(type == TOKEN_DOT)
@@ -500,3 +525,228 @@ int NonTerminalTermPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+ASTNode* findDeepestCodeNode(ASTNode** ast) 
+{
+    if ((*ast)->left == NULL) {
+        return *ast;
+    } else {
+        return findDeepestCodeNode(&(*ast)->left);
+    }
+}
+// finds deepest code node and returns FunDec node
+ASTNode* findDeepestFunDecNode(ASTNode** ast)
+{
+    *ast = findDeepestCodeNode(&(*ast));
+    return (*ast)->right  == NULL ? *ast : (*ast)->right;
+}
+
+
+// MOZNO NEPOTREBUJEME BO CREATEPARAMNODE PREJDE UZ NA SPODOK PARAMS DANEJ FUNKCIE
+// ALE ASI POTREBUJEME KVOLI ZAPISU TYPE 
+ASTNode* findDeepestParamNode(ASTNode** ast)
+{
+    *ast = findDeepestFunDecNode(&(*ast));
+    if((*ast)->left == NULL)
+    {
+        return *ast;
+    }
+    else
+    {
+        return findDeepestParamNode(&(*ast)->left);
+    }
+}
+// MOZNO NEPOTREBUJEME BO CREATEPARAMNODE PREJDE UZ NA SPODOK PARAMS DANEJ FUNKCIE
+
+ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
+{
+    *ast = findDeepestFunDecNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        if ((*ast)->left == NULL) return *ast;
+        return findDeepestCodeNode(&(*ast)->left);
+    }
+}
+
+ASTNode* findDeepestVarNode(ASTNode** ast)
+{
+    *ast = findDeepestFunctionBodyNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else if((*ast)->right->type != TYPE_VAR_DECL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        return *ast;
+    }
+}
+
+ASTNode* findDeepestConstNode(ASTNode** ast)
+{
+    *ast = findDeepestFunctionBodyNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else if((*ast)->right->type != TYPE_CON_DECL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        return *ast;
+    }
+}
+
+void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
+{
+    switch (interestingToken)
+    {
+        case TOKEN_fn:
+            if(token->type == TOKEN_fn)
+            {
+                *ast = findDeepestCodeNode(&(*ast));
+                if((*ast)->right != NULL)   // creates new code node under the top one (bo musime zapisat func do dalsej code node)
+                {
+                    *ast = CreateCodeNode(*ast);
+                }
+                *ast = CreateFunDeclNode(*ast);
+            }
+            else if(token->type == TOKEN_VARIABLE)
+            {
+                // function id 
+                *ast = findDeepestFunDecNode(&(*ast));
+                if((*ast)->left == NULL)
+                {
+                    *ast = CreateIdNode(*ast, token->data);
+                }
+                // param id
+                else
+                {
+                    *ast = CreateParamNode(*ast, token->data);
+                }
+            }
+            // param type
+            else if(token->type == TOKEN_void || token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            {
+                *ast = findDeepestFunDecNode(&(*ast));
+                *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
+            }
+        break;
+        case TOKEN_const:
+            if(lastNonTerminal == NON_T_BODY){
+                break; // dont check const for prolog 
+            }
+            if(token->type == TOKEN_const)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast);
+                *ast = CreateConDeclNode(*ast);
+            }
+            else if(token->type == TOKEN_VARIABLE)
+            {
+                // function id 
+                *ast = findDeepestConstNode(&(*ast));
+                *ast = CreateIdNode(*ast, token->data);
+            }
+            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            {
+                *ast = findDeepestConstNode(&(*ast));
+                *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
+            }
+            break;
+        case TOKEN_var:
+            if(token->type == TOKEN_var)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast);
+                *ast = CreateVarDeclNode(*ast);
+            }
+            else if(token->type == TOKEN_VARIABLE)
+            {
+                // function id 
+                *ast = findDeepestVarNode(&(*ast));
+                *ast = CreateIdNode(*ast, token->data);
+            }
+            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            {
+                *ast = findDeepestVarNode(&(*ast));
+                *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
+            }
+            break;
+        case TOKEN_return:
+             if(token->type == TOKEN_return)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast);
+                *ast = CreateReturnNode(*ast);
+            }
+            break;
+        case TOKEN_if:
+            *ast = CreateIfNode(*ast);
+            break;
+        case TOKEN_while:
+            *ast = CreateWhileNode(*ast);
+            break;
+        case TOKEN_else:
+            *ast = CreateElseNode(*ast);
+            break;
+        default:
+            break;
+    }
+}
+
+
+DataType TokenTypeToDataType(Tokentype type)
+{
+    switch (type)
+    {
+        case TOKEN_void:
+            return T_VOID;
+        case TOKEN_i32:
+            return T_I32;
+        case TOKEN_f64:
+            return T_F64;
+        case TOKEN_u8:
+            return T_U8;
+        default:
+            return T_DEFAULT;
+    }
+}
+
+
+int InterestingTokens(Tokentype type)
+{
+    switch (type)
+    {
+        case TOKEN_fn:
+            return 1;
+        case TOKEN_const:
+            return 1;
+        case TOKEN_var:
+            return 1;
+        case TOKEN_return:
+            return 1;
+        // case TOKEN_if:
+        //     return 1;
+        // case TOKEN_while:
+        //     return 1;
+        // case TOKEN_else:
+        //     return 1;
+        // case TOKEN_SEMICOLON:
+        //     return 1;
+        break;
+        default:
+            return 0;
+    }
+}
