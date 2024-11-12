@@ -2,7 +2,7 @@
 #define TOKEN_H
 typedef enum Tokentype{
     TOKEN_ERROR,
-    TOKEN_UNKOWN,
+    TOKEN_UNKNOWN,
     TOKEN_UNDERSCORE,
     TOKEN_VARIABLE,
     TOKEN_PROLOG,

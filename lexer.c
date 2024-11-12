@@ -45,7 +45,7 @@ int FSM(FILE* file, Token* token)
     char c;
     State state = STATE_START;
 
-    while(token->type == TOKEN_UNKOWN)
+    while(token->type == TOKEN_UNKNOWN)
     {
         c = getc(file);
 
@@ -258,7 +258,7 @@ int FSM(FILE* file, Token* token)
             break;
         }
 
-        if(token->type != TOKEN_UNKOWN) 
+        if(token->type != TOKEN_UNKNOWN) 
         {
             if(token->type == TOKEN_VARIABLE)
             {

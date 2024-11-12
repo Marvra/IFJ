@@ -19,7 +19,7 @@ Stack* InitStack()
 StackItem* InitStackItem() {
     StackItem* item = (StackItem*) malloc(sizeof(StackItem)); 
     item->nonTerminal = NON_TERMINAL_UNKOWN;
-    item->tokenType = TOKEN_UNKOWN;
+    item->tokenType = TOKEN_UNKNOWN;
     return item;
 }
 
@@ -124,7 +124,7 @@ void PrintStack(Stack* stack)
         if (item->nonTerminal != NON_TERMINAL_UNKOWN) {
             printf("Non-terminal: %s\n", NonTerminalToString(item->nonTerminal));
         } 
-        else if (item->tokenType != TOKEN_UNKOWN) {
+        else if (item->tokenType != TOKEN_UNKNOWN) {
             printf("Token: %s\n", TokenTypeString(item->tokenType));
         }
     }

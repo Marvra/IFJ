@@ -24,7 +24,7 @@ Token* InitToken()
     token->data=NULL;
     token->nextToken=NULL;
     token->prevToken=NULL;
-    token->type=TOKEN_UNKOWN;
+    token->type=TOKEN_UNKNOWN;
     token->dataLength=0;
     return token;
 }
@@ -96,8 +96,8 @@ char* TokenTypeString(Tokentype type)
     {
     case TOKEN_ERROR:
         return "TOKEN_ERROR";
-    case TOKEN_UNKOWN:
-        return "TOKEN_UNKOWN";
+    case TOKEN_UNKNOWN:
+        return "TOKEN_UNKNOWN";
     case TOKEN_VARIABLE:
         return "TOKEN_VARIABLE";
     case TOKEN_UNDERSCORE:

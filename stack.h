@@ -20,6 +20,7 @@ typedef enum NonTerminal{
     NON_T_RETURN_TYPE,
     NON_T_TYPE,
     NON_T_TERM,
+    NON_T_EXPR
 } NonTerminal;
 
 typedef struct StackItem{
