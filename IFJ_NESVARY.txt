@@ -1,0 +1,12 @@
+LEXER:
+	- ? pred typmy premenych
+PARSER:
+	- multiline kod (jeden riadok kodu moze byt na viacerych riadkoch (enter,space, etc))
+	- volanie vstavanych funkcii
+	- dorobit vytvaranie ast (while, if, ifelse + v expression parsery)
+EXPRESSIOn PARER:
+	- CELE NENI
+SEMANTIKA: 
+	- ?? <- robin plsky dopis
+CODE GEN: 
+	- CELE NENI
