@@ -700,7 +700,12 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
             *ast = CreateIfNode(*ast);
             break;
         case TOKEN_while:
-            *ast = CreateWhileNode(*ast);
+            if(token->type == TOKEN_while)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast);
+                *ast = CreateWhileNode(*ast);
+            }
             break;
         case TOKEN_else:
             *ast = CreateElseNode(*ast);
@@ -743,8 +748,8 @@ int InterestingTokens(Tokentype type)
             return 1;
         // case TOKEN_if:
         //     return 1;
-        // case TOKEN_while:
-        //     return 1;
+        case TOKEN_while:
+            return 1;
         // case TOKEN_else:
         //     return 1;
         // case TOKEN_SEMICOLON:
