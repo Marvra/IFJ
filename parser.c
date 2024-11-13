@@ -561,6 +561,16 @@ ASTNode* findDeepestParamNode(ASTNode** ast)
 }
 // MOZNO NEPOTREBUJEME BO CREATEPARAMNODE PREJDE UZ NA SPODOK PARAMS DANEJ FUNKCIE
 
+ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
+{
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) {
+        return (*ast)->right->right == NULL ? (*ast)->right : findDeepestFuncCodeNode(&(*ast)->right->right);
+    } else if ((*ast)->left != NULL) {
+        return findDeepestFuncCodeNode(&(*ast)->left);
+    }
+    return *ast;
+}
+
 ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
 {
     *ast = findDeepestFunDecNode(&(*ast));
@@ -571,8 +581,11 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
     else
     {
         *ast = (*ast)->right;
-        if ((*ast)->left == NULL) return *ast;
-        return findDeepestCodeNode(&(*ast)->left);
+        if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) return findDeepestFuncCodeNode(&(*ast));
+        else if ((*ast)->left != NULL) {
+            return findDeepestFuncCodeNode(&(*ast)->left);
+        }
+        return *ast;
     }
 }
 

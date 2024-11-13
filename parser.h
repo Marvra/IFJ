@@ -33,6 +33,7 @@ ASTNode* findDeepestCodeNode(ASTNode** ast);
 ASTNode* findDeepestFunDecNode(ASTNode** ast);
 ASTNode* findDeepestParamNode(ASTNode** ast);
 ASTNode* findDeepestFunctionBodyNode(ASTNode** ast);
+ASTNode* findDeepestBodyInFunction(ASTNode** ast);
 ASTNode* findDeepestVarNode(ASTNode** ast);
 ASTNode* findDeepestConstNode(ASTNode** ast);
 //CHAT GPT HOVNO
