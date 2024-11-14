@@ -156,7 +156,7 @@ int GetType(TNode *rootPtr, char *key, NType *value){
 int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        *value = rootPtr->data.functionReturnType;
+        *value = temp->data.functionReturnType;
         return 0;
     }
     return -1;
@@ -174,7 +174,7 @@ int GetIsNullable(TNode *rootPtr, char *key, bool *value){
 int GetIsConstant(TNode *rootPtr, char *key, bool *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
-        *value = rootPtr->data.isConstant;
+        *value = temp->data.isConstant;
         return 0;
     }
     return -1;
@@ -204,7 +204,7 @@ void FreeTree(TNode *rootPtr){
     if(rootPtr != NULL){
         FreeTree(rootPtr->lPtr);
         FreeTree(rootPtr->rPtr);
-        if(rootPtr->data.paramCount != NULL){
+        if(rootPtr->data.paramCount != 0){
             free(rootPtr->data.paramTypes);
         }
         free(rootPtr->key);
