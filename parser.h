@@ -36,7 +36,11 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast);
 ASTNode* findDeepestFuncCodeNode(ASTNode** ast);
 ASTNode* findDeepestVarNode(ASTNode** ast);
 ASTNode* findDeepestConstNode(ASTNode** ast);
+ASTNode* findDeepestWhileNode(ASTNode** ast);
+ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 //CHAT GPT HOVNO
+void exportASTToDot(ASTNode* root);
+void printDotAST(ASTNode* node, FILE* file);
 
 void PrintStack(Stack* stack);
 
