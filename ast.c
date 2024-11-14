@@ -298,6 +298,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_BLOCK: return "Block";
         case TYPE_WHILE: return "While";
         case TYPE_WHILE1: return "While1";
+        case TYPE_WHILE_CLOSED: return "WhileEnd";
         case TYPE_FUN_CALL: return "FunCall";
         case TYPE_ARGUMENT: return "Argument";
         case TYPE_PARAMETER: return "Parameter";

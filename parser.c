@@ -11,6 +11,7 @@
 #include "error.h"
 
 NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
+ASTNode* temp = NULL;
 
 int Parser(TokenList* list)
 {
@@ -19,8 +20,6 @@ int Parser(TokenList* list)
     ASTNode *ast = CreateAST(); 
     ASTNode *root = ast; // potom sa bude posielat do semantiky
     ASTNode *baseCode = CreateCodeNode(ast);
-    // ASTNode *funcDec;
-    // ASTNode *funcBodyDec;
     Tokentype lastInteresingToken = TOKEN_UNKNOWN;
     PushItem(stack, TOKEN_UNKNOWN, NON_T_BODY);
 
@@ -83,6 +82,8 @@ int Parser(TokenList* list)
     }
     printf("Parser finished successfully\n");
     FreeStack(stack);
+
+    exportASTToDot(root);
 
     return 0;
 }
@@ -173,7 +174,7 @@ int NonTerminalBodyPush(Stack* stack,Tokentype type)
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_STRING, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_PROLOG, NON_TERMINAL_UNKOWN);  // -------- PRIDAJ TOKEN IMPORT 
+        PushItem(stack, TOKEN_PROLOG, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_const, NON_TERMINAL_UNKOWN);
@@ -625,6 +626,35 @@ ASTNode* findDeepestConstNode(ASTNode** ast)
     }
 }
 
+ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) {
+        temp = (*ast)->right; // saving while
+        return (*ast)->right->right == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right);
+    } else if ((*ast)->left != NULL) {
+        return findDeepestWhileNodeHelp(&(*ast)->left);
+    } else {
+        return NULL;
+    }
+}
+
+ASTNode* findDeepestWhileNode(ASTNode** ast) {
+
+    *ast = findDeepestFunDecNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) return findDeepestWhileNodeHelp(&(*ast));
+        else if ((*ast)->left != NULL) {
+            return findDeepestWhileNodeHelp(&(*ast)->left);
+        }
+        return NULL;
+    }
+}
+
 void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
 {
     switch (interestingToken)
@@ -723,6 +753,14 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
         case TOKEN_else:
             *ast = CreateElseNode(*ast);
             break;
+        case TOKEN_CURLY_RIGHT_PAR:
+            *ast = findDeepestWhileNode(&(*ast));
+            *ast = temp;
+            if(*ast != NULL)
+            {
+                (*ast)->type = TYPE_WHILE_CLOSED;
+            }
+            break;
         default:
             break;
     }
@@ -765,10 +803,41 @@ int InterestingTokens(Tokentype type)
             return 1;
         // case TOKEN_else:
         //     return 1;
-        // case TOKEN_SEMICOLON:
-        //     return 1;
+        case TOKEN_CURLY_RIGHT_PAR:
+            return 1;
         break;
         default:
             return 0;
     }
+}
+
+// Function to print a single node and its children in DOT format
+void printDotAST(ASTNode* node, FILE* file) {
+    if (node == NULL) return;
+
+    // Print the current node's label, assuming `type` or similar gives a name for the node
+    fprintf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
+
+    // Print edges for left and right children if they exist
+    if (node->left) {
+        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
+        printDotAST(node->left, file);
+    }
+    if (node->right) {
+        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
+        printDotAST(node->right, file);
+    }
+}
+
+// Main function to export AST to a DOT file
+void exportASTToDot(ASTNode* root) {
+    FILE* file = fopen("ast.txt", "w");
+    if (file == NULL) {
+        perror("Failed to open file for DOT output");
+        return;
+    }
+    fprintf(file, "digraph AST {\n");
+    printDotAST(root, file);
+    fprintf(file, "}\n");
+    fclose(file);
 }
