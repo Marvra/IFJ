@@ -65,6 +65,15 @@ typedef struct ASTNode{
     struct ASTNode *right;
 }ASTNode;
 
+typedef struct StackNode{
+    ASTNode *node;
+    struct StackNode *next;
+}StackNode;
+
+typedef struct{
+    StackNode *top;
+}ASTStack;
+
 ASTNode* CreateAST();
 ASTNode* CreateAstNode(ASTNodeType type);
 ASTNode* CreateCodeNode(ASTNode *node);
@@ -82,6 +91,18 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id);
 ASTNode* CreateParamNode(ASTNode *node, char *id);
 ASTNode* CreateTypeNode(ASTNode *node, DataType type);
 
+ASTNode* GetCode(ASTNode *node);
+ASTNode* GetNode(ASTNode *node);
+ASTNodeType GetNodeType(ASTNode *node);
+DataType GetDataType(ASTNode *node);
+ASTNode* GetIdNode(ASTNode *node);
+ASTNode* GetParamNode(ASTNode *node);
+char* GetId(ASTNode *node);
+ASTNode* GetIfNode(ASTNode *node);
+ASTNode* GetElseNode(ASTNode *node);
+ASTNode* GetNoNullId(ASTNode *node);
+ASTNode* GetConditionNode(ASTNode *node);
+
 /// added chagpt print shits
 void DisplayAST(ASTNode *node);
 void DisplayASTHelper(ASTNode *node, int depth, const char* prefix);
@@ -89,4 +110,10 @@ const char* OperatorToString(Operator op);
 const char* NodeTypeToString(ASTNodeType type);
 void PrintIndent(int depth);
 void DisplayDataType(DataType dataType);
+
+//chatgpt
+ASTStack* CreateStackAST();
+void PushAST(ASTStack *stack, ASTNode *node);
+ASTNode* PopAST(ASTStack *stack);
+void FreeStackAST(ASTStack *stack);
 #endif

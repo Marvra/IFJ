@@ -137,8 +137,8 @@ ASTNode* CreateIfElseNode(ASTNode *node){
         return NULL;
     }
     node->right = CreateAstNode(TYPE_IF_ELSE);
-    node->right->right = CreateAstNode(TYPE_IF_ELSE1);
-    node->right->left = CreateAstNode(TYPE_BLOCK);
+    node->right->right = CreateAstNode(TYPE_BLOCK);
+    node->right->left = CreateAstNode(TYPE_IF_ELSE1);
     return node->right;
 }
 
@@ -152,7 +152,7 @@ ASTNode* CreateIfNode(ASTNode *node){
 }
 
 ASTNode* CreateElseNode(ASTNode *node){
-    if(node->type != TYPE_IF_ELSE1){
+    if(node->type != TYPE_BLOCK){
         printf("CreateElseNode error");
         return NULL;
     }
@@ -250,6 +250,82 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
     temp->right = CreateAstNode(TYPE_DATA_TYPE);
     temp->right->data.type = type;
     return node;
+}
+
+// ------------------------- GET ---------------------------
+
+ASTNode* GetCode(ASTNode *node){
+    if(node == NULL){
+        return NULL;
+    }
+    return node->left;
+}
+
+ASTNode* GetNode(ASTNode *node){
+    if(node == NULL){
+        return NULL;
+    }
+    return node->right;
+}
+
+ASTNodeType GetNodeType(ASTNode *node){
+    return node->type;
+}
+
+DataType GetDataType(ASTNode *node){
+    if(node->right == NULL){
+        return T_VOID;
+    }
+    return node->right->data.type;
+}
+
+ASTNode* GetIdNode(ASTNode *node){
+    if(node == NULL || node->left == NULL){
+        return NULL;
+    }
+    return node->left;
+}
+
+ASTNode* GetParamNode(ASTNode *node){
+    if(node == NULL || node->left == NULL){
+        return NULL;
+    }
+    return node->left;
+}
+
+char* GetId(ASTNode *node){
+    if(node == NULL){ //dobry by bol check ci existuje data.str
+        return NULL;
+    }
+    return node->data.str;
+}
+
+ASTNode* GetIfNode(ASTNode *node){
+    if(node == NULL || node->right == NULL){
+        return NULL;
+    }
+    return node->right->left;
+}
+
+ASTNode* GetElseNode(ASTNode *node){
+    if(node == NULL || node->right == NULL){
+        return NULL;
+    }
+    return node->right->right;
+}
+
+ASTNode* GetNoNullId(ASTNode *node){
+    if(node == NULL || node->left == NULL){
+        return NULL; //spravne by asi malo hadzat error ale co uz
+    }
+    return node->left->left;
+}
+
+ASTNode* GetConditionNode(ASTNode *node){
+    if(node == NULL || node->left == NULL){
+        return NULL; //spravne by asi malo hadzat error ale co uz
+    }
+    return node->left->right;
 }
 
 // int main(){
@@ -397,3 +473,46 @@ void DisplayAST(ASTNode *node) {
     DisplayASTHelper(node, 0, "Root-->");
 }
 // ADDDED CHATGPT CREATED PRINT SHIT
+
+ASTStack* CreateStackAST() {
+    ASTStack *stack = (ASTStack*)malloc(sizeof(ASTStack));
+    if (!stack) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    stack->top = NULL;
+    return stack;
+}
+
+void PushAST(ASTStack *stack, ASTNode *node) {
+    StackNode *newNode = (StackNode*)malloc(sizeof(StackNode));
+    if (!newNode) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->node = node;
+    newNode->next = stack->top;
+    stack->top = newNode;
+}
+
+ASTNode* PopAST(ASTStack *stack) {
+    if (stack->top == NULL) {
+        return NULL;
+    }
+    StackNode *topNode = stack->top;
+    ASTNode *node = topNode->node;
+    stack->top = topNode->next;
+    free(topNode);
+    return node;
+}
+
+
+void FreeStackAST(ASTStack *stack) {
+    StackNode *current = stack->top;
+    while (current != NULL) {
+        StackNode *next = current->next;
+        free(current);
+        current = next;
+    }
+    free(stack);
+}

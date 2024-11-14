@@ -227,3 +227,46 @@ int Height(TNode *rootPtr){
         return 0;
     }
 }
+
+SymList* CreateSymList(){
+    SymList *list = (SymList*)malloc(sizeof(SymList));
+    if(!list){
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    list->last = NULL;
+    return list;
+}
+
+void InsertTable(SymList *list, TNode *node){
+    SymListNode *newNode = (SymListNode*)malloc(sizeof(SymListNode));
+    if(!newNode){
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->node = node;
+    newNode->next = list->last;
+    list->last = newNode;
+}
+
+SymListNode* GetLast(SymList *list){
+    return list->last;
+}
+
+SymListNode* GetNext(SymListNode *node){
+    return node->next;
+}
+
+TNode* GetTableNode(SymListNode *node){
+    if(node == NULL){
+        return NULL;
+    }
+    return node->node;
+}
+
+void DeleteTable(SymList *list){
+    SymListNode *temp = list->last;
+    list->last = temp->next;
+    FreeTree(GetTableNode(temp));
+    free(temp);
+}

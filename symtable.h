@@ -29,6 +29,15 @@ typedef struct tnode{
     struct tnode *rPtr;
 } TNode;
 
+typedef struct SymListNode {
+    TNode *node;
+    struct SymListNode *next;
+} SymListNode;
+
+typedef struct {
+    SymListNode *last;
+} SymList;
+
 TNode* CreateNode(char *key);
 TNode* InsertNode(TNode *rootPtr, char *key);
 TNode* RotateRight(TNode *rootPtr);
@@ -48,5 +57,13 @@ int GetParameterCount(TNode *rootPtr, char *key, int *count);
 void FreeTree(TNode *rootPtr);
 int Max(int a, int b);
 int Height(TNode *rootPtr);
+
+//-------------------
+SymList* CreateSymList();
+void InsertTable(SymList *list, TNode *node);
+SymListNode* GetLast(SymList *list);
+SymListNode* GetNext(SymListNode *node);
+TNode* GetTableNode(SymListNode *node);
+void DeleteTable(SymList *list);
 
 #endif

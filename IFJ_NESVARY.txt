@@ -7,6 +7,8 @@ PARSER:
 EXPRESSIOn PARER:
 	- CELE NENI
 SEMANTIKA: 
-	- ?? <- robin plsky dopis
+	- dost toho neni (vela veci je rozpracovanych)
 CODE GEN: 
 	- CELE NENI
+CELKOVO:
+	- error kody spravne vraciat
