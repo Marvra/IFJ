@@ -32,8 +32,9 @@ Token* InitToken()
 void DataToToken(char c, Token* token)
 {
     token->dataLength++;
-    token->data = (char*)realloc(token->data, token->dataLength*sizeof(char));
+    token->data = (char*)realloc(token->data, (token->dataLength + 1)*sizeof(char));
     token->data[token->dataLength-1] = c;
+    token->data[token->dataLength] = '\0';
 }
 
 void GetNextToken(Token** token)
