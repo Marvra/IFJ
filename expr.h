@@ -25,7 +25,7 @@ typedef enum
 	ACTION_shift,
 	ACTION_reduce,
 	ACTION_illegal,
-	ACTION_DONE	
+	ACTION_equal
 }	precTableAction_t;
 
 typedef enum
@@ -54,25 +54,13 @@ typedef enum
 
 }	precTableIndex_t;
 
-int expr_main();
-
-int expr_algorithm();
+void expr_shift();
+void expr_reduce();
+void expr_illegal();
+int expr_start(TokenList *list);
 
 precTableAction_t expr_readTable();
 
 precTableIndex_t expr_getIndexFromChar();
-
-char expr_getCharFromIndex();
-
-int expr_shift();
-int expr_reduce();
-
-int expr_searchRule();
-int expr_isAlgotihmFinished();  
-int expr_generateResult();
-int expr_convertTypes();
-int expr_finishAlgorithm();
-
-int expr_isFirstValid();
 
 #endif
