@@ -70,11 +70,22 @@ int Parser(TokenList* list)
         // mozno by bolo fajn spravit nieco ze by to rekurzivne hladalo kde by sa mal pridat další node
         // napr ak mame zakladal a prisla  by pub ze by sa snazilo najst prazdny code ak by nasle tak by sa pridal funcDec k nemu
         // prisli by paramtere tak by sa pridal parametre a tak dalej
+
+        // NEMENIT NEJAKO FUNGUJE<3
         if (lastInteresingToken != TOKEN_UNKNOWN )
         {
-            BuildAST(&ast, lastInteresingToken, list->currToken);
-            ast = root;
+            if(lastInteresingToken == TOKEN_CURLY_RIGHT_PAR && list->currToken->type == TOKEN_CURLY_RIGHT_PAR)
+            {
+                BuildAST(&ast, lastInteresingToken, list->currToken);
+                ast = root;
+            }
+            else if(lastInteresingToken != TOKEN_CURLY_RIGHT_PAR)
+            {
+                BuildAST(&ast, lastInteresingToken, list->currToken);
+                ast = root;
+            }
         }
+        // NEMENIT NEJAKO FUNGUJE<3
 
         Token* nextToken = list->currToken->nextToken;
         list->currToken = nextToken;
