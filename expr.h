@@ -26,41 +26,21 @@ typedef enum
 	ACTION_reduce,
 	ACTION_illegal,
 	ACTION_equal
-}	precTableAction_t;
+} precTableAction_t;
 
-typedef enum
+typedef enum 
 {
-	// Relační operátory
-	TERM_plus,		
-	TERM_minus,		
-	TERM_mul,		
-	TERM_div,
+	TERM_plusMinus,
+	TERM_mulDiv,
+	TERM_leftBracket,
+	TERM_rightBracket,
+	TERM_relational,
+	TERM_variable,
+	TERM_stackEnd,
+} precTableTerm_t;
 
-	// ()	
-	TERM_lBrac,	
-	TERM_rBrac,	
-
-	// Relační operátory
-	TERM_equal,	
-	TERM_notEqual,	
-	TERM_less,
-	TERM_greater,		
-	TERM_lessEqual,					
-	TERM_greaterEqual,
- 
-	// i a $
-	TERM_stackEnd,	
-	TERM_variable,	
-
-}	precTableIndex_t;
-
-void expr_shift();
-void expr_reduce();
-void expr_illegal();
 int expr_start(TokenList *list);
 
-precTableAction_t expr_readTable();
-
-precTableIndex_t expr_getIndexFromChar();
+precTableTerm_t expr_getTermFromToken(Token *token);
 
 #endif
