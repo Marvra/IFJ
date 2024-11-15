@@ -120,8 +120,37 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list){
     return newSymtable;
 }
 
+TNode* FindInSymlist(SymList *list, char *id){
+    TNode *node = NULL;
+    SymListNode *currentSymListNode = GetLast(list);
+    TNode *symtable = GetTableNode(currentSymListNode);
+
+    while(symtable != NULL){
+        node = SearchNode(symtable, id);
+        if(node == NULL){
+            currentSymListNode = GetNext(currentSymListNode);
+            symtable = GetTableNode(currentSymListNode);
+        }
+    }
+    return node;
+}
+
+int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
+    ASTNode *idNode = GetIdNode(node);
+    char *id = GetId(idNode);
+    DataType type = GetDataType(idNode);
+    TNode *tableNode = FindInSymlist(list, id);
+    if(tableNode != NULL){
+        //ERROR 
+        return -1;
+    }
+    //ZISKAT EXPRESSION TYPE, POZRIET CI SA ZHODUJE S TYPE(ak je T_DEFAULT TAK SKIP)
+    //vytvorit zaznam do symtable s id a typom + ci je constant a nullable
+    return 0;
+}
+
 int SemanticAnalysis(ASTNode *root){
-    ASTStack *stack = createStack();
+    ASTStack *stack = CreateStackAST();
     ASTNode *currentNode = GetCode(root);
     TNode *symtable = NULL;
     
@@ -150,12 +179,26 @@ int SemanticAnalysis(ASTNode *root){
     while(currentNode != NULL || level != 0){
         if(currentNode == NULL){
             level--;
-            currentNode = pop(stack);
+            currentNode = PopAST(stack);
             if(currentNode != NULL){
                 ASTNodeType type = GetNodeType(currentNode);
                 if(type == TYPE_IF){
-                    currentNode = pop(stack);
+                    currentNode = PopAST(stack);
+                    PushAST(stack, currentNode);
+                    DeleteTable(symlist); 
                     continue;
+                }
+                if(type == TYPE_ELSE){
+                    DeleteTable(symlist); 
+                    SymListNode *symListNode = GetLast(symlist);
+                    symtable = GetTableNode(symListNode);
+                    currentNode = PopAST(stack);
+                }
+                if(type == TYPE_FUN_DECL){
+                    DeleteTable(symlist);
+                    SymListNode *symListNode = GetLast(symlist);
+                    symtable = GetTableNode(symListNode);
+                    currentNode = PopAST(stack);
                 }
             }
             currentNode = GetCode(currentNode);
@@ -166,7 +209,7 @@ int SemanticAnalysis(ASTNode *root){
         ASTNodeType type = GetNodeType(currentNode);
         switch(type){
             case TYPE_CODE:
-                push(stack, currentNode);
+                PushAST(stack, currentNode);
                 currentNode = GetNode(currentNode);
                 level++;
                 continue;
@@ -174,25 +217,28 @@ int SemanticAnalysis(ASTNode *root){
                 if(level == 1){
                     //najdi argumenty a pridaj do lokalnej symtable, pre teraz skip
                     symtable = GetFunctionSymtable(currentNode);
+                    InsertTable(symlist, symtable);
+                    PushAST(stack, currentNode);
                     currentNode = GetNode(currentNode);
                 }else{
                     //error - definicia funkcie v definicii funkcie
                 }
                 break;
             case TYPE_RETURN:
+                printf("IN RETURN NODE\n");
                 //check return type funkcie a expression type
                 level--;
-                currentNode = pop(stack);
+                currentNode = PopAST(stack);
                 currentNode = GetCode(currentNode);
                 break;
             case TYPE_IF_ELSE:
                 //IF A ELSE NODY BY MALI BYT VYTVORENE (dufam)
                 level++;
-                InsertTable(symlist, symtable);
                 symtable = GetBlockSymtable(currentNode, symlist);
-                push(stack, GetElseNode(currentNode));
+                InsertTable(symlist, symtable);
+                PushAST(stack, GetElseNode(currentNode));
                 currentNode = GetIfNode(currentNode);
-                push(stack,currentNode);
+                PushAST(stack,currentNode);
                 //check condition
                 //check id bez null -> ak ano tak ho pridat do symtable pre IF vetvu
                 //checknut if vetvu
@@ -204,6 +250,7 @@ int SemanticAnalysis(ASTNode *root){
                 currentNode = GetNode(currentNode);
                 break;
             case TYPE_VAR_DECL:
+            case TYPE_CON_DECL:
                 //check symtable ci existuje
                 //check type vs exp type + pridat do symtable
                 break;
@@ -218,7 +265,8 @@ int SemanticAnalysis(ASTNode *root){
                 currentNode = GetCode(currentNode);
                 break;
             case TYPE_ELSE:
-                //vytvorit novu symtable
+                symtable = NULL;
+                InsertTable(symlist, symtable);
                 currentNode = GetCode(currentNode);
                 break;
             default:
@@ -275,7 +323,7 @@ ASTNode* createAST(){
     temp3->left->right->type = TYPE_ID;
     temp3->left->right->data.str = strdup("b");
     ASTNode *temp4 = CreateIfNode(temp3);
-    ASTNode *temp5 = CreateElseNode(temp4);
+    ASTNode *temp5 = CreateElseNode(temp3);
 
     temp = CreateCodeNode(temp);
     ASTNode *ret = CreateReturnNode(temp);

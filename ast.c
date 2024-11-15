@@ -274,7 +274,7 @@ ASTNodeType GetNodeType(ASTNode *node){
 
 DataType GetDataType(ASTNode *node){
     if(node->right == NULL){
-        return T_VOID;
+        return T_DEFAULT;
     }
     return node->right->data.type;
 }
