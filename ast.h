@@ -14,6 +14,7 @@ typedef enum{
     TYPE_IF,
     TYPE_IF_CLOSED,
     TYPE_ELSE,
+    TYPE_ELSE_CLOSED,
     TYPE_BLOCK,
     TYPE_WHILE,
     TYPE_WHILE1,
