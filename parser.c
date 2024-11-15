@@ -451,13 +451,19 @@ int NonTerminalBarsPush(Stack* stack, Tokentype type)
 
 int NonTerminalElsePush(Stack* stack, Tokentype type)
 {
-    // <else> -> ELSE {<function_body>}
+    // <else> -> ELSE <eol> {<function_body>}
     if(type == TOKEN_else)
     {
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
         PushItem(stack, TOKEN_else, NON_TERMINAL_UNKOWN);
+    }
+    else if(type == TOKEN_EOL)
+    {
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_ELSE);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
     }
     // <else> -> ε
 
@@ -584,6 +590,10 @@ ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
     {
         return (*ast)->right->right->left->left == NULL ? (*ast)->right->right->left : findDeepestFuncCodeNode(&(*ast)->right->right->left->left);
     }
+    // else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right == TYPE_ELSE) 
+    // {
+    //     return (*ast)->right->right->right->left == NULL ? (*ast)->right->right->left : findDeepestFuncCodeNode(&(*ast)->right->right->left->left);
+    // }
     else if ((*ast)->left != NULL)
     {
         return findDeepestFuncCodeNode(&(*ast)->left);
@@ -659,6 +669,11 @@ ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
         temp =(*ast)->right->right->left;
         return (*ast)->right->right->left->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->left->left);
     }
+    // else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right->type == TYPE_ELSE) 
+    // {
+    //     temp =(*ast)->right->right->right;
+    //     return (*ast)->right->right->right->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->right->left);
+    // }
     else if ((*ast)->left != NULL)
     {
         return findDeepestWhileNodeHelp(&(*ast)->left);
@@ -686,6 +701,45 @@ ASTNode* findDeepestWhileNode(ASTNode** ast) {
         return NULL;
     }
 }
+
+ASTNode* findDeepestElseIfNodeHelp(ASTNode** ast) {
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
+    {
+        return (*ast)->right->right == NULL ? NULL : findDeepestElseIfNodeHelp(&(*ast)->right->right);
+    } 
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
+    {
+        // finds deepest else if node
+        return (*ast)->right->right->left->left == NULL ? (*ast)->right  : findDeepestElseIfNodeHelp(&(*ast)->right->right->left->left);
+    }
+    else if ((*ast)->left != NULL)
+    {
+        return findDeepestElseIfNodeHelp(&(*ast)->left);
+    } 
+    else
+    {
+        return NULL;
+    }
+}
+
+ASTNode* findDeepestElseIfNode(ASTNode** ast) {
+
+    *ast = findDeepestFunDecNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE )) return findDeepestElseIfNodeHelp(&(*ast));
+        else if ((*ast)->left != NULL) {
+            return findDeepestElseIfNodeHelp(&(*ast)->left);
+        }
+        return NULL;
+    }
+}
+
 
 void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
 {
@@ -789,7 +843,8 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
             }
             break;
         case TOKEN_else:
-            *ast = CreateElseNode(*ast);
+            //*ast = findDeepestElseIfNode(&(*ast));
+            //*ast = CreateElseNode(*ast);
             break;
         case TOKEN_CURLY_RIGHT_PAR:
             *ast = findDeepestWhileNode(&(*ast));
@@ -846,8 +901,8 @@ int InterestingTokens(Tokentype type)
             return 1;
         case TOKEN_while:
             return 1;
-        // case TOKEN_else:
-        //     return 1;
+        case TOKEN_else:
+            return 1;
         case TOKEN_CURLY_RIGHT_PAR:
             return 1;
         break;
