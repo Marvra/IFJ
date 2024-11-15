@@ -20,14 +20,6 @@
 
 #define PREC_TABLE_SIZE 14
 
-typedef enum
-{
-	ACTION_shift,
-	ACTION_reduce,
-	ACTION_illegal,
-	ACTION_equal
-} precTableAction_t;
-
 typedef enum 
 {
 	TERM_plusMinus,
