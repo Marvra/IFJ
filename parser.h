@@ -7,7 +7,7 @@
 
 
 
-int Parser(TokenList* list);
+int Parser(ASTNode** tree, TokenList* list);
 int LLGrammar(Stack* stack, Tokentype type);
 int NonTerminalBodyPush(Stack* stack, Tokentype type);
 int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type);

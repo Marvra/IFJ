@@ -6,11 +6,13 @@
 #include "token.h"
 #include "lexer.h"
 #include "parser.h"
+#include "semantic.h"
 
 int main(int argc, char *argv[])
 {
     TokenList* list = InitTokenList();
     int returnCode = 0;
+    ASTNode* tree = NULL;
 
     if (argc != 2)
     {
@@ -34,15 +36,25 @@ int main(int argc, char *argv[])
     }
 
     printf("STARTING PARSER\n");
-    returnCode = Parser(list);
+    returnCode = Parser(&tree,list);
 
     if(returnCode != 0)
     {
         printf("Error in Parser : %d\n", returnCode);
         return returnCode;
     }
-
     freeTokenList(list);
+
+    // SMEMANTIC ANALYSIS
+
+    printf("STARTING SEMANTIC ANALYSIS\n");
+    returnCode = SemanticAnalysis(tree);
+
+    if(returnCode != 0)
+    {
+        printf("Error in Semantic : %d\n", returnCode);
+        return returnCode;
+    }
     
     fclose(file);
     return returnCode;

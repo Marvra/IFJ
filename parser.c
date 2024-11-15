@@ -13,7 +13,7 @@
 NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
 ASTNode* temp = NULL;
 
-int Parser(TokenList* list)
+int Parser(ASTNode** tree, TokenList* list)
 {
     Stack* stack = InitStack();
     Error error = 0;
@@ -95,6 +95,7 @@ int Parser(TokenList* list)
     FreeStack(stack);
 
     exportASTToDot(root);
+    *tree = ast;
 
     return 0;
 }

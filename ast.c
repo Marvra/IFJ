@@ -247,6 +247,14 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
         }
     }
 
+    // PRIDANE PRE GENEROVANIE TYPE_RETURN_TYPE AK PRIDE TYPE_FUN_DECL KDE NEMAME PARAMETRRE
+    if(node->left->right == NULL && node->type == TYPE_FUN_DECL){
+        node->left->right = CreateAstNode(TYPE_RETURN_TYPE);
+        node->left->right->data.type = type;
+        return node;
+    }
+    // PRIDANE PRE GENEROVANIE TYPE_RETURN_TYPE AK PRIDE TYPE_FUN_DECL KDE NEMAME PARAMETRRE
+
     temp->right = CreateAstNode(TYPE_DATA_TYPE);
     temp->right->data.type = type;
     return node;
