@@ -590,18 +590,18 @@ ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
     {
         return (*ast)->right->right->left->left == NULL ? (*ast)->right->right->left : findDeepestFuncCodeNode(&(*ast)->right->right->left->left);
     }
-    // else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right == TYPE_ELSE) 
-    // {
-    //     return (*ast)->right->right->right->left == NULL ? (*ast)->right->right->left : findDeepestFuncCodeNode(&(*ast)->right->right->left->left);
-    // }
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right != NULL) 
+    {
+        if((*ast)->right->right->right->type == TYPE_ELSE) 
+        {
+            return (*ast)->right->right->right->left == NULL ? (*ast)->right->right->right : findDeepestWhileNodeHelp(&(*ast)->right->right->right->left);
+        }
+    }
     else if ((*ast)->left != NULL)
     {
         return findDeepestFuncCodeNode(&(*ast)->left);
     } 
-    else
-    {
-        return *ast;
-    }
+    return *ast;
 }
 
 ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
