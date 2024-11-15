@@ -669,19 +669,19 @@ ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
         temp =(*ast)->right->right->left;
         return (*ast)->right->right->left->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->left->left);
     }
-    // else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right->type == TYPE_ELSE) 
-    // {
-    //     temp =(*ast)->right->right->right;
-    //     return (*ast)->right->right->right->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->right->left);
-    // }
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right != NULL) 
+    {
+        if((*ast)->right->right->right->type == TYPE_ELSE) 
+        {
+            temp = (*ast)->right->right->right;
+            return (*ast)->right->right->right->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->right->left);
+        }
+    }
     else if ((*ast)->left != NULL)
     {
         return findDeepestWhileNodeHelp(&(*ast)->left);
     } 
-    else
-    {
-        return *ast;
-    }
+    return *ast;
 }
 
 ASTNode* findDeepestWhileNode(ASTNode** ast) {
@@ -702,19 +702,22 @@ ASTNode* findDeepestWhileNode(ASTNode** ast) {
     }
 }
 
-ASTNode* findDeepestElseIfNodeHelp(ASTNode** ast) {
+ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast) {
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
-        return (*ast)->right->right == NULL ? NULL : findDeepestElseIfNodeHelp(&(*ast)->right->right);
+        return (*ast)->right->right == NULL ? NULL : findFirstClosedIfNodeHelp(&(*ast)->right->right);
     } 
-    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE) 
     {
-        // finds deepest else if node
-        return (*ast)->right->right->left->left == NULL ? (*ast)->right  : findDeepestElseIfNodeHelp(&(*ast)->right->right->left->left);
+        if((*ast)->right->right->left->type == TYPE_IF_CLOSED) 
+        {
+            return (*ast)->right;
+        }
+        return (*ast)->right->right->left->left == NULL ? NULL  : findFirstClosedIfNodeHelp(&(*ast)->right->right->left->left);
     }
     else if ((*ast)->left != NULL)
     {
-        return findDeepestElseIfNodeHelp(&(*ast)->left);
+        return findFirstClosedIfNodeHelp(&(*ast)->left);
     } 
     else
     {
@@ -722,7 +725,7 @@ ASTNode* findDeepestElseIfNodeHelp(ASTNode** ast) {
     }
 }
 
-ASTNode* findDeepestElseIfNode(ASTNode** ast) {
+ASTNode* findFirstClosedIfNode(ASTNode** ast) {
 
     *ast = findDeepestFunDecNode(&(*ast));
     if((*ast)->right == NULL)
@@ -732,9 +735,9 @@ ASTNode* findDeepestElseIfNode(ASTNode** ast) {
     else
     {
         *ast = (*ast)->right;
-        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE )) return findDeepestElseIfNodeHelp(&(*ast));
+        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE )) return findFirstClosedIfNodeHelp(&(*ast));
         else if ((*ast)->left != NULL) {
-            return findDeepestElseIfNodeHelp(&(*ast)->left);
+            return findFirstClosedIfNodeHelp(&(*ast)->left);
         }
         return NULL;
     }
@@ -843,8 +846,11 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
             }
             break;
         case TOKEN_else:
-            //*ast = findDeepestElseIfNode(&(*ast));
-            //*ast = CreateElseNode(*ast);
+            *ast = findFirstClosedIfNode(&(*ast));
+            if(*ast != NULL)
+            {
+                *ast = CreateElseNode(*ast);
+            }
             break;
         case TOKEN_CURLY_RIGHT_PAR:
             *ast = findDeepestWhileNode(&(*ast));
@@ -858,6 +864,10 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
                 else if((*ast)->type == TYPE_WHILE)
                 {
                     (*ast)->type = TYPE_WHILE_CLOSED;
+                }
+                else if((*ast)->type == TYPE_ELSE)
+                {
+                    (*ast)->type = TYPE_ELSE_CLOSED;
                 }
             }
             break;

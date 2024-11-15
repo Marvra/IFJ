@@ -156,7 +156,7 @@ ASTNode* CreateElseNode(ASTNode *node){
         printf("CreateElseNode error");
         return NULL;
     }
-    node->right->right = CreateAstNode(TYPE_IF);
+    node->right->right = CreateAstNode(TYPE_ELSE);
     return node;
 }
 
@@ -372,6 +372,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_IF: return "If";
         case TYPE_IF_CLOSED: return "IfEnd";
         case TYPE_ELSE: return "Else";
+        case TYPE_ELSE_CLOSED: return "ElseEnd";
         case TYPE_BLOCK: return "Block";
         case TYPE_WHILE: return "While";
         case TYPE_WHILE1: return "While1";

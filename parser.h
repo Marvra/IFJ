@@ -38,8 +38,8 @@ ASTNode* findDeepestVarNode(ASTNode** ast);
 ASTNode* findDeepestConstNode(ASTNode** ast);
 ASTNode* findDeepestWhileNode(ASTNode** ast);
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
-ASTNode* findDeepestElseIfNode(ASTNode** ast);
-ASTNode* findDeepestElseIfNodeHelp(ASTNode** ast); 
+ASTNode* findFirstClosedIfNode(ASTNode** ast);
+ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast); 
 //CHAT GPT HOVNO
 void exportASTToDot(ASTNode* root);
 void printDotAST(ASTNode* node, FILE* file);
