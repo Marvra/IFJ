@@ -575,12 +575,23 @@ ASTNode* findDeepestParamNode(ASTNode** ast)
 
 ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
 {
-    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) {
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
+    {
+
         return (*ast)->right->right == NULL ? (*ast)->right : findDeepestFuncCodeNode(&(*ast)->right->right);
-    } else if ((*ast)->left != NULL) {
-        return findDeepestFuncCodeNode(&(*ast)->left);
+    } 
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
+    {
+        return (*ast)->right->right->left->left == NULL ? (*ast)->right->right->left : findDeepestFuncCodeNode(&(*ast)->right->right->left->left);
     }
-    return *ast;
+    else if ((*ast)->left != NULL)
+    {
+        return findDeepestFuncCodeNode(&(*ast)->left);
+    } 
+    else
+    {
+        return *ast;
+    }
 }
 
 ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
@@ -593,7 +604,7 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
     else
     {
         *ast = (*ast)->right;
-        if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) return findDeepestFuncCodeNode(&(*ast));
+        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE ) ) return findDeepestFuncCodeNode(&(*ast));
         else if ((*ast)->left != NULL) {
             return findDeepestFuncCodeNode(&(*ast)->left);
         }
@@ -638,13 +649,23 @@ ASTNode* findDeepestConstNode(ASTNode** ast)
 }
 
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
-    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) {
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
+    {
         temp = (*ast)->right; // saving while
         return (*ast)->right->right == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right);
-    } else if ((*ast)->left != NULL) {
+    } 
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
+    {
+        temp =(*ast)->right->right->left;
+        return (*ast)->right->right->left->left == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right->left->left);
+    }
+    else if ((*ast)->left != NULL)
+    {
         return findDeepestWhileNodeHelp(&(*ast)->left);
-    } else {
-        return NULL;
+    } 
+    else
+    {
+        return *ast;
     }
 }
 
@@ -658,7 +679,7 @@ ASTNode* findDeepestWhileNode(ASTNode** ast) {
     else
     {
         *ast = (*ast)->right;
-        if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE) return findDeepestWhileNodeHelp(&(*ast));
+        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE )) return findDeepestWhileNodeHelp(&(*ast));
         else if ((*ast)->left != NULL) {
             return findDeepestWhileNodeHelp(&(*ast)->left);
         }
@@ -751,7 +772,13 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
             }
             break;
         case TOKEN_if:
-            *ast = CreateIfNode(*ast);
+            if(token->type == TOKEN_if)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast);
+                *ast = CreateIfElseNode(*ast);
+                *ast = CreateIfNode(*ast);
+            }
             break;
         case TOKEN_while:
             if(token->type == TOKEN_while)
@@ -769,7 +796,14 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
             *ast = temp;
             if(*ast != NULL)
             {
-                (*ast)->type = TYPE_WHILE_CLOSED;
+                if((*ast)->type == TYPE_IF)
+                {
+                    (*ast)->type = TYPE_IF_CLOSED;
+                }
+                else if((*ast)->type == TYPE_WHILE)
+                {
+                    (*ast)->type = TYPE_WHILE_CLOSED;
+                }
             }
             break;
         default:
@@ -808,8 +842,8 @@ int InterestingTokens(Tokentype type)
             return 1;
         case TOKEN_return:
             return 1;
-        // case TOKEN_if:
-        //     return 1;
+        case TOKEN_if:
+            return 1;
         case TOKEN_while:
             return 1;
         // case TOKEN_else:
