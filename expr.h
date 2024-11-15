@@ -20,59 +20,19 @@
 
 #define PREC_TABLE_SIZE 14
 
-typedef enum
+typedef enum 
 {
-	ACTION_shift,
-	ACTION_reduce,
-	ACTION_illegal,
-	ACTION_DONE	
-}	precTableAction_t;
+	TERM_plusMinus,
+	TERM_mulDiv,
+	TERM_leftBracket,
+	TERM_rightBracket,
+	TERM_relational,
+	TERM_variable,
+	TERM_stackEnd,
+} precTableTerm_t;
 
-typedef enum
-{
-	// Relační operátory
-	TERM_plus,		
-	TERM_minus,		
-	TERM_mul,		
-	TERM_div,
+int expr_start(TokenList *list);
 
-	// ()	
-	TERM_lBrac,	
-	TERM_rBrac,	
-
-	// Relační operátory
-	TERM_equal,	
-	TERM_notEqual,	
-	TERM_less,
-	TERM_greater,		
-	TERM_lessEqual,					
-	TERM_greaterEqual,
- 
-	// i a $
-	TERM_stackEnd,	
-	TERM_variable,	
-
-}	precTableIndex_t;
-
-int expr_main();
-
-int expr_algorithm();
-
-precTableAction_t expr_readTable();
-
-precTableIndex_t expr_getIndexFromChar();
-
-char expr_getCharFromIndex();
-
-int expr_shift();
-int expr_reduce();
-
-int expr_searchRule();
-int expr_isAlgotihmFinished();  
-int expr_generateResult();
-int expr_convertTypes();
-int expr_finishAlgorithm();
-
-int expr_isFirstValid();
+precTableTerm_t expr_getTermFromToken(Token *token);
 
 #endif
