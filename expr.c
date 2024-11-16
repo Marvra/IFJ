@@ -112,6 +112,12 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
 
   while (CheckForEnd(*linked_list))
   {
+
+    // skip whitespaces
+    while ((*list)->currToken->type == TOKEN_SPACE || (*list)->currToken->type == TOKEN_EOL || (*list)->currToken->type == TOKEN_COMMENT)
+    {
+      (*list)->currToken = (*list)->currToken->nextToken;
+    }
     currTerm = expr_getTermFromToken((*list)->currToken);
     incomingToken = getIndexFromTerm(currTerm);
     topToken = listTopIndex(*linked_list);
