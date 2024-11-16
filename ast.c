@@ -180,7 +180,7 @@ ASTNode* CreateReturnNode(ASTNode *node){
 }
 
 ASTNode* CreateFunCallNode(ASTNode *node){
-    if(node->type != TYPE_CODE || node->right != NULL){
+    if((node->type != TYPE_CODE && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL && node->type != TYPE_ASSIGNMENT)|| node->right != NULL){
         printf("CreateFunCallNode error");
         return NULL;
     }
@@ -248,7 +248,7 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
     }
 
     // PRIDANE PRE GENEROVANIE TYPE_RETURN_TYPE AK PRIDE TYPE_FUN_DECL KDE NEMAME PARAMETRRE
-    if(node->left->right == NULL && node->type == TYPE_FUN_DECL){
+    if(node->left->right == NULL && node->type == TYPE_FUN_DECL && node->left->left == NULL){
         node->left->right = CreateAstNode(TYPE_RETURN_TYPE);
         node->left->right->data.type = type;
         return node;
@@ -299,6 +299,13 @@ ASTNode* GetParamNode(ASTNode *node){
         return NULL;
     }
     return node->left;
+}
+
+ASTNode* GetArgNode(ASTNode *node){
+    if(node == NULL || node->right == NULL){
+        return NULL;
+    }
+    return node->right;
 }
 
 char* GetId(ASTNode *node){

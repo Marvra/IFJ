@@ -131,9 +131,64 @@ TNode* FindInSymlist(SymList *list, char *id){
         if(node == NULL){
             currentSymListNode = GetNext(currentSymListNode);
             symtable = GetTableNode(currentSymListNode);
+        }else{
+            break;
         }
     }
     return node;
+}
+
+int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
+    ASTNode *idNode = GetIdNode(node);
+    char *id = GetId(idNode);
+    TNode *tableNode = FindInSymlist(list, id);
+    if(tableNode == NULL){
+        //ERROR funkcia neexistuje
+        return -1;
+    }
+    NType returnType;
+    GetFunctionReturnType(tableNode, id, &returnType);
+    int paramCount;
+    GetParameterCount(tableNode, id, &paramCount);
+    NType pt[paramCount];
+    GetParameters(tableNode, id, pt);
+
+    ASTNode *temp = GetArgNode(node);
+    int argCount = 0;
+    while(temp != NULL){
+        char *argId = GetId(temp);
+        if(argCount < paramCount){
+            TNode *paramTableNode = FindInSymlist(list, argId);
+            if(paramTableNode == NULL){
+                //error nenasiel sa param
+                printf("nenasiel sa param");
+                return -1;
+            }
+            NType type;
+            GetType(paramTableNode, argId, &type);
+            if(type == pt[argCount]){
+                argCount++;
+                temp = GetArgNode(temp);
+                continue;
+            }else{
+                printf("zly param type");
+                return -1;
+                //error zly param type
+            }
+        }else{
+            printf("vela");
+            return -1;
+            //error vela parametrov
+        }
+    }
+    if(paramCount != argCount){
+        printf("malo");
+        return -1;
+        //error malo parametrov
+    }
+
+    *type = returnType;
+    return 0;
 }
 
 int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
@@ -141,12 +196,41 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     char *id = GetId(idNode);
     DataType type = GetDataType(idNode);
     TNode *tableNode = FindInSymlist(list, id);
+    int error = 0;
+
+    if(type == T_VOID){
+        //variable nemoze byt void error
+        return -1;
+    }
+
     if(tableNode != NULL){
         //ERROR 
         return -1;
     }
-    //ZISKAT EXPRESSION TYPE, POZRIET CI SA ZHODUJE S TYPE(ak je T_DEFAULT TAK SKIP)
-    //vytvorit zaznam do symtable s id a typom + ci je constant a nullable
+
+    NType funReturnType;
+    error = AnalyzeFunctionCall(node->right, list, &funReturnType);
+    if(error){
+        printf("error in function call");
+        return error;
+    }
+
+    SymListNode *symtableListNode = GetLast(list);
+    TNode *symtable = GetTableNode(symtableListNode);
+
+    if(funReturnType == DataTypeToNType(type) || type == T_DEFAULT){
+        InsertNode(symtable, id);
+        SetType(symtable, id, funReturnType);
+    }else{
+        return -1;
+    }
+
+    if(node->type == TYPE_CON_DECL){
+        SetIsConstant(symtable, id, true);
+    }
+
+    //----------NULLABLE TYP---------
+    
     return 0;
 }
 
@@ -201,6 +285,12 @@ int SemanticAnalysis(ASTNode *root){
                     symtable = GetTableNode(symListNode);
                     currentNode = PopAST(stack);
                 }
+                if(type == TYPE_WHILE_CLOSED){
+                    DeleteTable(symlist);
+                    SymListNode *symListNode = GetLast(symlist);
+                    symtable = GetTableNode(symListNode);
+                    currentNode = PopAST(stack);
+                }
             }
             currentNode = GetCode(currentNode);
             continue;
@@ -245,20 +335,32 @@ int SemanticAnalysis(ASTNode *root){
                 //checknut if vetvu
                 //checknut else vetvu - ako budem vediet ze if je checknute?
                 break;
-            case TYPE_WHILE:
+            case TYPE_WHILE_CLOSED:
                 //check condition
                 //check id bez null -> ak ano tak ho pridat do symtable pre code
+                symtable = GetBlockSymtable(currentNode, symlist);
+                InsertTable(symlist, symtable);
+                PushAST(stack, currentNode);
                 currentNode = GetNode(currentNode);
                 break;
             case TYPE_VAR_DECL:
             case TYPE_CON_DECL:
+                error = AnalyzeVariableDeclaration(currentNode, symlist);
                 //check symtable ci existuje
                 //check type vs exp type + pridat do symtable
+                currentNode = PopAST(stack);
+                currentNode = GetCode(currentNode);
+                level--;
                 break;
             case TYPE_ASSIGNMENT:
                 //check type vs exp type + constant?
                 break;
             case TYPE_FUN_CALL:
+                NType funReturnType;
+                error = AnalyzeFunctionCall(currentNode, symlist, &funReturnType);
+                currentNode = PopAST(stack);
+                currentNode = GetCode(currentNode);
+                level--;
                 //check symtable ci existuje funkcia
                 //check argumenty
                 break;
@@ -297,51 +399,72 @@ int SemanticAnalysis(ASTNode *root){
     return 0;
 }
 
-// ASTNode* createAST(){
-//     ASTNode *root = CreateAST();
+ASTNode* createAST(){
+    ASTNode *root = CreateAST();
 
-//     ASTNode *temp = CreateCodeNode(root);
-//     temp = CreateFunDeclNode(temp);
-//     CreateIdNode(temp, "max");
-//     CreateParamNode(temp, "a");
-//     CreateTypeNode(temp, T_I32);
-//     CreateParamNode(temp, "b");
-//     CreateTypeNode(temp, T_F64);
-//     CreateParamNode(temp, "c");
-//     CreateTypeNode(temp, T_F64);
-//     CreateTypeNode(temp, T_I32);
+    ASTNode *temp = CreateCodeNode(root);
+    temp = CreateFunDeclNode(temp);
+    CreateIdNode(temp, "max");
+    CreateParamNode(temp, "a");
+    CreateTypeNode(temp, T_F64);
+    CreateParamNode(temp, "b");
+    CreateTypeNode(temp, T_F64);
+    CreateParamNode(temp, "c");
+    CreateTypeNode(temp, T_F64);
+    CreateTypeNode(temp, T_I32);
 
-//     /*temp = CreateCodeNode(temp);
-//     ASTNode *whilee = CreateWhileNode(temp);
-//     CreateCodeNode(whilee);*/
+    /*temp = CreateCodeNode(temp);
+    ASTNode *whilee = CreateWhileNode(temp);
+    whilee->type = TYPE_WHILE_CLOSED;*/
 
-//     temp = CreateCodeNode(temp);
-//     ASTNode *temp3 = CreateIfElseNode(temp);
-//     temp3->left->left = (ASTNode *)malloc(sizeof(ASTNode));
-//     temp3->left->left->type = TYPE_ID;
-//     temp3->left->left->data.str = strdup("aaaa");
-//     temp3->left->right = (ASTNode *)malloc(sizeof(ASTNode));
-//     temp3->left->right->type = TYPE_ID;
-//     temp3->left->right->data.str = strdup("b");
-//     ASTNode *temp4 = CreateIfNode(temp3);
-//     ASTNode *temp5 = CreateElseNode(temp3);
+    /*//var decl
+    temp = CreateCodeNode(temp);
+    ASTNode *var = CreateConDeclNode(temp);
+    CreateIdNode(var, "a");
+    //CreateTypeNode(var, T_I32);
+    ASTNode *fc = CreateFunCallNode(var);
+    CreateIdNode(fc, "max");
+    CreateArgumentNode(fc,"a");
+    CreateArgumentNode(fc,"a");
+    CreateArgumentNode(fc,"a");
 
-//     temp = CreateCodeNode(temp);
-//     ASTNode *ret = CreateReturnNode(temp);
-//     ret = CreateIdNode(ret, "a");
-
-
-//     ASTNode *temp2 = CreateCodeNode(root);
-//     temp2 = CreateFunDeclNode(temp2);
-//     CreateIdNode(temp2, "main");
-//     CreateTypeNode(temp2, T_VOID);
-//     return root;
-// }
+    temp = CreateCodeNode(temp);
+    ASTNode *fc1 = CreateFunCallNode(temp);
+    CreateIdNode(fc1, "max");
+    CreateArgumentNode(fc1,"a");
+    CreateArgumentNode(fc1,"a");
+    CreateArgumentNode(fc1,"a");*/
 
 
-// int main(){
-//     ASTNode *root = createAST();
-//     SemanticAnalysis(root);
-//     //DisplayAST(root);
-//     return 0;
-// }
+    temp = CreateCodeNode(temp);
+    ASTNode *temp3 = CreateIfElseNode(temp);
+    temp3->left->left = (ASTNode *)malloc(sizeof(ASTNode));
+    temp3->left->left->type = TYPE_ID;
+    temp3->left->left->data.str = strdup("aaaa");
+    temp3->left->right = (ASTNode *)malloc(sizeof(ASTNode));
+    temp3->left->right->type = TYPE_ID;
+    temp3->left->right->data.str = strdup("b");
+    ASTNode *temp4 = CreateIfNode(temp3);
+    ASTNode *temp5 = CreateElseNode(temp3);
+    temp4->left->type = TYPE_IF_CLOSED;
+    temp5->right->right->type = TYPE_ELSE_CLOSED;
+
+    /*temp = CreateCodeNode(temp);
+    ASTNode *ret = CreateReturnNode(temp);
+    ret = CreateIdNode(ret, "a");*/
+
+
+    ASTNode *temp2 = CreateCodeNode(root);
+    temp2 = CreateFunDeclNode(temp2);
+    CreateIdNode(temp2, "main");
+    CreateTypeNode(temp2, T_VOID);
+    return root;
+}
+
+
+/*int main(){
+    ASTNode *root = createAST();
+    SemanticAnalysis(root);
+    //DisplayAST(root);
+    return 0;
+}*/

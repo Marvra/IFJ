@@ -99,6 +99,7 @@ ASTNodeType GetNodeType(ASTNode *node);
 DataType GetDataType(ASTNode *node);
 ASTNode* GetIdNode(ASTNode *node);
 ASTNode* GetParamNode(ASTNode *node);
+ASTNode* GetArgNode(ASTNode *node);
 char* GetId(ASTNode *node);
 ASTNode* GetIfNode(ASTNode *node);
 ASTNode* GetElseNode(ASTNode *node);
