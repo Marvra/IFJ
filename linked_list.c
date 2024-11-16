@@ -22,13 +22,13 @@ void DLLDispose( DLList *list ) {
     list->currentLength = 0;
 }
 
-void DLLInsertLast( DLList *list, precTableTerm_t termType, NonTerminal nonTerminal ) {
+int DLLInsertLast( DLList *list, precTableTerm_t termType) {
 	DLLElementPtr newElement = malloc(sizeof(DLLElementPtr) * 1);
     if (newElement == NULL) {
         return -1;
     } else {
+        newElement->data = malloc(sizeof(DLLData) * 1);
         newElement->data->termType = termType;
-        newElement->data->nonTerminal = nonTerminal;
         newElement->nextElement = NULL;
         newElement->previousElement = list->lastElement;
 
@@ -42,9 +42,14 @@ void DLLInsertLast( DLList *list, precTableTerm_t termType, NonTerminal nonTermi
         list->lastElement = newElement;
         list->currentLength += 1;
     }
+    return 0;
 }
 
-void DLLDeleteLast( DLList *list ) {
+DLLData DLLDeleteLast( DLList *list ) {
+    if(list->lastElement == NULL) {
+        return NULL;
+    }
+    DLLData data = list->lastElement->data;
 	if (list->lastElement != NULL) {
         if (list->firstElement == list->lastElement) {
             DLLElementPtr tempElement;
@@ -62,4 +67,5 @@ void DLLDeleteLast( DLList *list ) {
             list->currentLength -= 1;
         }
     }
+    return data;
 }

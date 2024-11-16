@@ -9,12 +9,14 @@
 #include "symtable.h"
 #include "ast.h"
 #include "error.h"
+#include "expr.h"
 
 NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
 ASTNode* temp = NULL;
 
 int Parser(ASTNode** tree, TokenList* list)
 {
+    int errorExpr = 0;
     Stack* stack = InitStack();
     Error error = 0;
     ASTNode *ast = CreateAST(); 
@@ -48,6 +50,11 @@ int Parser(ASTNode** tree, TokenList* list)
 
         if(Top(stack)->nonTerminal == NON_T_EXPR) {
             Pop(stack);
+            errorExpr = expr_start(&list, Top(stack)->tokenType);
+            if (errorExpr != 0) {
+                printf("Error found in EXPRESION (expr_start)! \n");
+                return ERROR_PARSER;
+            }
         }
 
         if(Top(stack)->tokenType != list->currToken->type)

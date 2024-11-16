@@ -6,7 +6,7 @@ PARSER:
 	- dorobit vytvaranie ast (treba expression parser)
 	- pri var neberie syntakticky spravnu moznost (var i : i32; ale berie len var i : i32 = ;) 
 EXPRESSIOn PARER:
-	- CELE NENI
+	- chyby ak su vo vyrazi ( ) a chyby ak je vyraz prazdny "if()" chyba je v tom ze to prechadza, chyba ak je relacny operator
 SEMANTIKA: 
 	- dost toho neni (vela veci je rozpracovanych)
 CODE GEN: 

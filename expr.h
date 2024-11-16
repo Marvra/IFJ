@@ -21,26 +21,15 @@
 
 #define PREC_TABLE_SIZE 7
 
-typedef enum precTableTerm_t {
-	TERM_plusMinus,
-	TERM_mulDiv,
-	TERM_leftBracket,
-	TERM_rightBracket,
-	TERM_relational,
-	TERM_variable,
-	TERM_stackEnd,
-} precTableTerm_t;
 
-typedef enum {
-	RULE_plusMinus, // E -> E + E || E - E
-	RULE_mulDiv, // E -> E * E || E / E
-	RULE_brackets, // E -> (E)
-	RULE_relational, // E -> E == E || E != E || E >= ...
-	RULE_e, // E -> i
-} precTableRule_t;
-
-int expr_start(TokenList *list);
+int expr_start(TokenList **list, Tokentype topOnParserStack);
+int checkForTop(TokenList *list, Tokentype topOnParserStack);
 
 precTableTerm_t expr_getTermFromToken(Token *token);
+int getIndexFromTerm(precTableTerm_t term);
+int CheckRule(DLList* linked_list);
+int CheckForEnd(DLList linked_list);
+int listTopIndex(DLList linked_list);
+int shouldSkipTerm(precTableTerm_t term) ;
 
 #endif
