@@ -49,14 +49,61 @@ precTableTerm_t expr_getTermFromToken(Token *token)
   }
 }
 
+int getIndexFromTerm(precTableTerm_t term) {
+  switch (term)
+  {
+  case TERM_plusMinus:
+    return 0;
+  case TERM_mulDiv:
+    return 1;
+  case TERM_leftBracket:
+    return 2;
+  case TERM_rightBracket:
+    return 3;
+  case TERM_relational:
+    return 4;
+  case TERM_variable:
+    return 5;
+  case TERM_stackEnd:
+    return 6;
+  default:
+    return -1;
+  }
+}
+
 int expr_start(TokenList *list)
 {
-  Stack* stack = InitStack();
-  Push(stack, TERM_stackEnd);
+  DLList* linked_list = DLLInit();
+  DLLInsertLast(linked_list, TERM_stackEnd, NON_T_EXPR);
+
+  int col = -1;
+  int row = -1;
 
   while (1) 
   {
-    printf("AAAAAAA");
+    row = linked_list->lastElement;
+    DLLInsertLast(linked_list, expr_getTermFromToken(list->currToken), NON_T_EXPR);
+    col = linked_list->lastElement;
+    char sign = precTable[row][col];
+    switch (sign)
+    {
+      case '>':
+
+        list = list->currToken->nextToken;
+        break;
+      case '<':
+
+        list = list->currToken->nextToken;
+        break;
+      case '=':
+
+        list = list->currToken->nextToken;
+        break;
+      case '#':
+
+        list = list->currToken->nextToken;
+        break;
+    }
   }
-  
+  DLLDispose(linked_list);
 }

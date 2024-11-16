@@ -17,11 +17,11 @@
 #include "stack.h"
 #include "symtable.h"
 #include "token.h"
+#include "linked_list.h"
 
-#define PREC_TABLE_SIZE 14
+#define PREC_TABLE_SIZE 7
 
-typedef enum 
-{
+typedef enum precTableTerm_t {
 	TERM_plusMinus,
 	TERM_mulDiv,
 	TERM_leftBracket,
@@ -30,6 +30,14 @@ typedef enum
 	TERM_variable,
 	TERM_stackEnd,
 } precTableTerm_t;
+
+typedef enum {
+	RULE_plusMinus, // E -> E + E || E - E
+	RULE_mulDiv, // E -> E * E || E / E
+	RULE_brackets, // E -> (E)
+	RULE_relational, // E -> E == E || E != E || E >= ...
+	RULE_e, // E -> i
+} precTableRule_t;
 
 int expr_start(TokenList *list);
 
