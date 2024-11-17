@@ -1,6 +1,6 @@
 /**
  * @file expr.c
- * @authors Vojtech Panek, Jaroslav Doktor
+ * @authors Jaroslav Doktor, Martin Vrablec
  * @brief  file for precedent analysis of expressions
  * @todo
  */
@@ -112,7 +112,7 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
 
   while (CheckForEnd(*linked_list))
   {
-
+    
     // skip whitespaces
     while ((*list)->currToken->type == TOKEN_SPACE || (*list)->currToken->type == TOKEN_EOL || (*list)->currToken->type == TOKEN_COMMENT)
     {
@@ -142,7 +142,13 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '=')
     {
-      (*list)->currToken  = (*list)->currToken->nextToken;
+      DLLInsertLast(linked_list, currTerm);
+      if(CheckRule(linked_list))
+      {
+        DLLDispose(linked_list);
+        return 1;
+      }
+      (*list)->currToken = (*list)->currToken->nextToken;
     }
     else if (tableSign == '#')
     {
@@ -199,7 +205,7 @@ int CheckRule(DLList* linked_list)
     DLLInsertLast(linked_list, NO_TERM_E);
     return 0;
   }
-  else if (data1->termType == TERM_leftBracket && data2->termType == NO_TERM_E && data3->termType == TERM_rightBracket) // E -> (E)
+  else if (data1->termType == TERM_rightBracket && data2->termType == NO_TERM_E && data3->termType == TERM_leftBracket) // E -> (E)
   {
     DLLInsertLast(linked_list, NO_TERM_E);
     return 0;

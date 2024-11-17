@@ -1,6 +1,6 @@
 /**
  * @file expr.h
- * @author Vojtech Panek, Jaroslav Doktor
+ * @author Jaroslav Doktor, Martin Vrablec
  * @brief  header file for precedent analysis of expressions
  * @todo
  */
