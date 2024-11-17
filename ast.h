@@ -24,11 +24,13 @@ typedef enum{
     TYPE_PARAMETER,
     TYPE_ID,
     TYPE_OPERATOR,
-    TYPE_VALUE,
+    TYPE_VALUE_I32,
+    TYPE_VALUE_F64,
     TYPE_STRING,
     TYPE_REL_OPERATOR,
     TYPE_DATA_TYPE,
-    TYPE_RETURN_TYPE
+    TYPE_RETURN_TYPE,
+    TYPE_NULL
 }ASTNodeType;
 
 typedef enum{
@@ -50,13 +52,17 @@ typedef enum{
     T_VOID,
     T_I32,
     T_F64,
-    T_U8
+    T_U8,
+    T_I32_N,
+    T_F64_N,
+    T_U8_N
 }DataType;
 
 typedef union{
     Operator op;
     char *str;
-    float value;
+    float f64;
+    int i32;
     DataType type;
 }ASTData;
 
@@ -90,8 +96,12 @@ ASTNode* CreateElseNode(ASTNode *node);
 ASTNode* CreateReturnNode(ASTNode *node);
 ASTNode* CreateFunCallNode(ASTNode *node);
 ASTNode* CreateArgumentNode(ASTNode *node, char *id);
+ASTNode* CreateArgumentNodeI32(ASTNode *node, int value);
+ASTNode* CreateArgumentNodeF64(ASTNode *node, float value);
+ASTNode* CreateArgumentNodeU8(ASTNode *node, char *value);
 ASTNode* CreateParamNode(ASTNode *node, char *id);
 ASTNode* CreateTypeNode(ASTNode *node, DataType type);
+ASTNode* CreateNullNode(ASTNode *node);
 
 ASTNode* GetCode(ASTNode *node);
 ASTNode* GetNode(ASTNode *node);

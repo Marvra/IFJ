@@ -16,8 +16,10 @@ ASTNode* CreateAstNode(ASTNodeType type){
 
     node->type = type;
 
-    if(type == TYPE_VALUE){
-        node->data.value = 0;
+    if(type == TYPE_VALUE_I32){
+        node->data.i32 = 0;
+    }else if(type == TYPE_VALUE_F64){
+        node->data.f64 = 0;
     }else if(type == TYPE_OPERATOR || type == TYPE_REL_OPERATOR){
         node->data.op = OP_DEFAULT;
     }else if(type == TYPE_DATA_TYPE || type == TYPE_RETURN_TYPE){
@@ -207,6 +209,59 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     return node;
 }
 
+ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
+    if(node->type != TYPE_FUN_CALL){
+        printf("CreateArgumentNode error");
+        return NULL;
+    }
+
+    ASTNode *temp = node;
+    while(temp->right != NULL){
+        temp = temp->right;
+    }
+    temp->right = CreateAstNode(TYPE_VALUE_I32);
+    temp->right->data.i32 = value;
+    
+    return node;
+}
+
+ASTNode* CreateArgumentNodeF64(ASTNode *node, float value){
+    if(node->type != TYPE_FUN_CALL){
+        printf("CreateArgumentNode error");
+        return NULL;
+    }
+
+    ASTNode *temp = node;
+    while(temp->right != NULL){
+        temp = temp->right;
+    }
+    temp->right = CreateAstNode(TYPE_VALUE_F64);
+    temp->right->data.f64 = value;
+    
+    return node;
+}
+
+ASTNode* CreateArgumentNodeU8(ASTNode *node, char *string){
+    if(node->type != TYPE_FUN_CALL){
+        printf("CreateArgumentNode error");
+        return NULL;
+    }
+
+    ASTNode *temp = node;
+    while(temp->right != NULL){
+        temp = temp->right;
+    }
+
+    temp->right = CreateAstNode(TYPE_STRING);
+    temp->right->data.str = strdup(string);
+    if(temp->right->data.str == NULL){
+        fprintf(stderr, "AST NODE: Memory allocation failed\n");
+        exit(-1);
+    }
+    
+    return node;
+}
+
 ASTNode* CreateParamNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_DECL || node->left == NULL){
         printf("CreateParamNode error");
@@ -257,6 +312,15 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
 
     temp->right = CreateAstNode(TYPE_DATA_TYPE);
     temp->right->data.type = type;
+    return node;
+}
+
+ASTNode* CreateNullNode(ASTNode *node){
+    if(node != NULL || (node->type != TYPE_VAR_DECL && node->type != TYPE_ASSIGNMENT && node->type != TYPE_CON_DECL)){
+        //error
+        return NULL;
+    }
+    node->right = CreateAstNode(TYPE_NULL);
     return node;
 }
 
@@ -397,7 +461,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_PARAMETER: return "Parameter";
         case TYPE_ID: return "ID";
         case TYPE_OPERATOR: return "Operator";
-        case TYPE_VALUE: return "Value";
+        //case TYPE_VALUE: return "Value"; ---------------------------------------------------------------------------------------------------
         case TYPE_STRING: return "String";
         case TYPE_REL_OPERATOR: return "RelOperator";
         case TYPE_DATA_TYPE: return "DataType";
@@ -438,9 +502,9 @@ void DisplayASTHelper(ASTNode *node, int depth, const char* prefix) {
         printf(": %s", node->data.str);
     } else if (node->type == TYPE_OPERATOR || node->type == TYPE_REL_OPERATOR) {
         printf(": %s", OperatorToString(node->data.op));
-    } else if (node->type == TYPE_VALUE) {
-        printf(": %f", node->data.value);
-    } else if (node->type == TYPE_DATA_TYPE || node->type == TYPE_RETURN_TYPE) {
+    } /*else if (node->type == TYPE_VALUE) {
+        printf(": %f", node->data.value);    -------------------------------------------------------------------------------------------------------------
+    }*/ else if (node->type == TYPE_DATA_TYPE || node->type == TYPE_RETURN_TYPE) {
         printf(":");
         DisplayDataType(node->data.type);
     }

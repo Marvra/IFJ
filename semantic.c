@@ -10,15 +10,20 @@
     GetParameters(*symtable, idFunction, pt);
 */
 
+//NULLABLE TYPY DO SYMTABLE AKO PARAMTYPES?
+
 NType DataTypeToNType(DataType type){
     switch(type){
         case T_F64:
+        case T_F64_N:
             return TYPE_F64;
         case T_VOID:
             return TYPE_VOID;
         case T_I32:
+        case T_I32_N:
             return TYPE_I32;
         case T_U8:
+        case T_U8_N:
             return TYPE_U8;
         default:
             return TYPE_DEFAULT;
@@ -138,6 +143,39 @@ TNode* FindInSymlist(SymList *list, char *id){
     return node;
 }
 
+int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType){
+    if(node == NULL){
+        //error
+    }
+
+    int error = 0;
+    ASTNodeType type = GetNodeType(node);
+    if(type == TYPE_OPERATOR){
+        DataType expTypeL;
+        DataType expTypeR;
+        error = AnalyzeExpression(node->left, list, &expTypeL);
+        if(error == 0){
+            error = AnalyzeExpression(node->right, list, &expTypeR);
+        }
+        
+
+    }else if(type == TYPE_ID){
+
+    }else if(type == TYPE_VALUE_I32){
+        *expType = T_I32;
+        return 0;
+    }else if(type == TYPE_VALUE_F64){
+        *expType = T_F64;
+        return 0;
+    }else if(type == TYPE_STRING){
+        *expType = T_U8;
+        return 0;
+    }else{
+        //function call
+    }
+    return error;
+}
+
 int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
@@ -156,17 +194,28 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
     ASTNode *temp = GetArgNode(node);
     int argCount = 0;
     while(temp != NULL){
-        char *argId = GetId(temp);
         if(argCount < paramCount){
-            TNode *paramTableNode = FindInSymlist(list, argId);
-            if(paramTableNode == NULL){
-                //error nenasiel sa param
-                printf("nenasiel sa param");
-                return -1;
+            ASTNodeType nodeType = GetNodeType(temp);
+            NType argtype;
+
+            if(nodeType == TYPE_ARGUMENT){
+                char *argId = GetId(temp);
+                TNode *argumentNode = FindInSymlist(list, argId);
+                if(argumentNode == NULL){
+                    //error nenasiel sa param
+                    printf("nenasiel sa param");
+                    return -1;
+                }
+                GetType(argumentNode, argId, &argtype);
+            }else if(nodeType == TYPE_VALUE_I32){
+                argtype = TYPE_I32;
+            }else if(nodeType == TYPE_VALUE_F64){
+                argtype = TYPE_F64;
+            }else{
+                argtype = TYPE_U8;
             }
-            NType type;
-            GetType(paramTableNode, argId, &type);
-            if(type == pt[argCount]){
+
+            if(argtype == pt[argCount]){
                 argCount++;
                 temp = GetArgNode(temp);
                 continue;
@@ -204,32 +253,89 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     }
 
     if(tableNode != NULL){
-        //ERROR 
+        //ERROR premenna uz existuje
         return -1;
     }
 
-    NType funReturnType;
-    error = AnalyzeFunctionCall(node->right, list, &funReturnType);
-    if(error){
-        printf("error in function call");
-        return error;
+    ASTNode *temp = GetNode(node);
+    if(temp == NULL){
+        //error chyba expression
+        return -1;
     }
 
     SymListNode *symtableListNode = GetLast(list);
     TNode *symtable = GetTableNode(symtableListNode);
 
-    if(funReturnType == DataTypeToNType(type) || type == T_DEFAULT){
-        InsertNode(symtable, id);
-        SetType(symtable, id, funReturnType);
-    }else{
-        return -1;
+    ASTNodeType astType = GetNodeType(temp);
+    switch (astType){
+        case TYPE_NULL:
+            if(type == T_DEFAULT){
+                //error
+                return 8;
+            }else if(type == T_F64 || type == T_I32 || type == T_U8){
+                //error
+                return 7;
+            }else{
+                InsertNode(symtable, id);
+                SetType(symtable, id, DataTypeToNType(type));
+            }
+            break;
+        case TYPE_FUN_CALL:
+            NType funReturnType;
+            error = AnalyzeFunctionCall(node->right, list, &funReturnType);
+            if(error){
+                printf("error in function call");
+                return error;
+            }
+
+            if(funReturnType == DataTypeToNType(type) || type == T_DEFAULT){
+                InsertNode(symtable, id);
+                SetType(symtable, id, funReturnType);
+            }else{
+                return -1;
+            }
+            break;
+        case TYPE_VALUE_I32:
+            if(type == T_DEFAULT || type == T_I32 || type == T_I32_N){
+                //ok vytvorit zaznam v symtable
+                InsertNode(symtable, id);
+                SetType(symtable, id, TYPE_I32);
+            }else{
+                //error
+                return 7;
+            }
+            break;
+        case TYPE_VALUE_F64:
+            if(type == T_DEFAULT || type == T_F64 || type == T_F64_N){
+                //ok vytvorit zaznam v symtable
+                InsertNode(symtable, id);
+                SetType(symtable, id, TYPE_F64);
+            }else{
+                //error
+                return 7;
+            }
+            break;
+        case TYPE_STRING:
+            if(type == T_DEFAULT || type == T_U8 || type == T_U8_N){
+                //ok vytvorit zaznam v symtable
+                InsertNode(symtable, id);
+                SetType(symtable, id, TYPE_U8);
+            }else{
+                //error
+                return 7;
+            }
+            break;
+        case TYPE_OPERATOR:
+            //analyze -> treba zistit vysledny return type
+            break;
+        default:
+            //error
+            break;
     }
 
     if(node->type == TYPE_CON_DECL){
         SetIsConstant(symtable, id, true);
     }
-
-    //----------NULLABLE TYP---------
     
     return 0;
 }
