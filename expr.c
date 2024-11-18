@@ -80,25 +80,29 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   {
     while (list->currToken != NULL)
     {
+      list->currToken = list->currToken->nextToken;
       Tokentype currType = list->currToken->type;
       
-      if (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL || currType == TOKEN_EOF)
+      while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
       {
         list->currToken = list->currToken->nextToken;
-        continue;
+        currType = list->currToken->type;
       }
+
 
       if (currType == TOKEN_CURLY_LEFT_PAR)
       {
         list->currToken = originalToken;
+        return 1;
+      } 
+      else {
         return 0;
       }
-      list->currToken = list->currToken->nextToken;
     }
   }
 
   list->currToken = originalToken;
-  return 1;
+  return 0;
 }
 
 int expr_start(TokenList **list, Tokentype topOnParserStack)
@@ -109,31 +113,56 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
   int incomingToken = -1;
   int topToken = -1;
   char tableSign = ' ';
+  int didOperation = 0; // for counting operations to avoid while()
+  // counting brackets
+  int leftBrackets = 1; 
+  int rightBrackets = 0;
 
   while (CheckForEnd(*linked_list))
   {
-    
+    DLLPrintTerms(linked_list);
+    PrintToken((*list)->currToken);
+
     // skip whitespaces
     while ((*list)->currToken->type == TOKEN_SPACE || (*list)->currToken->type == TOKEN_EOL || (*list)->currToken->type == TOKEN_COMMENT)
     {
       (*list)->currToken = (*list)->currToken->nextToken;
     }
+
     currTerm = expr_getTermFromToken((*list)->currToken);
+
+    // count left & right brackets
+    if (currTerm == TERM_leftBracket) 
+    {
+      leftBrackets++;
+    }
+    else if (currTerm == TERM_rightBracket)
+    {
+      rightBrackets++;
+    }
     incomingToken = getIndexFromTerm(currTerm);
     topToken = listTopIndex(*linked_list);
     tableSign = precTable[topToken][incomingToken];
 
-    // lespei bude dat if (checkForTop(*list, topOnParserStack)) a potom break;
-    // a do while das len ze pokial nebude linked_list n $ nejako ig
+    // dealing here with while and if brackets
+    if (checkForTop(*list, topOnParserStack)) {
+      if ((didOperation == 0) || (rightBrackets != leftBrackets)) // the brackets should never ==, because we have one more rightBracket 
+      {
+        return 1;
+      }
+      return 0;
+    }
 
     if(tableSign == '<')
     {
       DLLInsertLast(linked_list, currTerm);
       (*list)->currToken = (*list)->currToken->nextToken;
+      didOperation++;
       continue;
     }
     else if (tableSign == '>')
     {
+      didOperation++;
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
@@ -143,6 +172,7 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
     else if (tableSign == '=')
     {
       DLLInsertLast(linked_list, currTerm);
+      didOperation++;
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
