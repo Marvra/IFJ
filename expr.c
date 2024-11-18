@@ -80,15 +80,13 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   {
     while (list->currToken != NULL)
     {
-      list->currToken = list->currToken->nextToken;
-      Tokentype currType = list->currToken->type;
+      Tokentype currType = list->currToken->nextToken->type;
       
       while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
       {
         list->currToken = list->currToken->nextToken;
         currType = list->currToken->type;
       }
-
 
       if (currType == TOKEN_CURLY_LEFT_PAR)
       {
@@ -115,7 +113,7 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
   char tableSign = ' ';
   int didOperation = 0; // for counting operations to avoid while()
   // counting brackets
-  int leftBrackets = 1; 
+  int leftBrackets = 0; 
   int rightBrackets = 0;
 
   while (CheckForEnd(*linked_list))
@@ -145,11 +143,14 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
     tableSign = precTable[topToken][incomingToken];
 
     // dealing here with while and if brackets
-    if (checkForTop(*list, topOnParserStack)) {
-      if ((didOperation == 0) || (rightBrackets != leftBrackets)) // the brackets should never ==, because we have one more rightBracket 
+    if (checkForTop(*list, topOnParserStack)) { 
+      if ((didOperation == 0) || (rightBrackets == leftBrackets)) // the brackets should never ==, because we have one more rightBracket 
       {
         return 1;
       }
+      printf("AHOJDA\n");
+      printf("%d", rightBrackets);
+      printf("%d", leftBrackets);
       return 0;
     }
 
