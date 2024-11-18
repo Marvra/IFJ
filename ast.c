@@ -210,10 +210,10 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
 }
 
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
-    if(node->type != TYPE_FUN_CALL){
+    /*if(node->type != TYPE_FUN_CALL){
         printf("CreateArgumentNode error");
         return NULL;
-    }
+    }*/
 
     ASTNode *temp = node;
     while(temp->right != NULL){
