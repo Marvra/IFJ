@@ -69,3 +69,46 @@ DLLData DLLDeleteLast( DLList *list ) {
     }
     return data;
 }
+
+void DLLPrintTerms(DLList *list) {
+    if (list == NULL || list->firstElement == NULL) {
+        printf("List is empty\n");
+        return;
+    }
+
+    DLLElementPtr current = list->firstElement;
+    printf("List Terms: ");
+    while (current != NULL) {
+        switch(current->data->termType) {
+            case TERM_plusMinus:
+                printf("PlusMinus ");
+                break;
+            case TERM_mulDiv:
+                printf("MulDiv ");
+                break;
+            case TERM_leftBracket:
+                printf("LeftBracket ");
+                break;
+            case TERM_rightBracket:
+                printf("RightBracket ");
+                break;
+            case TERM_relational:
+                printf("Relational ");
+                break;
+            case TERM_variable:
+                printf("Variable ");
+                break;
+            case TERM_stackEnd:
+                printf("StackEnd ");
+                break;
+            case NO_TERM_E:
+                printf("NoTermE ");
+                break;
+            default:
+                printf("Unknown ");
+                break;
+        }
+        current = current->nextElement;
+    }
+    printf("\n");
+}

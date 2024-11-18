@@ -36,7 +36,7 @@ typedef enum {
 } precTableRule_t;
 
 typedef struct {
-    precTableTerm_t termType; // Opravit nefunguje
+    precTableTerm_t termType;
 } *DLLData;
 
 typedef struct DLLElement {
