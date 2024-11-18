@@ -9,16 +9,19 @@ typedef enum{
     TYPE_I32,
     TYPE_F64,
     TYPE_U8,
+    TYPE_I32_N,
+    TYPE_F64_N,
+    TYPE_U8_N,
     TYPE_PARAMS,
     TYPE_VOID
 } NType;
 
 typedef struct{
-    bool isNullable;
     bool isConstant;
     NType functionReturnType;
     int paramCount;
     NType *paramTypes;
+    bool isUsed;
 } NData;
 
 typedef struct tnode{
@@ -45,15 +48,15 @@ TNode* RotateLeft(TNode *rootPtr);
 TNode* SearchNode(TNode *rootPtr, char *key);
 int SetType(TNode *rootPtr, char *key, NType type);
 int SetFunctionReturnType(TNode *rootPtr, char *key, NType type);
-int SetIsNullable(TNode *rootPtr, char *key, bool b);
 int SetIsConstant(TNode *rootPtr, char *key, bool b);
 int SetParameter(TNode *rootPtr, char *key, NType type);
+int SetIsUsed(TNode *rootPtr, char *key);
 int GetType(TNode *rootPtr, char *key, NType *value);
 int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value);
-int GetIsNullable(TNode *rootPtr, char *key, bool *value);
 int GetIsConstant(TNode *rootPtr, char *key, bool *value);
 int GetParameters(TNode *rootPtr, char *key, NType *params);
 int GetParameterCount(TNode *rootPtr, char *key, int *count);
+int GetIsUsed(TNode *rootPtr, char *key, bool *used);
 void FreeTree(TNode *rootPtr);
 int Max(int a, int b);
 int Height(TNode *rootPtr);

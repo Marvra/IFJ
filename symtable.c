@@ -19,10 +19,10 @@ TNode* CreateNode(char *key){
     }
     newPtr->type = TYPE_DEFAULT;
     newPtr->data.isConstant = false;
-    newPtr->data.isNullable = false;
     newPtr->data.functionReturnType = TYPE_DEFAULT;
     newPtr->data.paramCount = 0;
     newPtr->data.paramTypes = NULL;
+    newPtr->data.isUsed = false;
     newPtr->lPtr = NULL;
     newPtr->rPtr = NULL;
     return newPtr;
@@ -111,15 +111,6 @@ int SetFunctionReturnType(TNode *rootPtr, char *key, NType type){
     return -1;
 }
 
-int SetIsNullable(TNode *rootPtr, char *key, bool b){
-    TNode *temp = SearchNode(rootPtr, key);
-    if(temp != NULL){
-        temp->data.isNullable = b;
-        return 0;
-    }
-    return -1;
-}
-
 int SetIsConstant(TNode *rootPtr, char *key, bool b){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
@@ -144,6 +135,15 @@ int SetParameter(TNode *rootPtr, char *key, NType type){
     return -1;
 }
 
+int SetIsUsed(TNode *rootPtr, char *key){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        temp->data.isUsed = true;
+        return 0;
+    }
+    return -1;
+}
+
 int GetType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
@@ -157,15 +157,6 @@ int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
         *value = temp->data.functionReturnType;
-        return 0;
-    }
-    return -1;
-}
-
-int GetIsNullable(TNode *rootPtr, char *key, bool *value){
-    TNode *temp = SearchNode(rootPtr, key);
-    if(temp != NULL){
-        *value = rootPtr->data.isNullable;
         return 0;
     }
     return -1;
@@ -195,6 +186,15 @@ int GetParameterCount(TNode *rootPtr, char *key, int *count){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
         *count = temp->data.paramCount;
+        return 0;
+    }
+    return -1;
+}
+
+int GetIsUsed(TNode *rootPtr, char *key, bool *used){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        *used = temp->data.isUsed;
         return 0;
     }
     return -1;
