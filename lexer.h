@@ -40,6 +40,7 @@ typedef enum State{
     STATE_DOT,
     STATE_SPACE,
     STATE_INTEGER,
+    STATE_ZERO,
     STATE_FLOAT_DOT,
     STATE_FLOAT_DIGIT,
     STATE_FLOAT_EXP,
