@@ -20,6 +20,7 @@ int NonTerminalReturnTypePush(Stack* stack, Tokentype type);
 int NonTerminalTypePush(Stack* stack, Tokentype type);
 int NonTerminalVarOrConstPush(Stack* stack, Tokentype type);
 int NonTerminalIdContinuePush(Stack* stack, Tokentype type);
+int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type);
 int NonTerminalParamsEnterPush(Stack* stack, Tokentype type);
 int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type);
 int NonTerminalAfterBodyPush(Stack* stack, Tokentype type);

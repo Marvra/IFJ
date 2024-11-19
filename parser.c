@@ -137,6 +137,9 @@ int LLGrammar(Stack* stack, Tokentype type)
             case NON_T_PARAMS_ENTER:
                 error = NonTerminalParamsEnterPush(stack, type);
             break;
+            case NON_T_DECLARATION_CONTINUE:
+                error = NonTerminalDeclarationContinuePush(stack, type);
+            break;
             case NON_T_NEXT_PARAMS_ENTER:
                 error = NonTerminalNextParamsEnterPush(stack, type);
             break;
@@ -254,15 +257,16 @@ int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
 
 int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 {
-    // <function_body> -> <var_or_const> ID : <type> = expression; <function_body>
+    // <function_body> -> <var_or_const> ID <declaration_continue> <function_body>
     if(type == TOKEN_const || type == TOKEN_var)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
-        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
-        PushItem(stack, TOKEN_COLON,NON_TERMINAL_UNKOWN);
+        // PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        // PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
+        // PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
+        // PushItem(stack, TOKEN_COLON,NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_DECLARATION_CONTINUE);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_VAR_OR_CONST);
     }
@@ -322,6 +326,30 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 
 }
 
+int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type)
+{
+    // <declaration_continue> -> : <type> = expression
+    if(type == TOKEN_COLON)
+    {
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
+        PushItem(stack, TOKEN_COLON, NON_TERMINAL_UNKOWN);
+    }
+    // <declaration_continue> -> = expression
+    else if(type == TOKEN_ASSIGN)
+    {
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
+    }
+    else
+    {
+        printf("Error in NonTerminalDeclarationContinuePush! \n");
+        return ERROR_PARSER;
+    }
+    return 0;
+}
+
 int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 {
     // <id_continue> -> = expression
@@ -357,16 +385,12 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 int NonTerminalParamsEnterPush(Stack* stack, Tokentype type)
 {
     // <params_enter> -> <term> <next_params_enter>
-    if(type == TOKEN_VARIABLE || type == TOKEN_f64 || type == TOKEN_i32 || type == TOKEN_u8)
+    if(type == TOKEN_INTEGER || type == TOKEN_FLOAT || type == TOKEN_STRING || type == TOKEN_VARIABLE)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_NEXT_PARAMS_ENTER);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_TERM);
     }
-    else
-    {
-        printf("Error in NonTerminalParamsEnterPush! \n");
-        return ERROR_PARSER;
-    }
+    // <params_enter> -> ε
     return 0;
 }
 
@@ -378,11 +402,7 @@ int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_UNKNOWN, NON_T_PARAMS_ENTER);
         PushItem(stack, TOKEN_COMMA, NON_TERMINAL_UNKOWN);
     }
-    else 
-    {
-        printf("Error in NonTerminalNextParamsEnterPush! \n");
-        return ERROR_PARSER;
-    }
+    // <next_params_enter> -> ε
     return 0;
 }
 
@@ -549,19 +569,19 @@ int NonTerminalTermPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
     }
     // <term> -> VALUE_FLOAT
-    else if(type == TOKEN_f64)
+    else if(type == TOKEN_FLOAT)
     {
-        PushItem(stack, TOKEN_f64, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_FLOAT, NON_TERMINAL_UNKOWN);
     }
     // <term> -> VALUE_INT
-    else if(type == TOKEN_i32)
+    else if(type == TOKEN_INTEGER)
     {
-        PushItem(stack, TOKEN_i32, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_INTEGER, NON_TERMINAL_UNKOWN);
     }
     // <term> -> VALUE_STRING
-    else if(type == TOKEN_u8)
+    else if(type == TOKEN_STRING)
     {
-        PushItem(stack, TOKEN_u8, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_STRING, NON_TERMINAL_UNKOWN);
     }
     else
     {

@@ -189,6 +189,8 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_EOL";
     case TOKEN_SPACE:
         return "TOKEN_SPACE";
+    case TOKEN_DOT:
+        return "TOKEN_DOT";
     default:
         return "UNKNOWN";
     }

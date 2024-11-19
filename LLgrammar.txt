@@ -6,7 +6,7 @@
 <after_body> -> PUB FN ID (<params>) <return_type> <eol> { <function_body> } <after_body>
 <after_body> -> EOF
 
-<function_body> -> <var_or_const> ID <declaration_continue> 
+<function_body> -> <var_or_const> ID <declaration_continue> <function_body>
 <function_body> -> ID <id_continue>;  <function_body>
 <function_body> -> IF (expression) <bars> <eol> {<function_body>} <else> <function_body>
 <function_body> -> WHILE (expression) <bars> <eol> {<function_body>} <function_body>
@@ -14,15 +14,16 @@
 <function_body> -> <eol> <function_body>
 <function_body> -> ε
 
-<declaration_continue> -> : <type> = expression; <function_body>
-<declaration_continue> -> = expression; <function_body>
+<declaration_continue> -> : <type> = expression;
+<declaration_continue> -> = expression;
 
-<id_continue> -> = expression        !!! NEJSOM SI ISTY AKO TO MA BYT PRI FUNCTION CALLS 
+<id_continue> -> = expression
 <id_continue> -> .ID(<params_enter>)
 <id_continue> -> (<params_enter>)
 
 <params_enter> -> <term> <next_params_enter>
-<next_params_enter> -> , <params_enter>
+<params_enter> -> ε
+<next_params_enter> -> , <next_params_enter>
 <next_param_enter> -> ε
 
 <var_or_const> -> VAR
@@ -55,4 +56,3 @@
 <term> -> VALUE_INT
 <term> -> VALUE_FLOAT
 <term> -> VALUE_STRING
-<term> -> ε
