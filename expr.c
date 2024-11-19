@@ -73,6 +73,16 @@ int getIndexFromTerm(precTableTerm_t term) {
   }
 }
 
+void skipWhitespaces(TokenList *list)
+{
+  while (list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT || list->currToken->type == TOKEN_EOL)
+  {
+    list->currToken = list->currToken->nextToken;
+  }
+
+  return;
+}
+
 int checkForTop(TokenList *list, Tokentype topOnParserStack)
 {
   Token* originalToken = list->currToken;
@@ -83,11 +93,7 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
     {
       Tokentype currType = list->currToken->nextToken->type;
       
-      while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
-      {
-        list->currToken = list->currToken->nextToken;
-        currType = list->currToken->type;
-      }
+      skipWhitespaces(list);
 
       if (currType == TOKEN_CURLY_LEFT_PAR)
       {
@@ -102,6 +108,52 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
 
   list->currToken = originalToken;
   return 0;
+}
+
+int checkForFunction(TokenList *list) 
+{
+  // if ifj.func()
+  list->currToken = list->currToken->nextToken;
+  skipWhitespaces(list);
+  if (list->currToken->type == TOKEN_DOT) 
+  {
+    list->currToken = list->currToken->nextToken;
+    skipWhitespaces(list);
+    if (list->currToken->type != TOKEN_VARIABLE) 
+    {
+      return 1;
+    }
+    list->currToken = list->currToken->nextToken;
+    skipWhitespaces(list);
+  }
+  // if func()
+  if (list->currToken->type == TOKEN_LEFT_PAR)
+  {
+    while (list->currToken != NULL) {
+      list->currToken = list->currToken->nextToken;
+      skipWhitespaces(list);
+      if (list->currToken->type == TOKEN_RIGHT_PAR)
+      {
+        return 0;
+      }
+      else if (list->currToken->type == TOKEN_INTEGER || list->currToken->type == TOKEN_FLOAT || list->currToken->type == TOKEN_STRING || list->currToken->type == TOKEN_VARIABLE)
+      {
+        list->currToken = list->currToken->nextToken;
+        skipWhitespaces(list);
+        if (list->currToken->type == TOKEN_COMMA)
+          continue;
+        else
+        {
+          return 0;
+        }
+      }
+      else
+      {
+        return 1;
+      }
+    }
+  }
+  return 1;
 }
 
 int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
@@ -119,13 +171,23 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
   while (CheckForEnd(*linked_list))
   {
-    DLLPrintTerms(linked_list);
     PrintToken((*list)->currToken);
 
-    // skip whitespaces
-    while ((*list)->currToken->type == TOKEN_SPACE || (*list)->currToken->type == TOKEN_EOL || (*list)->currToken->type == TOKEN_COMMENT)
+    skipWhitespaces(*list);
+
+    // check if the function is called
+    if ((*list)->currToken->type == TOKEN_VARIABLE) 
     {
-      (*list)->currToken = (*list)->currToken->nextToken;
+      if(checkForFunction(*list))
+      {
+        printf("\nNOT VERY HAPPY\n");
+        return 1;
+      }
+      else 
+      {
+        printf("\nHAPPY\n");
+        return 0;
+      }
     }
 
     currTerm = expr_getTermFromToken((*list)->currToken);
@@ -150,9 +212,6 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
       {
         return 1;
       }
-      printf("AHOJDA\n");
-      printf("%d", rightBrackets);
-      printf("%d", leftBrackets);
       return 0;
     }
 
