@@ -180,12 +180,10 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     {
       if(checkForFunction(*list))
       {
-        printf("\nNOT VERY HAPPY\n");
         return 1;
       }
       else 
       {
-        printf("\nHAPPY\n");
         return 0;
       }
     }
