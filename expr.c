@@ -44,6 +44,7 @@ precTableTerm_t expr_getTermFromToken(Token *token)
     case TOKEN_INTEGER:
     case TOKEN_FLOAT:
     case TOKEN_VARIABLE:
+    case TOKEN_STRING:
       return TERM_variable;
     default:
       return TERM_stackEnd;
@@ -103,7 +104,7 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   return 0;
 }
 
-int expr_start(TokenList **list, Tokentype topOnParserStack)
+int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 {
   DLList* linked_list = DLLInit();
   DLLInsertLast(linked_list, TERM_stackEnd);
@@ -138,6 +139,7 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
     {
       rightBrackets++;
     }
+
     incomingToken = getIndexFromTerm(currTerm);
     topToken = listTopIndex(*linked_list);
     tableSign = precTable[topToken][incomingToken];
@@ -154,8 +156,10 @@ int expr_start(TokenList **list, Tokentype topOnParserStack)
       return 0;
     }
 
+
     if(tableSign == '<')
     {
+      insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
       (*list)->currToken = (*list)->currToken->nextToken;
       didOperation++;
@@ -264,4 +268,144 @@ int listTopIndex(DLList linked_list)
     return getIndexFromTerm(linked_list.lastElement->previousElement->data->termType);
   }
   return getIndexFromTerm(linked_list.lastElement->data->termType);
+}
+
+// --------------------------------- AST CREATION ---------------------------------
+void insert(ASTNode **root, Token* curr_token) 
+{
+  if (expr_getTermFromToken(curr_token) == TERM_variable)
+  { // Token is a number ONLY NUMBER
+    ASTNode *new_node = NULL;
+
+    // UGLY TYPE CHECK
+    if(curr_token->type == TOKEN_INTEGER)
+    {
+      new_node = CreateAstNode(TYPE_VALUE_I32);
+      new_node->data.i32 = atoi(strdup(curr_token->data));
+    }
+    else if(curr_token->type == TOKEN_FLOAT)
+    {
+      new_node = CreateAstNode(TYPE_VALUE_F64);
+      new_node->data.f64 = atof(strdup(curr_token->data));
+    }
+    else if(curr_token->type == TOKEN_STRING)
+    {
+      new_node = CreateAstNode(TYPE_STRING);
+      // new_node->data.str = strdup(curr_token->data);
+    }
+    else if(curr_token->type == TOKEN_VARIABLE)
+    {
+      new_node = CreateAstNode(TYPE_ID);
+      new_node->data.str = strdup(curr_token->data);
+    }
+    // UGLY TYPE CHECK
+
+    if (*root == NULL)
+    {
+      // First operand, make it the root
+      *root = new_node;
+    }
+    else if ((*root)->right == NULL) 
+    {
+      // Attach as the right child of the current root
+      (*root)->right = new_node;
+    }
+    else
+    {
+      fprintf(stderr, "Error: Unexpected token sequence (too many operands).\n");
+      exit(1);
+    }
+  } 
+  else 
+  { // Token is an operator
+    ASTNode *new_node = CreateAstNode(TYPE_OPERATOR);
+    new_node->data.op = getOperatorFromToken(curr_token->type);
+    if (*root == NULL)
+    {
+        // First operator, make it the root
+        *root = new_node;
+    }
+    else 
+    {
+      int current_precedence = getAstPrecedance((*root)->type);
+      int new_precedence = getTokenPrecedance(curr_token->type);
+      
+      if (new_precedence < current_precedence)
+      {
+          // Higher precedence: Make the new operator a subtree root
+          new_node->left = (*root)->right;
+          (*root)->right = new_node;
+      }
+      else
+      {
+          // Lower or equal precedence: Make the new operator the root
+          new_node->left = *root;
+          *root = new_node;
+      }
+    }
+  }
+}
+int getTokenPrecedance(Tokentype type)
+{
+  switch (type)
+  {
+    case TOKEN_MUL:
+    case TOKEN_DIV:
+      return 1;
+    case TOKEN_PLUS:
+    case TOKEN_MINUS:
+      return 2;
+    case TOKEN_EQUAL:
+    case TOKEN_NOT_EQUAL:
+    case TOKEN_LESSER:
+    case TOKEN_GREATER:
+    case TOKEN_LESSER_EQUAL:
+    case TOKEN_GREATER_EQUAL:
+      return 3;
+    default:
+      return -1;
+  }
+}
+
+int getAstPrecedance(ASTNodeType type)
+{
+  switch (type)
+  {
+    case TYPE_OPERATOR:
+      return 1;
+    case TYPE_VALUE_I32:
+    case TYPE_STRING:
+      return 0;
+    default:
+      return -1;
+  }
+}
+
+Operator getOperatorFromToken(Tokentype type)
+{
+  switch (type)
+  {
+    case TOKEN_PLUS:
+      return OP_ADD;
+    case TOKEN_MINUS:
+      return OP_SUB;
+    case TOKEN_MUL:
+      return OP_MUL;
+    case TOKEN_DIV:
+      return OP_DIV;
+    case TOKEN_EQUAL:
+      return OP_EQ;
+    case TOKEN_NOT_EQUAL:
+      return OP_NEQ;
+    case TOKEN_LESSER:
+      return OP_LESS;
+    case TOKEN_GREATER:
+      return OP_GREATER;
+    case TOKEN_LESSER_EQUAL:
+      return OP_LE;
+    case TOKEN_GREATER_EQUAL:
+      return OP_GE;
+    default:
+      return OP_DEFAULT;
+  }
 }

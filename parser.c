@@ -22,13 +22,14 @@ int Parser(ASTNode** tree, TokenList* list)
     ASTNode *ast = CreateAST(); 
     ASTNode *root = ast; // potom sa bude posielat do semantiky
     ASTNode *baseCode = CreateCodeNode(ast);
+    ASTNode *expr_root = NULL;
     Tokentype lastInteresingToken = TOKEN_UNKNOWN;
     PushItem(stack, TOKEN_UNKNOWN, NON_T_BODY);
 
 
     while (!Empty(stack))
     {
-        if(list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT)
+        if(list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT || list->currToken->type == TOKEN_EOL)
         {
             Token* nextToken = list->currToken->nextToken;
             list->currToken = nextToken;
@@ -50,7 +51,8 @@ int Parser(ASTNode** tree, TokenList* list)
 
         if(Top(stack)->nonTerminal == NON_T_EXPR) {
             Pop(stack);
-            errorExpr = expr_start(&list, Top(stack)->tokenType);
+            lastNonTerminal = NON_T_EXPR;
+            errorExpr = expr_start(&expr_root, &list, Top(stack)->tokenType);
             if (errorExpr != 0) {
                 printf("Error found in EXPRESION (expr_start)! \n");
                 return ERROR_PARSER;
@@ -83,15 +85,17 @@ int Parser(ASTNode** tree, TokenList* list)
         {
             if(lastInteresingToken == TOKEN_CURLY_RIGHT_PAR && list->currToken->type == TOKEN_CURLY_RIGHT_PAR)
             {
-                BuildAST(&ast, lastInteresingToken, list->currToken);
+                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken);
                 ast = root;
             }
             else if(lastInteresingToken != TOKEN_CURLY_RIGHT_PAR)
             {
-                BuildAST(&ast, lastInteresingToken, list->currToken);
+                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken);
                 ast = root;
             }
         }
+
+        expr_root = NULL; // vycissti lebo potom dalsi expresion by sa ti zapisoval do toho isteho
         // NEMENIT NEJAKO FUNGUJE<3
 
         Token* nextToken = list->currToken->nextToken;
@@ -666,6 +670,24 @@ ASTNode* findDeepestConstNode(ASTNode** ast)
     }
 }
 
+ASTNode* findDeepestReturnNode(ASTNode** ast)
+{
+    *ast = findDeepestFunctionBodyNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else if((*ast)->right->type != TYPE_RETURN)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        return *ast;
+    }
+}
+
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
@@ -752,7 +774,7 @@ ASTNode* findFirstClosedIfNode(ASTNode** ast) {
 }
 
 
-void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
+void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token)
 {
     switch (interestingToken)
     {
@@ -827,6 +849,11 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
                 *ast = findDeepestVarNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
             }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestVarNode(&(*ast));
+                (*ast)->right = *expr_root;
+            }
             break;
         case TOKEN_return:
              if(token->type == TOKEN_return)
@@ -834,6 +861,11 @@ void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token)
                 *ast = findDeepestFunctionBodyNode(&(*ast));
                 *ast = CreateCodeNode(*ast);
                 *ast = CreateReturnNode(*ast);
+            }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestReturnNode(&(*ast));
+                (*ast)->right = *expr_root;
             }
             break;
         case TOKEN_if:

@@ -26,7 +26,7 @@ int NonTerminalAfterBodyPush(Stack* stack, Tokentype type);
 int NonTerminalTermPush(Stack* stack, Tokentype type);
 
 // building ast 
-void BuildAST(ASTNode** ast, Tokentype interestingToken, Token* token);
+void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token);
 int InterestingTokens(Tokentype type);
 DataType TokenTypeToDataType(Tokentype type);
 ASTNode* findDeepestCodeNode(ASTNode** ast);
@@ -36,6 +36,7 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast);
 ASTNode* findDeepestFuncCodeNode(ASTNode** ast);
 ASTNode* findDeepestVarNode(ASTNode** ast);
 ASTNode* findDeepestConstNode(ASTNode** ast);
+ASTNode* findDeepestReturnNode(ASTNode** ast);
 ASTNode* findDeepestWhileNode(ASTNode** ast);
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 ASTNode* findFirstClosedIfNode(ASTNode** ast);

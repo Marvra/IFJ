@@ -22,7 +22,7 @@
 #define PREC_TABLE_SIZE 7
 
 
-int expr_start(TokenList **list, Tokentype topOnParserStack);
+int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack);
 int checkForTop(TokenList *list, Tokentype topOnParserStack);
 
 precTableTerm_t expr_getTermFromToken(Token *token);
@@ -30,6 +30,11 @@ int getIndexFromTerm(precTableTerm_t term);
 int CheckRule(DLList* linked_list);
 int CheckForEnd(DLList linked_list);
 int listTopIndex(DLList linked_list);
-int shouldSkipTerm(precTableTerm_t term) ;
+int shouldSkipTerm(precTableTerm_t term);
+
+void insert(ASTNode **root, Token* curr_token);
+int getTokenPrecedance(Tokentype type);
+int getAstPrecedance(ASTNodeType type);
+Operator getOperatorFromToken(Tokentype type);
 
 #endif
