@@ -43,8 +43,8 @@ typedef enum{
     OP_GREATER,    // >
     OP_LESS,       // <
     OP_GE,         // >=
-    OP_LE,
-    OP_DEFAULT         // <=
+    OP_LE,         // <=
+    OP_DEFAULT     
 }Operator;
 
 typedef enum{
@@ -107,6 +107,7 @@ ASTNode* GetCode(ASTNode *node);
 ASTNode* GetNode(ASTNode *node);
 ASTNodeType GetNodeType(ASTNode *node);
 DataType GetDataType(ASTNode *node);
+DataType GetDataTypeCurrentNode(ASTNode *node);
 ASTNode* GetIdNode(ASTNode *node);
 ASTNode* GetParamNode(ASTNode *node);
 ASTNode* GetArgNode(ASTNode *node);
@@ -115,6 +116,9 @@ ASTNode* GetIfNode(ASTNode *node);
 ASTNode* GetElseNode(ASTNode *node);
 ASTNode* GetNoNullId(ASTNode *node);
 ASTNode* GetConditionNode(ASTNode *node);
+Operator GetOperator(ASTNode *node);
+ASTNode* GetRightOperand(ASTNode *node);
+ASTNode* GetLeftOperand(ASTNode *node);
 
 /// added chagpt print shits
 void DisplayAST(ASTNode *node);
