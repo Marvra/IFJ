@@ -23,8 +23,10 @@ TNode* CreateNode(char *key){
     newPtr->data.paramCount = 0;
     newPtr->data.paramTypes = NULL;
     newPtr->data.isUsed = false;
+    newPtr->data.isKnown = false;
     newPtr->lPtr = NULL;
     newPtr->rPtr = NULL;
+    newPtr->height = 1;
     return newPtr;
 }
 
@@ -42,38 +44,51 @@ TNode* InsertNode(TNode *rootPtr, char *key){
         return rootPtr;
     }
 
+    rootPtr->height = Max(Height(rootPtr->lPtr), Height(rootPtr->rPtr)) + 1;
+
     int balance = Height(rootPtr->lPtr) - Height(rootPtr->rPtr);
-    if(balance > 1){
-        if(comparison > 0){
-            return RotateRight(rootPtr);
-        }else{
-            rootPtr->lPtr = RotateLeft(rootPtr->lPtr);
-            return RotateRight(rootPtr);
-        }
+
+    if(balance > 1 && strcmp(key, rootPtr->lPtr->key) < 0){
+        return RotateRight(rootPtr);
     }
-    if(balance < -1){
-        if(comparison > 0){
-            rootPtr->rPtr = RotateRight(rootPtr->rPtr);
-            return RotateLeft(rootPtr);
-        }else{
-            return RotateLeft(rootPtr);
-        }
+
+    if(balance < -1 && strcmp(key, rootPtr->rPtr->key) > 0){
+        return RotateLeft(rootPtr);
     }
+
+    if(balance > 1 && strcmp(key, rootPtr->lPtr->key) > 0){
+        rootPtr->lPtr = RotateLeft(rootPtr->lPtr);
+        return RotateRight(rootPtr);
+    }
+
+    if(balance < -1 && strcmp(key, rootPtr->rPtr->key) < 0){
+        rootPtr->rPtr = RotateRight(rootPtr->rPtr);
+        return RotateLeft(rootPtr);
+    }
+
 
     return rootPtr;
 }
 
-TNode* RotateRight(TNode *rootPtr){
-    TNode *temp = rootPtr->lPtr;
-    rootPtr->lPtr = temp->rPtr;
-    temp->rPtr = rootPtr;
+TNode* RotateRight(TNode *root){
+    TNode *temp = root->lPtr;
+    root->lPtr = temp->rPtr;
+    temp->rPtr = root;
+
+    root->height = Max(Height(root->lPtr), Height(root->rPtr)) + 1;
+    temp->height = Max(Height(temp->lPtr), Height(temp->rPtr)) + 1;
+
     return temp;
 }
 
-TNode* RotateLeft(TNode *rootPtr){
-    TNode *temp = rootPtr->rPtr;
-    rootPtr->rPtr = temp->lPtr;
-    temp->lPtr = rootPtr;
+TNode* RotateLeft(TNode *root){
+    TNode *temp = root->rPtr;
+    root->rPtr = temp->lPtr;
+    temp->lPtr = root;
+
+    root->height = Max(Height(root->lPtr), Height(root->rPtr)) + 1;
+    temp->height = Max(Height(temp->lPtr), Height(temp->rPtr)) + 1;
+
     return temp;
 }
 
@@ -144,6 +159,15 @@ int SetIsUsed(TNode *rootPtr, char *key){
     return -1;
 }
 
+int SetIsKnown(TNode *rootPtr, char *key){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        temp->data.isKnown = true;
+        return 0;
+    }
+    return -1;
+}
+
 int GetType(TNode *rootPtr, char *key, NType *value){
     TNode *temp = SearchNode(rootPtr, key);
     if(temp != NULL){
@@ -200,6 +224,15 @@ int GetIsUsed(TNode *rootPtr, char *key, bool *used){
     return -1;
 }
 
+int GetIsKnown(TNode *rootPtr, char *key, bool *known){
+    TNode *temp = SearchNode(rootPtr, key);
+    if(temp != NULL){
+        *known = temp->data.isKnown;
+        return 0;
+    }
+    return -1;
+}
+
 void FreeTree(TNode *rootPtr){
     if(rootPtr != NULL){
         FreeTree(rootPtr->lPtr);
@@ -220,12 +253,11 @@ int Max(int a, int b){
     }
 }
 
-int Height(TNode *rootPtr){
-    if(rootPtr != NULL){ 
-        return Max(Height(rootPtr->lPtr), Height(rootPtr->rPtr)) + 1;
-    }else{
+int Height(TNode* node) {
+    if (node == NULL) {
         return 0;
     }
+    return node->height;
 }
 
 SymList* CreateSymList(){
