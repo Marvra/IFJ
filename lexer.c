@@ -64,6 +64,14 @@ int FSM(FILE* file, Token* token)
                 else token->type = TOKEN_VARIABLE;
             break;
 
+            case STATE_ZERO:
+                if(c == '.') state = STATE_FLOAT_DOT;
+                else if(c == 'e' || c == 'E') state = STATE_FLOAT_EXP;
+                else if(isdigit(c)) return STATE_ERROR;
+                else token->type = TOKEN_INTEGER;
+            break;
+
+
             // INTEGER START
             case STATE_INTEGER:
                 if(isdigit(c)) state = STATE_INTEGER;
@@ -181,6 +189,18 @@ int FSM(FILE* file, Token* token)
             break;
             // NULL TYPE END
 
+            // u8 check start
+            case STATE_SQUARE_LEFT_PAR:
+                if(c == ']') state = STATE_SQUARE_RIGHT_PAR;
+                else return STATE_ERROR;
+            break;
+
+            case STATE_SQUARE_RIGHT_PAR:
+                if(isalnum(c)) state = STATE_VARIABLE;
+                else return STATE_ERROR;
+            break;
+            // u8 check end
+
             case STATE_PLUS:
                 token->type = TOKEN_PLUS;
             break;
@@ -239,12 +259,6 @@ int FSM(FILE* file, Token* token)
             case STATE_CURLY_RIGHT_PAR:
                 token->type = TOKEN_CURLY_RIGHT_PAR;
             break;
-            case STATE_SQUARE_LEFT_PAR:
-                token->type = TOKEN_SQUARE_LEFT_PAR;
-            break;
-            case STATE_SQUARE_RIGHT_PAR:
-                token->type = TOKEN_SQUARE_RIGHT_PAR;
-            break;
             case STATE_SEMICOLON:
                 token->type = TOKEN_SEMICOLON;
             break;
@@ -297,7 +311,8 @@ State GetFirstState(char c)
 {
     if(isalpha(c)) return STATE_VARIABLE;
     else if(c=='_') return STATE_UNDERSCORE;
-    else if(isdigit(c)) return STATE_INTEGER;
+    else if(isdigit(c) && c != '0') return STATE_INTEGER;
+    else if(c=='0') return STATE_ZERO;
     else if(c=='"') return STATE_STRING_START;
     else if(c=='?') return STATE_NULL_START;
     else if(c=='+') return STATE_PLUS;
@@ -313,7 +328,6 @@ State GetFirstState(char c)
     else if(c=='{') return STATE_CURLY_LEFT_PAR;
     else if(c=='}') return STATE_CURLY_RIGHT_PAR;
     else if(c=='[') return STATE_SQUARE_LEFT_PAR;
-    else if(c==']') return STATE_SQUARE_RIGHT_PAR;
     else if(c==';') return STATE_SEMICOLON;
     else if(c==':') return STATE_COLON;
     else if(c=='|') return STATE_BAR;
