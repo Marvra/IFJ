@@ -99,7 +99,7 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
         currType = list->currToken->type;
       }
 
-      if (currType == TOKEN_CURLY_LEFT_PAR)
+      if (currType == TOKEN_CURLY_LEFT_PAR || currType == TOKEN_BAR)
       {
         list->currToken = originalToken;
         return 1;
