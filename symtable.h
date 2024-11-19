@@ -22,6 +22,7 @@ typedef struct{
     int paramCount;
     NType *paramTypes;
     bool isUsed;
+    bool isKnown;
 } NData;
 
 typedef struct tnode{
@@ -30,6 +31,7 @@ typedef struct tnode{
     NData data;
     struct tnode *lPtr;
     struct tnode *rPtr;
+    int height;
 } TNode;
 
 typedef struct SymListNode {
@@ -51,12 +53,14 @@ int SetFunctionReturnType(TNode *rootPtr, char *key, NType type);
 int SetIsConstant(TNode *rootPtr, char *key, bool b);
 int SetParameter(TNode *rootPtr, char *key, NType type);
 int SetIsUsed(TNode *rootPtr, char *key);
+int SetIsKnown(TNode *rootPtr, char *key);
 int GetType(TNode *rootPtr, char *key, NType *value);
 int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value);
 int GetIsConstant(TNode *rootPtr, char *key, bool *value);
 int GetParameters(TNode *rootPtr, char *key, NType *params);
 int GetParameterCount(TNode *rootPtr, char *key, int *count);
 int GetIsUsed(TNode *rootPtr, char *key, bool *used);
+int GetIsKnown(TNode *rootPtr, char *key, bool *known);
 void FreeTree(TNode *rootPtr);
 int Max(int a, int b);
 int Height(TNode *rootPtr);

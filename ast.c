@@ -351,6 +351,13 @@ DataType GetDataType(ASTNode *node){
     return node->right->data.type;
 }
 
+DataType GetDataTypeCurrentNode(ASTNode *node){
+    if(node == NULL){
+        return T_DEFAULT;
+    }
+    return node->data.type;
+}
+
 ASTNode* GetIdNode(ASTNode *node){
     if(node == NULL || node->left == NULL){
         return NULL;
@@ -405,6 +412,27 @@ ASTNode* GetConditionNode(ASTNode *node){
         return NULL; //spravne by asi malo hadzat error ale co uz
     }
     return node->left->right;
+}
+
+Operator GetOperator(ASTNode* node){
+    if(node == NULL || (node->type != TYPE_OPERATOR && node->type != TYPE_REL_OPERATOR)){
+        //error
+    }
+    return node->data.op;
+}
+
+ASTNode* GetRightOperand(ASTNode *node){
+    if(node == NULL){
+        //error
+    }
+    return node->right;
+}
+
+ASTNode* GetLeftOperand(ASTNode *node){
+    if(node == NULL){
+        //error
+    }
+    return node->left;
 }
 
 // int main(){
