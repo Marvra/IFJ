@@ -73,7 +73,7 @@ int getIndexFromTerm(precTableTerm_t term) {
   }
 }
 
-void skipWhitespaces(TokenList *list)
+void skipWhitespaces(TokenList* list)
 {
   while (list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT || list->currToken->type == TOKEN_EOL)
   {
@@ -93,7 +93,11 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
     {
       Tokentype currType = list->currToken->nextToken->type;
       
-      skipWhitespaces(list);
+      while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
+      {
+        list->currToken = list->currToken->nextToken;
+        currType = list->currToken->type;
+      }
 
       if (currType == TOKEN_CURLY_LEFT_PAR)
       {
@@ -110,12 +114,10 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   return 0;
 }
 
-int checkForFunction(TokenList *list, TokenList *copyList) 
+int checkForFunction(TokenList *list) 
 {
-  list = copyList;
+
   // if ifj.func()
-  list->currToken = list->currToken->nextToken;
-  skipWhitespaces(list);
   if (list->currToken->type == TOKEN_DOT) 
   {
     list->currToken = list->currToken->nextToken;
@@ -175,14 +177,17 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
   int rightBrackets = 0;
 
   // check if the function is called
+  Token* curr_token = (*list)->currToken;
   if ((*list)->currToken->type == TOKEN_VARIABLE) 
-  { 
-    TokenList** copyList = list;
+  {
+    (*list)->currToken = (*list)->currToken->nextToken;
     skipWhitespaces(*list);
-    if ((*list)->currToken->nextToken->type != TOKEN_DOT && (*list)->currToken->nextToken->type != TOKEN_LEFT_PAR) {
-      list = copyList;
+    PrintToken((*list)->currToken);
+    if ((*list)->currToken->type != TOKEN_DOT && (*list)->currToken->type != TOKEN_LEFT_PAR) 
+    {
+      (*list)->currToken = curr_token;
     }
-    else if(checkForFunction(*list, *copyList))
+    else if(checkForFunction(*list))
     {
       return 1;
     }
@@ -197,6 +202,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
   while (CheckForEnd(*linked_list))
   {
     PrintToken((*list)->currToken);
+    DLLPrintTerms(linked_list);
 
     skipWhitespaces(*list);
 
