@@ -44,6 +44,9 @@
 <type> -> INT
 <type> -> FLOAT
 <type> -> STRING 
+<type> -> INT_NULL
+<type> -> FLOAT_NULL
+<type> -> STRING_NULL 
 
 <term> -> ID
 <term> -> VALUE_INT

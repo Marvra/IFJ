@@ -14,7 +14,6 @@ typedef enum State{
     STATE_OK,
     STATE_UNDERSCORE,
     STATE_VARIABLE,
-    STATE_QUESTIONMARK,
     STATE_PLUS,
     STATE_MINUS,
     STATE_MUL,
@@ -58,6 +57,9 @@ typedef enum State{
     STATE_PROLOG_o,
     STATE_PROLOG_r,
     STATE_PROLOG_t,
+    STATE_NULL_START,
+    STATE_NULL_RBRACKET,
+    STATE_NULL_TYPE,
     STATE_EOL,
     STATE_EOF
 } State;
@@ -66,6 +68,7 @@ typedef enum State{
 int Lexer(FILE* file, TokenList* list);
 int FSM(FILE* file, Token* token);
 State GetFirstState(char c);
-void CheckKeyword(Token* token); // ASI DOUBLE PPOINTER
+void CheckKeyword(Token* token);
+int CheckForNullType(Token* token);
 
 #endif // LEXER_H 

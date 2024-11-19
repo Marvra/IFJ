@@ -521,6 +521,18 @@ int NonTerminalTypePush(Stack* stack, Tokentype type)
     {
         PushItem(stack, TOKEN_u8, NON_TERMINAL_UNKOWN);
     }
+    else if(type == TOKEN_i32_NULL)
+    {
+        PushItem(stack, TOKEN_i32_NULL, NON_TERMINAL_UNKOWN);
+    }
+    else if(type == TOKEN_f64_NULL)
+    {
+        PushItem(stack, TOKEN_f64_NULL, NON_TERMINAL_UNKOWN);
+    }
+    else if(type == TOKEN_u8_NULL)
+    {
+        PushItem(stack, TOKEN_u8_NULL, NON_TERMINAL_UNKOWN);
+    }
     else
     {
         printf("Error in NonTerminalTypePush! \n Got : %s \n Needed : %s \n", TokenTypeString(type), NonTerminalToString(stack->items[stack->top]->nonTerminal));

@@ -117,6 +117,12 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_i32";
     case TOKEN_f64:
         return "TOKEN_f64";
+    case TOKEN_u8_NULL:
+        return "TOKEN_u8_NULL";
+    case TOKEN_i32_NULL:
+        return "TOKEN_i32_NULL";
+    case TOKEN_f64_NULL:
+        return "TOKEN_f64_NULL";
     case TOKEN_null:
         return "TOKEN_null";
     case TOKEN_pub:
@@ -137,8 +143,6 @@ char* TokenTypeString(Tokentype type)
         return "TOKEN_FLOAT";
     case TOKEN_STRING:
         return "TOKEN_STRING";
-    case TOKEN_QUESTIONMARK:
-        return "TOKEN_QUESTIONMARK";
     case TOKEN_PLUS:
         return "TOKEN_PLUS";
     case TOKEN_MINUS:

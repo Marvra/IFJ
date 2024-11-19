@@ -162,9 +162,25 @@ int FSM(FILE* file, Token* token)
                 token->type = TOKEN_PROLOG;
             break;
             // PROLOG END
-            case STATE_QUESTIONMARK:
-                token->type = TOKEN_QUESTIONMARK;
+
+            // NULL TYPE START
+            case STATE_NULL_START:
+                if(isalnum(c)) state = STATE_NULL_TYPE;
+                else if(c == '[') state = STATE_NULL_RBRACKET;
+                else return STATE_ERROR;
             break;
+
+            case STATE_NULL_RBRACKET:
+                if(c == ']') state = STATE_NULL_TYPE;
+                else return STATE_ERROR;
+            break;
+
+            case STATE_NULL_TYPE:
+                if(isalnum(c)) state = STATE_NULL_START;
+                else token->type = TOKEN_NULL_TYPE;
+            break;
+            // NULL TYPE END
+
             case STATE_PLUS:
                 token->type = TOKEN_PLUS;
             break;
@@ -264,6 +280,10 @@ int FSM(FILE* file, Token* token)
             {
                 CheckKeyword(token);
             }
+            else if(token->type == TOKEN_NULL_TYPE)
+            {
+                return CheckForNullType(token);
+            }
 
             ungetc(c,file);
             return STATE_OK;
@@ -279,7 +299,7 @@ State GetFirstState(char c)
     else if(c=='_') return STATE_UNDERSCORE;
     else if(isdigit(c)) return STATE_INTEGER;
     else if(c=='"') return STATE_STRING_START;
-    else if(c=='?') return STATE_QUESTIONMARK;
+    else if(c=='?') return STATE_NULL_START;
     else if(c=='+') return STATE_PLUS;
     else if(c=='-') return STATE_MINUS;
     else if(c=='*') return STATE_MUL;
@@ -304,6 +324,26 @@ State GetFirstState(char c)
     else if(isspace(c)) return STATE_SPACE;
     else if(c==EOF) return STATE_EOF;
     else return STATE_ERROR;
+}
+
+int CheckForNullType(Token* token)
+{
+    if(strcmp(token->data, "?i32"))
+    {
+        token->type = TOKEN_i32_NULL;
+        return STATE_OK;
+    }
+    if(strcmp(token->data, "?f64"))
+    {
+        token->type = TOKEN_f64_NULL;
+        return STATE_OK;
+    }
+    if(strcmp(token->data, "?[]u8"))
+    {
+        token->type = TOKEN_u8_NULL;
+        return STATE_OK;
+    }
+    return STATE_ERROR;
 }
 
 void CheckKeyword(Token* token)
