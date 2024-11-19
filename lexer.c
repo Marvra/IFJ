@@ -407,7 +407,7 @@ void CheckKeyword(Token* token)
         token->type = TOKEN_return;
         return;
     }
-    if(!strcmp(token->data, "u8"))
+    if(!strcmp(token->data, "[]u8"))
     {
         token->type = TOKEN_u8;
         return;
