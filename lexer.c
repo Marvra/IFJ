@@ -328,17 +328,17 @@ State GetFirstState(char c)
 
 int CheckForNullType(Token* token)
 {
-    if(strcmp(token->data, "?i32"))
+    if(!strcmp(token->data, "?i32"))
     {
         token->type = TOKEN_i32_NULL;
         return STATE_OK;
     }
-    if(strcmp(token->data, "?f64"))
+    else if(!strcmp(token->data, "?f64"))
     {
         token->type = TOKEN_f64_NULL;
         return STATE_OK;
     }
-    if(strcmp(token->data, "?[]u8"))
+    else if(!strcmp(token->data, "?[]u8"))
     {
         token->type = TOKEN_u8_NULL;
         return STATE_OK;
