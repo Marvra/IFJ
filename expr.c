@@ -140,11 +140,15 @@ int checkForFunction(TokenList *list)
       {
         list->currToken = list->currToken->nextToken;
         skipWhitespaces(list);
-        if (list->currToken->type == TOKEN_COMMA)
-          continue;
-        else
-        {
+        if (list->currToken->type == TOKEN_RIGHT_PAR)
           return 0;
+        else if (list->currToken->type == TOKEN_COMMA)
+        {
+          continue;
+        }
+        else 
+        {
+          return 1;
         }
       }
       else
@@ -184,6 +188,8 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
       }
       else 
       {
+        (*list)->currToken = (*list)->currToken->nextToken;
+        skipWhitespaces(*list);
         return 0;
       }
     }
@@ -216,7 +222,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
     if(tableSign == '<')
     {
-      insert(root, (*list)->currToken);
+      // insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
       (*list)->currToken = (*list)->currToken->nextToken;
       didOperation++;
