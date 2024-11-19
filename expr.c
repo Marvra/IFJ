@@ -110,8 +110,9 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   return 0;
 }
 
-int checkForFunction(TokenList *list) 
+int checkForFunction(TokenList *list, TokenList *copyList) 
 {
+  list = copyList;
   // if ifj.func()
   list->currToken = list->currToken->nextToken;
   skipWhitespaces(list);
@@ -173,26 +174,31 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
   int leftBrackets = 0; 
   int rightBrackets = 0;
 
+  // check if the function is called
+  if ((*list)->currToken->type == TOKEN_VARIABLE) 
+  { 
+    TokenList** copyList = list;
+    skipWhitespaces(*list);
+    if ((*list)->currToken->nextToken->type != TOKEN_DOT && (*list)->currToken->nextToken->type != TOKEN_LEFT_PAR) {
+      list = copyList;
+    }
+    else if(checkForFunction(*list, *copyList))
+    {
+      return 1;
+    }
+    else 
+    {
+      (*list)->currToken = (*list)->currToken->nextToken;
+      skipWhitespaces(*list);
+      return 0;
+    }
+  }
+
   while (CheckForEnd(*linked_list))
   {
     PrintToken((*list)->currToken);
 
     skipWhitespaces(*list);
-
-    // check if the function is called
-    if ((*list)->currToken->type == TOKEN_VARIABLE) 
-    {
-      if(checkForFunction(*list))
-      {
-        return 1;
-      }
-      else 
-      {
-        (*list)->currToken = (*list)->currToken->nextToken;
-        skipWhitespaces(*list);
-        return 0;
-      }
-    }
 
     currTerm = expr_getTermFromToken((*list)->currToken);
 
