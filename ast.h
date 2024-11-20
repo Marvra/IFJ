@@ -119,6 +119,8 @@ ASTNode* GetConditionNode(ASTNode *node);
 Operator GetOperator(ASTNode *node);
 ASTNode* GetRightOperand(ASTNode *node);
 ASTNode* GetLeftOperand(ASTNode *node);
+int GetIntValue(ASTNode *node);
+float GetFloatValue(ASTNode *node);
 
 /// added chagpt print shits
 void DisplayAST(ASTNode *node);

@@ -435,6 +435,20 @@ ASTNode* GetLeftOperand(ASTNode *node){
     return node->left;
 }
 
+int GetIntValue(ASTNode *node){
+    if(node->type == TYPE_VALUE_I32){
+        return node->data.i32;
+    }
+    return 0;
+}
+
+float GetFloatValue(ASTNode *node){
+    if(node->type == TYPE_VALUE_F64){
+        return node->data.f64;
+    }
+    return 0;
+}
+
 // int main(){
 //     //test
 //     ASTNode *ast = CreateAST();
