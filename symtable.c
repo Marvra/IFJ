@@ -215,13 +215,8 @@ int GetParameterCount(TNode *rootPtr, char *key, int *count){
     return -1;
 }
 
-int GetIsUsed(TNode *rootPtr, char *key, bool *used){
-    TNode *temp = SearchNode(rootPtr, key);
-    if(temp != NULL){
-        *used = temp->data.isUsed;
-        return 0;
-    }
-    return -1;
+bool GetIsUsed(TNode *node){
+    return node->data.isUsed;
 }
 
 int GetIsKnown(TNode *rootPtr, char *key, bool *known){
@@ -231,6 +226,20 @@ int GetIsKnown(TNode *rootPtr, char *key, bool *known){
         return 0;
     }
     return -1;
+}
+
+TNode* GetRightNode(TNode *rootPtr){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+    return rootPtr->rPtr;
+}
+
+TNode* GetLeftNode(TNode *rootPtr){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+    return rootPtr->lPtr;
 }
 
 void FreeTree(TNode *rootPtr){
