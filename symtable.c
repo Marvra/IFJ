@@ -8,13 +8,13 @@ TNode* CreateNode(char *key){
     TNode *newPtr = (TNode *) malloc(sizeof(TNode));
 
     if(newPtr == NULL){
-        fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
+        //fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
         exit(INTERNAL_ERROR);
     }
 
     newPtr->key = strdup(key);
     if(newPtr->key == NULL){
-        fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
+        //fprintf(stderr, "SYMTABLE NODE: Memory allocation failed\n");
         exit(INTERNAL_ERROR);
     }
     newPtr->type = TYPE_DEFAULT;
@@ -140,7 +140,7 @@ int SetParameter(TNode *rootPtr, char *key, NType type){
     if(temp != NULL){
         temp->data.paramTypes = (NType *)realloc(temp->data.paramTypes, (temp->data.paramCount + 1) * (sizeof(NType)));
         if(temp->data.paramTypes == NULL){
-            fprintf(stderr, "NODE PARAMETERS: Memory allocation failed\n");
+            //fprintf(stderr, "NODE PARAMETERS: Memory allocation failed\n");
             exit(INTERNAL_ERROR);
         }
         temp->data.paramTypes[temp->data.paramCount] = type;
@@ -272,7 +272,7 @@ int Height(TNode* node) {
 SymList* CreateSymList(){
     SymList *list = (SymList*)malloc(sizeof(SymList));
     if(!list){
-        fprintf(stderr, "Memory allocation failed\n");
+        //fprintf(stderr, "Memory allocation failed\n");
         exit(INTERNAL_ERROR);
     }
     list->last = NULL;
@@ -282,7 +282,7 @@ SymList* CreateSymList(){
 void InsertTable(SymList *list, TNode *node){
     SymListNode *newNode = (SymListNode*)malloc(sizeof(SymListNode));
     if(!newNode){
-        fprintf(stderr, "Memory allocation failed\n");
+        //fprintf(stderr, "Memory allocation failed\n");
         exit(INTERNAL_ERROR);
     }
     newNode->node = node;
