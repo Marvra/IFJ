@@ -59,4 +59,6 @@ int DLLInsertLast(DLList*, precTableTerm_t);
 
 DLLData DLLDeleteLast(DLList *);
 
+void DLLPrintTerms(DLList *);
+
 #endif

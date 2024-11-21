@@ -116,7 +116,6 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
 
 int checkForFunction(TokenList *list) 
 {
-
   // if ifj.func()
   if (list->currToken->type == TOKEN_DOT) 
   {
@@ -201,9 +200,6 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
   while (CheckForEnd(*linked_list))
   {
-    PrintToken((*list)->currToken);
-    DLLPrintTerms(linked_list);
-
     skipWhitespaces(*list);
 
     currTerm = expr_getTermFromToken((*list)->currToken);
@@ -229,6 +225,12 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
         return 1;
       }
       return 0;
+    }
+
+    // if the expression has two E_TERMS next to each other it's an error
+    DLLPrintTerms(linked_list);
+    if ((linked_list->lastElement->data->termType == NO_TERM_E) && (linked_list->lastElement->previousElement->data->termType == NO_TERM_E)) {
+      return 1;
     }
 
 
@@ -273,6 +275,10 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
   DLLDispose(linked_list);
   return 0;
+}
+
+int errorTwoTerms() {
+
 }
 
 int CheckRule(DLList* linked_list)
