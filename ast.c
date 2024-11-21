@@ -184,6 +184,13 @@ ASTNode* CreateFunCallNode(ASTNode *node){
     return node->right;
 }
 
+ASTNode* CreateFunCallExpressionsNode(ASTNode *node){
+    if(node==NULL){
+        node = CreateAstNode(TYPE_FUN_CALL);
+    }
+    return node;
+}
+
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_CALL){
         exit(99);

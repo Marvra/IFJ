@@ -96,6 +96,7 @@ ASTNode* CreateIfNode(ASTNode *node);
 ASTNode* CreateElseNode(ASTNode *node);
 ASTNode* CreateReturnNode(ASTNode *node);
 ASTNode* CreateFunCallNode(ASTNode *node);
+ASTNode* CreateFunCallExpressionsNode(ASTNode *node);
 ASTNode* CreateArgumentNode(ASTNode *node, char *id);
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value);
 ASTNode* CreateArgumentNodeF64(ASTNode *node, float value);
