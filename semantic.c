@@ -277,11 +277,11 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
             *error = 0;
             NType newType;
             if(tableType == TYPE_I32_N){
-                newType == TYPE_I32;
+                newType = TYPE_I32;
             }else if(tableType == TYPE_F64_N){
-                newType == TYPE_F64;
+                newType = TYPE_F64;
             }else{
-                newType == TYPE_U8;
+                newType = TYPE_U8;
             }
             id = GetId(idNoNullNode);
             newSymtable = InsertNode(newSymtable, id);
