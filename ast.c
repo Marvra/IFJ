@@ -100,6 +100,15 @@ ASTNode* CreateFunDeclNode(ASTNode *node){
     return node->right;
 }
 
+ASTNode* CreateAssignemtNode(ASTNode *node){
+    if(node->type != TYPE_CODE || node->right != NULL){
+        printf("CreateFunDeclNode error");
+        return NULL;
+    }
+    node->right = CreateAstNode(TYPE_ASSIGNMENT);
+    return node->right;
+}
+
 ASTNode* CreateIdNode(ASTNode *node, char *id){
     if(node == NULL){
         printf("CreateIdNode error");
@@ -210,10 +219,10 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
 }
 
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
-    /*if(node->type != TYPE_FUN_CALL){
+    if(node->type != TYPE_FUN_CALL){
         printf("CreateArgumentNode error");
         return NULL;
-    }*/
+    }
 
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -503,6 +512,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_PARAMETER: return "Parameter";
         case TYPE_ID: return "ID";
         case TYPE_OPERATOR: return "Operator";
+        case TYPE_VALUE_I32: return "ValueI32";
         //case TYPE_VALUE: return "Value"; ---------------------------------------------------------------------------------------------------
         case TYPE_STRING: return "String";
         case TYPE_REL_OPERATOR: return "RelOperator";

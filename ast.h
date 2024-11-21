@@ -88,6 +88,7 @@ ASTNode* CreateCodeNode(ASTNode *node);
 ASTNode* CreateVarDeclNode(ASTNode *node);
 ASTNode* CreateConDeclNode(ASTNode *node);
 ASTNode* CreateFunDeclNode(ASTNode *node);
+ASTNode* CreateAssignemtNode(ASTNode *node);
 ASTNode* CreateIdNode(ASTNode *node, char *id);
 ASTNode* CreateIfElseNode(ASTNode *node);
 ASTNode* CreateWhileNode(ASTNode *node);
