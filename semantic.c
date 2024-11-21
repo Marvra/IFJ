@@ -1196,6 +1196,9 @@ int SemanticAnalysis(ASTNode *root){
 
     while(currentNode != NULL){
         ASTNode *temp = GetNode(currentNode);
+        if(temp == NULL){
+            break;
+        }
         ASTNodeType type = GetNodeType(temp);
         if(type != TYPE_FUN_DECL){
             FreeStackAST(stack);
