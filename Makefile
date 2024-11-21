@@ -13,12 +13,15 @@ OBJECTS = $(SOURCES:.c=.o)
 # Target executable
 TARGET = program
 
+# Math library (linked separately)
+LIBS = -lm
+
 # Default target to build the program
 all: $(TARGET)
 
 # Link object files to create the executable
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 # Rule to compile each source file into an object file
 %.o: %.c

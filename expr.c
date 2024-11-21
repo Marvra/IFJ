@@ -178,6 +178,14 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
   char tableSign = ' ';
 
   Token* curr_token = (*list)->currToken;
+
+  if((*list)->currToken->type == TOKEN_null)
+  {
+    (*root) = CreateAstNode(TYPE_NULL);
+    (*list)->currToken = (*list)->currToken->nextToken;
+    skipWhitespaces(*list);
+    return 0;
+  }
   if ((*list)->currToken->type == TOKEN_VARIABLE) 
   {
     // get function name
@@ -354,67 +362,87 @@ int listTopIndex(DLList linked_list)
 }
 
 // --------------------------------- AST CREATION ---------------------------------
-void insert(ASTNode **root, Token *curr_token) {
-    if (expr_getTermFromToken(curr_token) == TERM_variable) { 
-        // Create operand node
-        ASTNode *new_node = NULL;
-        if (curr_token->type == TOKEN_INTEGER) {
-            new_node = CreateAstNode(TYPE_VALUE_I32);
-            new_node->data.i32 = atoi(curr_token->data);
-        } else if (curr_token->type == TOKEN_FLOAT) {
-            new_node = CreateAstNode(TYPE_VALUE_F64);
-            new_node->data.f64 = atof(curr_token->data);
-        } else if (curr_token->type == TOKEN_VARIABLE) {
-            new_node = CreateAstNode(TYPE_ID);
-            new_node->data.str = strdup(curr_token->data);
-        } else if (curr_token->type == TOKEN_STRING) {
-            new_node = CreateAstNode(TYPE_STRING);
-            new_node->data.str = strdup(curr_token->data);
-        }
-        
-        if (*root == NULL) {
-            *root = new_node;
-        } else {
-            // For operators, we'll handle this in the operator case
-            ASTNode *current = *root;
-            while (current->right != NULL) {
-                current = current->right;
-            }
-            current->right = new_node;
-        }
+void insert(ASTNode **root, Token *curr_token)
+{
+  if (expr_getTermFromToken(curr_token) == TERM_variable) 
+  { 
+    // operand node
+    ASTNode *new_node = NULL;
+    if (curr_token->type == TOKEN_INTEGER) 
+    {
+      new_node = CreateAstNode(TYPE_VALUE_I32);
+      new_node->data.i32 = atoi(curr_token->data);
     } 
-    else if (expr_getTermFromToken(curr_token) != TERM_leftBracket && expr_getTermFromToken(curr_token) != TERM_rightBracket)
-    { // Operator
-        ASTNode *new_node = CreateAstNode(TYPE_OPERATOR);
-        new_node->data.op = getOperatorFromToken(curr_token->type);
-        
-        if (*root == NULL) {
-            *root = new_node;
-            return;
-        }
-        
-        int new_precedence = getTokenPrecedance(curr_token->type);
-        
-        // If current root is an operand or has lower precedence
-        if ((*root)->type != TYPE_OPERATOR || 
-            getAstPrecedance(*root) < new_precedence) {
-            new_node->left = *root;
-            *root = new_node;
-            return;
-        }
-        
-        // Traverse to find the correct insertion point
-        ASTNode *current = *root;
-        while (current->right != NULL && 
-               current->right->type == TYPE_OPERATOR && 
-               getAstPrecedance(current->right) >= new_precedence) {
-            current = current->right;
-        }
-        
-        // Insert the new operator
-        new_node->left = current->right;
-        current->right = new_node;
+    else if (curr_token->type == TOKEN_FLOAT) 
+    {
+      new_node = CreateAstNode(TYPE_VALUE_F64);
+      new_node->data.f64 = atof(curr_token->data);
+    } 
+    else if (curr_token->type == TOKEN_VARIABLE) 
+    {
+      new_node = CreateAstNode(TYPE_ID);
+      new_node->data.str = strdup(curr_token->data);
+    } 
+    else if (curr_token->type == TOKEN_STRING)
+    {
+      new_node = CreateAstNode(TYPE_STRING);
+      new_node->data.str = strdup(curr_token->data);
     }
+    
+    if (*root == NULL)
+    {
+      *root = new_node;
+    } 
+    else
+    {
+      ASTNode *current = *root;
+      while (current->right != NULL)
+      {
+        current = current->right;
+      }
+      current->right = new_node;
+    }
+  } 
+  else if (expr_getTermFromToken(curr_token) != TERM_leftBracket && expr_getTermFromToken(curr_token) != TERM_rightBracket)
+  { // Operator node
+    ASTNode *new_node = NULL;
+    if(curr_token->type == TOKEN_PLUS || curr_token->type == TOKEN_MINUS || curr_token->type == TOKEN_MUL || curr_token->type == TOKEN_DIV)
+    {
+      new_node = CreateAstNode(TYPE_OPERATOR);
+    }
+    else
+    {
+      new_node = CreateAstNode(TYPE_REL_OPERATOR);
+    }
+    new_node->data.op = getOperatorFromToken(curr_token->type);
+    
+    if (*root == NULL) 
+    {
+      *root = new_node;
+      return;
+    }
+    
+    int new_precedence = getTokenPrecedance(curr_token->type);
+
+    // precedance check (change useless changes)
+    if ((*root)->type != TYPE_OPERATOR || (*root)->type != TYPE_REL_OPERATOR || getAstPrecedance(*root) < new_precedence)
+    {
+      new_node->left = *root;
+      *root = new_node;
+      return;
+    }
+    
+    // precedance 
+    ASTNode *current = *root;
+    while (current->right != NULL && current->right->type == TYPE_OPERATOR && current->right->type == TYPE_REL_OPERATOR && getAstPrecedance(current->right) >= new_precedence)
+    {
+      current = current->right;
+    }
+    
+    // Insert the new operator
+    new_node->left = current->right;
+    current->right = new_node;
+  }
 }
 
 // helper function to build ast fot function calls 

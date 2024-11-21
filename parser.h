@@ -41,6 +41,8 @@ ASTNode* findDeepestReturnNode(ASTNode** ast);
 ASTNode* findDeepestAssignmentNode(ASTNode** ast);
 ASTNode* findDeepestWhileNode(ASTNode** ast);
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
+ASTNode* findDeepestIfElseNode(ASTNode** ast);
+ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 ASTNode* findFirstClosedIfNode(ASTNode** ast);
 ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast); 
 //CHAT GPT HOVNO

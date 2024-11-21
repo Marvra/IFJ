@@ -254,7 +254,7 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_UNKNOWN, NON_T_VAR_OR_CONST);
     }
     //<function_body> -> <id_helper>
-    else if(type == TOKEN_VARIABLE)
+    else if(type == TOKEN_VARIABLE || type == TOKEN_UNDERSCORE)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_HELPER);
     }
@@ -331,6 +331,15 @@ int NonTerminalIdHelper(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_CONTINUE);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
+    }
+    //<id_helper> -> _ = expression;  <function_body>
+    else if(type == TOKEN_UNDERSCORE)
+    {
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
+        PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNDERSCORE, NON_TERMINAL_UNKOWN);
     }
     else
     {
@@ -614,10 +623,7 @@ ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
     }
     else if ((*ast)->left != NULL)
     {
-        // if((*ast)->left != TYPE_VALUE_I32 || (*ast)->left != TYPE_VALUE_F64 || (*ast)->left != TYPE_STRING || (*ast)->left != TYPE_ID)
-        // {
-            return findDeepestFuncCodeNode(&(*ast)->left);
-        // }
+        return findDeepestFuncCodeNode(&(*ast)->left);
     } 
     return *ast;
 }
@@ -634,10 +640,7 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
         *ast = (*ast)->right;
         if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE ) ) return findDeepestFuncCodeNode(&(*ast));
         else if ((*ast)->left != NULL) {
-            // if((*ast)->left != TYPE_VALUE_I32 || (*ast)->left != TYPE_VALUE_F64 || (*ast)->left != TYPE_STRING || (*ast)->left != TYPE_ID)
-            // {
             return findDeepestFuncCodeNode(&(*ast)->left);
-            // }
         }
         return *ast;
     }
@@ -712,6 +715,51 @@ ASTNode* findDeepestReturnNode(ASTNode** ast)
     {
         *ast = (*ast)->right;
         return *ast;
+    }
+}
+
+ASTNode* findDeepestIfElseNodeHelp(ASTNode** ast)
+{
+    if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
+    {
+        temp = (*ast)->right; // saving while
+        return (*ast)->right->right == NULL ? temp : findDeepestIfElseNodeHelp(&(*ast)->right->right);
+    } 
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
+    {
+        temp =(*ast)->right;
+        return (*ast)->right->right->left->left == NULL ? temp : findDeepestIfElseNodeHelp(&(*ast)->right->right->left->left);
+    }
+    else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->right != NULL) 
+    {
+        if((*ast)->right->right->right->type == TYPE_ELSE) 
+        {
+            temp = (*ast)->right;
+            return (*ast)->right->right->right->left == NULL ? temp : findDeepestIfElseNodeHelp(&(*ast)->right->right->right->left);
+        }
+    }
+    else if ((*ast)->left != NULL)
+    {
+        return findDeepestIfElseNodeHelp(&(*ast)->left);
+    } 
+    return *ast;
+}
+
+ASTNode* findDeepestIfElseNode(ASTNode** ast) {
+
+    *ast = findDeepestFunDecNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE )) return findDeepestIfElseNodeHelp(&(*ast));
+        else if ((*ast)->left != NULL) {
+            return findDeepestIfElseNodeHelp(&(*ast)->left);
+        }
+        return NULL;
     }
 }
 
@@ -878,6 +926,11 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestConstNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
             }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestConstNode(&(*ast));
+                (*ast)->right = *expr_root;
+            }
             break;
         case TOKEN_var:
             if(token->type == TOKEN_var)
@@ -926,8 +979,13 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             else if (token->type == TOKEN_VARIABLE)
             {
-                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = findDeepestIfElseNode(&(*ast));
                 CreateIdNode(*ast, token->data);
+            }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestIfElseNode(&(*ast));
+                (*ast)->left->right = *expr_root;
             }
             break;
         case TOKEN_while:
