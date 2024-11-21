@@ -85,42 +85,42 @@ void skipWhitespaces(TokenList* list)
 
 int checkForTop(TokenList *list, Tokentype topOnParserStack)
 {
-  Token* originalToken = list->currToken;
+  Token* tempToken = list->currToken; 
 
-  if (topOnParserStack == TOKEN_RIGHT_PAR && originalToken->type == TOKEN_RIGHT_PAR)
+  if (topOnParserStack == TOKEN_RIGHT_PAR && tempToken->type == TOKEN_RIGHT_PAR)
   {
-    while (list->currToken != NULL)
+    while (tempToken != NULL)
     {
-      Tokentype currType = list->currToken->nextToken->type;
-      
+      Tokentype currType = tempToken->nextToken->type;
+
       while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
       {
-        list->currToken = list->currToken->nextToken;
-        currType = list->currToken->type;
+        tempToken = tempToken->nextToken;
+        currType = tempToken->type;
       }
 
       if (currType == TOKEN_CURLY_LEFT_PAR || currType == TOKEN_BAR)
       {
-        list->currToken = originalToken;
         return 1;
       } 
-      else {
+      else 
+      {
         return 0;
       }
     }
   }
-
-  list->currToken = originalToken;
   return 0;
 }
 
-int checkForFunction(TokenList *list) 
+int checkForFunction(TokenList *list, ASTNode **root, char *funcId) 
 {
   // if ifj.func()
   if (list->currToken->type == TOKEN_DOT) 
   {
+    strcat(funcId, list->currToken->data); // get dot
     list->currToken = list->currToken->nextToken;
     skipWhitespaces(list);
+    strcat(funcId, list->currToken->data); // get after fot
     if (list->currToken->type != TOKEN_VARIABLE) 
     {
       return 1;
@@ -131,6 +131,10 @@ int checkForFunction(TokenList *list)
   // if func()
   if (list->currToken->type == TOKEN_LEFT_PAR)
   {
+    //CreateCodeNode(*root); // create code node
+    *root = CreateFunCallExpressionsNode(*root); // create function call node
+    *root = CreateIdNode(*root, funcId); // create id node
+
     while (list->currToken != NULL) {
       list->currToken = list->currToken->nextToken;
       skipWhitespaces(list);
@@ -140,6 +144,7 @@ int checkForFunction(TokenList *list)
       }
       else if (list->currToken->type == TOKEN_INTEGER || list->currToken->type == TOKEN_FLOAT || list->currToken->type == TOKEN_STRING || list->currToken->type == TOKEN_VARIABLE)
       {
+        tokenToParameter(list->currToken, &(*root));
         list->currToken = list->currToken->nextToken;
         skipWhitespaces(list);
         if (list->currToken->type == TOKEN_RIGHT_PAR)
@@ -165,20 +170,19 @@ int checkForFunction(TokenList *list)
 int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 {
   DLList* linked_list = DLLInit();
+  char *funcId = NULL;
   DLLInsertLast(linked_list, TERM_stackEnd);
   precTableTerm_t currTerm = NO_TERM_E;
   int incomingToken = -1;
   int topToken = -1;
   char tableSign = ' ';
-  int didOperation = 0; // for counting operations to avoid while()
-  // counting brackets
-  int leftBrackets = 0; 
-  int rightBrackets = 0;
 
-  // check if the function is called
   Token* curr_token = (*list)->currToken;
   if ((*list)->currToken->type == TOKEN_VARIABLE) 
   {
+    // get function name
+    funcId = strdup((*list)->currToken->data);
+
     (*list)->currToken = (*list)->currToken->nextToken;
     skipWhitespaces(*list);
     PrintToken((*list)->currToken);
@@ -186,7 +190,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     {
       (*list)->currToken = curr_token;
     }
-    else if(checkForFunction(*list))
+    else if(checkForFunction(*list, &(*root), funcId))
     {
       return 1;
     }
@@ -204,47 +208,29 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
     currTerm = expr_getTermFromToken((*list)->currToken);
 
-    // count left & right brackets
-    if (currTerm == TERM_leftBracket) 
-    {
-      leftBrackets++;
-    }
-    else if (currTerm == TERM_rightBracket)
-    {
-      rightBrackets++;
-    }
-
     incomingToken = getIndexFromTerm(currTerm);
     topToken = listTopIndex(*linked_list);
     tableSign = precTable[topToken][incomingToken];
 
-    // dealing here with while and if brackets
-    if (checkForTop(*list, topOnParserStack)) { 
-      if ((didOperation == 0) || (rightBrackets == leftBrackets)) // the brackets should never ==, because we have one more rightBracket 
-      {
-        return 1;
-      }
-      return 0;
+
+    if (checkForTop(*list, topOnParserStack) && tableSign != '>')
+    { 
+      incomingToken = getIndexFromTerm(TERM_stackEnd);
+      topToken = listTopIndex(*linked_list);
+      tableSign = precTable[topToken][incomingToken];
     }
 
-    // if the expression has two E_TERMS next to each other it's an error
     DLLPrintTerms(linked_list);
-    if ((linked_list->lastElement->data->termType == NO_TERM_E) && (linked_list->lastElement->previousElement->data->termType == NO_TERM_E)) {
-      return 1;
-    }
-
 
     if(tableSign == '<')
     {
-      // insert(root, (*list)->currToken);
+      insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
       (*list)->currToken = (*list)->currToken->nextToken;
-      didOperation++;
       continue;
     }
     else if (tableSign == '>')
     {
-      didOperation++;
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
@@ -253,14 +239,15 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '=')
     {
+      insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
-      didOperation++;
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
         return 1;
       }
       (*list)->currToken = (*list)->currToken->nextToken;
+      continue;
     }
     else if (tableSign == '#')
     {
@@ -269,16 +256,16 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '@')
     {
+      if(CheckRule(linked_list))
+      {
+        DLLDispose(linked_list);
+        return 1;
+      }
       break;
     }
   }
-
   DLLDispose(linked_list);
   return 0;
-}
-
-int errorTwoTerms() {
-
 }
 
 int CheckRule(DLList* linked_list)
@@ -298,9 +285,21 @@ int CheckRule(DLList* linked_list)
   }
 
   data2 = DLLDeleteLast(linked_list);
+
+  if(data2 == NULL)
+  {
+    return 1;
+  }
+
+  if (data2->termType == TERM_stackEnd && data1->termType == NO_TERM_E) // E -> $E <---- THIS IS END CHECK
+  {
+    DLLInsertLast(linked_list, NO_TERM_E);
+    return 0;
+  }
+
   data3 = DLLDeleteLast(linked_list);
 
-  if (data2 == NULL || data3 == NULL)
+  if (data3 == NULL)
   {
     return 1;
   }
@@ -343,89 +342,142 @@ int CheckForEnd(DLList linked_list)
 
 int listTopIndex(DLList linked_list)
 {
-  // ono to sice prejde vsetky NO_term_e ale prejde to aj pri tomto pripade (E) takze sa najde () coz posunie na dalsi token coz not good
-  if(linked_list.lastElement->data->termType == NO_TERM_E)
+  DLLElementPtr current = linked_list.lastElement;
+  while(current != NULL && (current->data->termType == NO_TERM_E)) 
   {
-    return getIndexFromTerm(linked_list.lastElement->previousElement->data->termType);
+    current = current->previousElement;
+  }
+  if(current != NULL) {
+    return getIndexFromTerm(current->data->termType);
   }
   return getIndexFromTerm(linked_list.lastElement->data->termType);
 }
 
 // --------------------------------- AST CREATION ---------------------------------
-void insert(ASTNode **root, Token* curr_token) 
+void insert(ASTNode **root, Token *curr_token) {
+    if (expr_getTermFromToken(curr_token) == TERM_variable) { 
+        // Create operand node
+        ASTNode *new_node = NULL;
+        if (curr_token->type == TOKEN_INTEGER) {
+            new_node = CreateAstNode(TYPE_VALUE_I32);
+            new_node->data.i32 = atoi(curr_token->data);
+        } else if (curr_token->type == TOKEN_FLOAT) {
+            new_node = CreateAstNode(TYPE_VALUE_F64);
+            new_node->data.f64 = atof(curr_token->data);
+        } else if (curr_token->type == TOKEN_VARIABLE) {
+            new_node = CreateAstNode(TYPE_ID);
+            new_node->data.str = strdup(curr_token->data);
+        } else if (curr_token->type == TOKEN_STRING) {
+            new_node = CreateAstNode(TYPE_STRING);
+            new_node->data.str = strdup(curr_token->data);
+        }
+        
+        if (*root == NULL) {
+            *root = new_node;
+        } else {
+            // For operators, we'll handle this in the operator case
+            ASTNode *current = *root;
+            while (current->right != NULL) {
+                current = current->right;
+            }
+            current->right = new_node;
+        }
+    } 
+    else if (expr_getTermFromToken(curr_token) != TERM_leftBracket && expr_getTermFromToken(curr_token) != TERM_rightBracket)
+    { // Operator
+        ASTNode *new_node = CreateAstNode(TYPE_OPERATOR);
+        new_node->data.op = getOperatorFromToken(curr_token->type);
+        
+        if (*root == NULL) {
+            *root = new_node;
+            return;
+        }
+        
+        int new_precedence = getTokenPrecedance(curr_token->type);
+        
+        // If current root is an operand or has lower precedence
+        if ((*root)->type != TYPE_OPERATOR || 
+            getAstPrecedance(*root) < new_precedence) {
+            new_node->left = *root;
+            *root = new_node;
+            return;
+        }
+        
+        // Traverse to find the correct insertion point
+        ASTNode *current = *root;
+        while (current->right != NULL && 
+               current->right->type == TYPE_OPERATOR && 
+               getAstPrecedance(current->right) >= new_precedence) {
+            current = current->right;
+        }
+        
+        // Insert the new operator
+        new_node->left = current->right;
+        current->right = new_node;
+    }
+}
+
+// helper function to build ast fot function calls 
+void tokenToParameter(Token *token, ASTNode **node) 
 {
-  if (expr_getTermFromToken(curr_token) == TERM_variable)
-  { // Token is a number ONLY NUMBER
-    ASTNode *new_node = NULL;
-
-    // UGLY TYPE CHECK
-    if(curr_token->type == TOKEN_INTEGER)
-    {
-      new_node = CreateAstNode(TYPE_VALUE_I32);
-      new_node->data.i32 = atoi(strdup(curr_token->data));
-    }
-    else if(curr_token->type == TOKEN_FLOAT)
-    {
-      new_node = CreateAstNode(TYPE_VALUE_F64);
-      new_node->data.f64 = atof(strdup(curr_token->data));
-    }
-    else if(curr_token->type == TOKEN_STRING)
-    {
-      new_node = CreateAstNode(TYPE_STRING);
-      // new_node->data.str = strdup(curr_token->data);
-    }
-    else if(curr_token->type == TOKEN_VARIABLE)
-    {
-      new_node = CreateAstNode(TYPE_ID);
-      new_node->data.str = strdup(curr_token->data);
-    }
-    // UGLY TYPE CHECK
-
-    if (*root == NULL)
-    {
-      // First operand, make it the root
-      *root = new_node;
-    }
-    else if ((*root)->right == NULL) 
-    {
-      // Attach as the right child of the current root
-      (*root)->right = new_node;
-    }
-    else
-    {
-      fprintf(stderr, "Error: Unexpected token sequence (too many operands).\n");
-      exit(1);
-    }
-  } 
-  else 
-  { // Token is an operator
-    ASTNode *new_node = CreateAstNode(TYPE_OPERATOR);
-    new_node->data.op = getOperatorFromToken(curr_token->type);
-    if (*root == NULL)
-    {
-        // First operator, make it the root
-        *root = new_node;
-    }
-    else 
-    {
-      int current_precedence = getAstPrecedance((*root)->type);
-      int new_precedence = getTokenPrecedance(curr_token->type);
-      
-      if (new_precedence < current_precedence)
-      {
-          // Higher precedence: Make the new operator a subtree root
-          new_node->left = (*root)->right;
-          (*root)->right = new_node;
-      }
-      else
-      {
-          // Lower or equal precedence: Make the new operator the root
-          new_node->left = *root;
-          *root = new_node;
-      }
-    }
+  if (token->type == TOKEN_INTEGER)
+  {
+    CreateArgumentNodeI32(*node, atoi(token->data));
+  }
+  else if (token->type == TOKEN_FLOAT)
+  {
+    CreateArgumentNodeF64(*node, atof(token->data));
+  }
+  else if (token->type == TOKEN_STRING)
+  {
+    CreateArgumentNodeU8(*node, token->data);
+  }
+  else if (token->type == TOKEN_VARIABLE)
+  {
+    CreateArgumentNode(*node, token->data);
   }
 }
+
+int getAstPrecedance(ASTNode *root)
+{
+  if (root->type == TYPE_OPERATOR)
+  {
+    switch (root->data.op)
+    {
+      case OP_MUL:
+      case OP_DIV:
+        return 1;
+      case OP_ADD:
+      case OP_SUB:
+        return 2;
+      case OP_EQ:
+      case OP_NEQ:
+      case OP_LESS:
+      case OP_GREATER:
+      case OP_LE:
+      case OP_GE:
+        return 3;
+      default:
+        return -1;
+    }
+  }
+  return -1;
+}
+
+int getTermPrecedence(precTableTerm_t term) 
+{
+    switch (term) {
+        case TERM_plusMinus:
+            return 1;
+        case TERM_mulDiv:
+            return 2;
+        case TERM_relational:
+            return 3;
+        default:
+            return -1;
+    }
+}
+
 int getTokenPrecedance(Tokentype type)
 {
   switch (type)
@@ -443,20 +495,6 @@ int getTokenPrecedance(Tokentype type)
     case TOKEN_LESSER_EQUAL:
     case TOKEN_GREATER_EQUAL:
       return 3;
-    default:
-      return -1;
-  }
-}
-
-int getAstPrecedance(ASTNodeType type)
-{
-  switch (type)
-  {
-    case TYPE_OPERATOR:
-      return 1;
-    case TYPE_VALUE_I32:
-    case TYPE_STRING:
-      return 0;
     default:
       return -1;
   }

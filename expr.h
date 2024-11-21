@@ -34,7 +34,13 @@ int shouldSkipTerm(precTableTerm_t term);
 
 void insert(ASTNode **root, Token* curr_token);
 int getTokenPrecedance(Tokentype type);
-int getAstPrecedance(ASTNodeType type);
+int getAstPrecedance(ASTNode *root);
 Operator getOperatorFromToken(Tokentype type);
+void joinBrackets(ASTNode **root, ASTNode *brackets_root);
+
+int checkForFunction(TokenList *list, ASTNode **root, char *funcId);
+void tokenToParameter(Token *token, ASTNode **node);
+
+
 
 #endif

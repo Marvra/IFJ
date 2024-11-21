@@ -17,6 +17,7 @@ ASTNode* temp = NULL;
 int Parser(ASTNode** tree, TokenList* list)
 {
     int errorExpr = 0;
+    Token *saveToken = InitToken();
     Stack* stack = InitStack();
     Error error = 0;
     ASTNode *ast = CreateAST(); 
@@ -75,22 +76,17 @@ int Parser(ASTNode** tree, TokenList* list)
             lastInteresingToken = list->currToken->type;
         }
 
-        // build ast
-        // mozno by bolo fajn spravit nieco ze by to rekurzivne hladalo kde by sa mal pridat další node
-        // napr ak mame zakladal a prisla  by pub ze by sa snazilo najst prazdny code ak by nasle tak by sa pridal funcDec k nemu
-        // prisli by paramtere tak by sa pridal parametre a tak dalej
-
         // NEMENIT NEJAKO FUNGUJE<3
         if (lastInteresingToken != TOKEN_UNKNOWN )
         {
             if(lastInteresingToken == TOKEN_CURLY_RIGHT_PAR && list->currToken->type == TOKEN_CURLY_RIGHT_PAR)
             {
-                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken);
+                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken, saveToken);
                 ast = root;
             }
             else if(lastInteresingToken != TOKEN_CURLY_RIGHT_PAR)
             {
-                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken);
+                BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken, saveToken);
                 ast = root;
             }
         }
@@ -131,6 +127,9 @@ int LLGrammar(Stack* stack, Tokentype type)
             case NON_T_FUNCTION_BODY:
                 error = NonTerminalFunctionBodyPush(stack, type);
             break;
+            case NON_T_ID_HELPER:
+                error = NonTerminalIdHelper(stack, type);
+            break;
             case NON_T_ID_CONTINUE:
                 error = NonTerminalIdContinuePush(stack, type);
             break;
@@ -158,9 +157,6 @@ int LLGrammar(Stack* stack, Tokentype type)
             case NON_T_NEXT_PARAMS:
                 error = NonTerminalNextParamsPush(stack, type);
             break;
-            case NON_T_EOL:
-                error = NonTerminalEolPush(stack, type);
-            break;
             case NON_T_RETURN_TYPE:
                 error = NonTerminalReturnTypePush(stack, type);
             break;
@@ -186,14 +182,8 @@ int LLGrammar(Stack* stack, Tokentype type)
 
 int NonTerminalBodyPush(Stack* stack,Tokentype type)
 {
-    // <body> -> <eol> <body>
-    if(type == TOKEN_EOL)
-    {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_BODY);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
-    }
     // <body> -> CONST ID = @IMPORT(STRING); <after_body>
-    else if(type == TOKEN_const)
+    if(type == TOKEN_const)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_AFTER_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
@@ -220,20 +210,13 @@ int NonTerminalBodyPush(Stack* stack,Tokentype type)
 
 int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
 {
-    // <after_body> -> <eol> <after_body>
-    if(type == TOKEN_EOL)
-    {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_AFTER_BODY);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
-    }
-    // <after_body> -> PUB FN ID (<params>) <return_type> <eol> { <function_body> } <after_body>
-    else if(type == TOKEN_pub)
+    // <after_body> -> PUB FN ID (<params>) <return_type> { <function_body> } <after_body>
+    if(type == TOKEN_pub)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_AFTER_BODY);
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_RETURN_TYPE);
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_PARAMS);
@@ -270,15 +253,12 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_VAR_OR_CONST);
     }
-    //<function_body> -> ID <id_continue>;  <function_body>
+    //<function_body> -> <id_helper>
     else if(type == TOKEN_VARIABLE)
     {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
-        PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_CONTINUE);
-        PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_HELPER);
     }
-    //<function_body> -> IF (expression) <bars> <eol> {<function_body>} <else> <function_body>
+    //<function_body> -> IF (expression) <bars> {<function_body>} <else> <function_body>
     else if(type == TOKEN_if)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
@@ -286,21 +266,19 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_BARS);
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
         PushItem(stack, TOKEN_LEFT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_if, NON_TERMINAL_UNKOWN);
     }
-    //<function_body> -> WHILE (expression) <bars> <eol> {<function_body>} <function_body>
+    //<function_body> -> WHILE (expression) <bars> {<function_body>} <function_body>
     else if(type == TOKEN_while)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_BARS);
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
@@ -314,12 +292,6 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
         PushItem(stack, TOKEN_return, NON_TERMINAL_UNKOWN);
-    }
-    //<function_body> -> <eol> <function_body>
-    else if(type == TOKEN_EOL)
-    {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
     }
     //<function_body> -> ε
     return 0;
@@ -345,6 +317,24 @@ int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type)
     else
     {
         printf("Error in NonTerminalDeclarationContinuePush! \n");
+        return ERROR_PARSER;
+    }
+    return 0;
+}
+
+int NonTerminalIdHelper(Stack* stack, Tokentype type)
+{
+    // <id_helper> -> ID <id_continue>;  <function_body>
+    if(type == TOKEN_VARIABLE)
+    {
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
+        PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_CONTINUE);
+        PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
+    }
+    else
+    {
+        printf("Error in NonTerminalIdHelper! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -426,19 +416,6 @@ int NonTerminalVarOrConstPush(Stack* stack, Tokentype type)
     return 0;
 }
 
-int NonTerminalEolPush(Stack* stack, Tokentype type)
-{
-    // <eol> := EOL <eol>
-    if(type == TOKEN_EOL)
-    {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
-        PushItem(stack, TOKEN_EOL, NON_TERMINAL_UNKOWN);
-    }
-    // <eol> := ε // HADAM ZE TAKTO IG IDK
-
-    return 0;
-}
-
 int NonTerminalParamsPush(Stack* stack, Tokentype type)
 {
     // <params> -> ID : <type> <next_params>
@@ -483,19 +460,13 @@ int NonTerminalBarsPush(Stack* stack, Tokentype type)
 
 int NonTerminalElsePush(Stack* stack, Tokentype type)
 {
-    // <else> -> ELSE <eol> {<function_body>}
+    // <else> -> ELSE {<function_body>}
     if(type == TOKEN_else)
     {
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
         PushItem(stack, TOKEN_else, NON_TERMINAL_UNKOWN);
-    }
-    else if(type == TOKEN_EOL)
-    {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_ELSE);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EOL);
     }
     // <else> -> ε
 
@@ -643,7 +614,10 @@ ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
     }
     else if ((*ast)->left != NULL)
     {
-        return findDeepestFuncCodeNode(&(*ast)->left);
+        // if((*ast)->left != TYPE_VALUE_I32 || (*ast)->left != TYPE_VALUE_F64 || (*ast)->left != TYPE_STRING || (*ast)->left != TYPE_ID)
+        // {
+            return findDeepestFuncCodeNode(&(*ast)->left);
+        // }
     } 
     return *ast;
 }
@@ -660,7 +634,10 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
         *ast = (*ast)->right;
         if ((*ast)->left == NULL && ((*ast)->right->type == TYPE_WHILE || (*ast)->right->type == TYPE_IF_ELSE ) ) return findDeepestFuncCodeNode(&(*ast));
         else if ((*ast)->left != NULL) {
+            // if((*ast)->left != TYPE_VALUE_I32 || (*ast)->left != TYPE_VALUE_F64 || (*ast)->left != TYPE_STRING || (*ast)->left != TYPE_ID)
+            // {
             return findDeepestFuncCodeNode(&(*ast)->left);
+            // }
         }
         return *ast;
     }
@@ -674,6 +651,24 @@ ASTNode* findDeepestVarNode(ASTNode** ast)
         return *ast;
     }
     else if((*ast)->right->type != TYPE_VAR_DECL)
+    {
+        return *ast;
+    }
+    else
+    {
+        *ast = (*ast)->right;
+        return *ast;
+    }
+}
+
+ASTNode* findDeepestAssignmentNode(ASTNode** ast)
+{
+    *ast = findDeepestFunctionBodyNode(&(*ast));
+    if((*ast)->right == NULL)
+    {
+        return *ast;
+    }
+    else if((*ast)->right->type != TYPE_ASSIGNMENT)
     {
         return *ast;
     }
@@ -806,8 +801,29 @@ ASTNode* findFirstClosedIfNode(ASTNode** ast) {
 }
 
 
-void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token)
+void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token, Token* saveToken)
 {
+    // if(lastNonTerminal == NON_T_ID_HELPER || lastNonTerminal == NON_T_ID_CONTINUE || lastNonTerminal == NON_T_PARAMS_ENTER || lastNonTerminal == NON_T_NEXT_PARAMS_ENTER)
+    // {
+    //     if(lastNonTerminal == NON_T_ID_HELPER)
+    //     {
+    //         *ast = findDeepestFunDecNode(&(*ast));
+    //     }
+    //     else if(lastNonTerminal == NON_T_ID_CONTINUE)
+    //     {
+    //         if (token->type == TOKEN_ASSIGN)
+    //         {
+    //             *ast = findDeepestParamNode(&(*ast));
+    //             (*ast)->right = *expr_root;
+    //         }
+    //         else if (token->type == TOKEN_DOT)
+    //         {
+    //             *ast = findDeepestParamNode(&(*ast));
+    //             (*ast)->right = *expr_root;
+    //         }
+            
+    //     }
+    // }
     switch (interestingToken)
     {
         case TOKEN_fn:
@@ -908,6 +924,11 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateIfElseNode(*ast);
                 *ast = CreateIfNode(*ast);
             }
+            else if (token->type == TOKEN_VARIABLE)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                CreateIdNode(*ast, token->data);
+            }
             break;
         case TOKEN_while:
             if(token->type == TOKEN_while)
@@ -915,6 +936,16 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestFunctionBodyNode(&(*ast));
                 *ast = CreateCodeNode(*ast);
                 *ast = CreateWhileNode(*ast);
+            }
+            else if (token->type == TOKEN_VARIABLE)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                CreateIdNode(*ast, token->data);
+            }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                (*ast)->left->right = *expr_root;
             }
             break;
         case TOKEN_else:
@@ -943,6 +974,70 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 }
             }
             break;
+        case TOKEN_VARIABLE:
+            if(lastNonTerminal == NON_T_ID_HELPER)
+            {
+                saveToken->data = strdup(token->data);
+                saveToken->type = token->type;
+                saveToken->dataLength = token->dataLength;
+            }
+            else if(token->type == TOKEN_LEFT_PAR) // DOROB FKN ARGUMENTY DPC
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast); 
+                *ast = CreateFunCallNode(*ast);
+                *ast = CreateIdNode(*ast, saveToken->data);
+                saveToken = NULL;
+            }
+            else if (lastNonTerminal == NON_T_TERM)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                if (token->type == TOKEN_INTEGER)
+                {
+                    *ast = (*ast)->right;
+                    *ast = CreateArgumentNodeI32(*ast, atoi(token->data));
+                }
+                else if (token->type == TOKEN_FLOAT)
+                {
+                    *ast = (*ast)->right;
+                    *ast = CreateArgumentNodeF64(*ast, atof(token->data));
+                }
+                else if (token->type == TOKEN_STRING)
+                {
+                    *ast = (*ast)->right;
+                    *ast = CreateArgumentNodeU8(*ast, token->data);
+                }
+                else if (token->type == TOKEN_VARIABLE)
+                {
+                    *ast = (*ast)->right;
+                    *ast = CreateArgumentNode(*ast, token->data);
+                }
+                
+                saveToken = NULL;
+            }
+            else if(token->type == TOKEN_ASSIGN)
+            {
+                *ast = findDeepestFunctionBodyNode(&(*ast));
+                *ast = CreateCodeNode(*ast); 
+                *ast = CreateAssignemtNode(*ast);// create assignment node
+                *ast = CreateIdNode(*ast, saveToken->data);
+                saveToken = NULL;
+            }
+            else if(lastNonTerminal == NON_T_EXPR)
+            {
+                *ast = findDeepestAssignmentNode(&(*ast));
+                (*ast)->right = *expr_root;
+                saveToken = NULL;
+            }
+            // TOTO KVOLI ifj.write() funkciam etc
+            else if(token->type == TOKEN_DOT)
+            {
+                strcat(saveToken->data,token->data);
+            }
+            else if(token->type == TOKEN_VARIABLE)  
+            {
+                strcat(saveToken->data,token->data);
+            }
         default:
             break;
     }
@@ -988,6 +1083,8 @@ int InterestingTokens(Tokentype type)
         case TOKEN_CURLY_RIGHT_PAR:
             return 1;
         break;
+        case TOKEN_VARIABLE:
+            return lastNonTerminal == NON_T_ID_HELPER ? 1 : 0;
         default:
             return 0;
     }
