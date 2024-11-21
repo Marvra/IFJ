@@ -311,3 +311,15 @@ void DeleteTable(SymList *list){
     FreeTree(GetTableNode(temp));
     free(temp);
 }
+
+void FreeSymlist(SymList *list){
+    if(list == NULL){
+        return;
+    }
+
+    while(list->last != NULL){
+        DeleteTable(list);
+    }
+
+    free(list);
+}

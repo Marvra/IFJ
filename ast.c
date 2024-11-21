@@ -191,6 +191,7 @@ ASTNode* CreateFunCallExpressionsNode(ASTNode *node){
     return node;
 }
 
+
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_CALL){
         exit(99);
@@ -210,11 +211,6 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
 }
 
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
-    if(node->type != TYPE_FUN_CALL){
-        printf("CreateArgumentNode error");
-        return NULL;
-    }
-
     ASTNode *temp = node;
     while(temp->right != NULL){
         temp = temp->right;
@@ -566,6 +562,7 @@ ASTStack* CreateStackAST() {
         fprintf(stderr, "Memory allocation failed\n");
         exit(99);
     }
+    
     stack->top = NULL;
     return stack;
 }
@@ -576,6 +573,7 @@ void PushAST(ASTStack *stack, ASTNode *node) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(99);
     }
+
     newNode->node = node;
     newNode->next = stack->top;
     stack->top = newNode;
@@ -585,6 +583,7 @@ ASTNode* PopAST(ASTStack *stack) {
     if (stack->top == NULL) {
         return NULL;
     }
+
     StackNode *topNode = stack->top;
     ASTNode *node = topNode->node;
     stack->top = topNode->next;
@@ -594,6 +593,10 @@ ASTNode* PopAST(ASTStack *stack) {
 
 
 void FreeStackAST(ASTStack *stack) {
+    if(stack == NULL){
+        return;
+    }
+
     StackNode *current = stack->top;
     while (current != NULL) {
         StackNode *next = current->next;

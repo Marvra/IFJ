@@ -12,7 +12,6 @@ typedef enum{
     TYPE_I32_N,
     TYPE_F64_N,
     TYPE_U8_N,
-    TYPE_PARAMS,
     TYPE_VOID
 } NType;
 
@@ -68,12 +67,13 @@ void FreeTree(TNode *rootPtr);
 int Max(int a, int b);
 int Height(TNode *rootPtr);
 
-//-------------------
+
 SymList* CreateSymList();
 void InsertTable(SymList *list, TNode *node);
 SymListNode* GetLast(SymList *list);
 SymListNode* GetNext(SymListNode *node);
 TNode* GetTableNode(SymListNode *node);
 void DeleteTable(SymList *list);
+void FreeSymlist(SymList *list);
 
 #endif
