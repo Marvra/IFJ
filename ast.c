@@ -10,8 +10,7 @@ ASTNode* CreateAST(){
 ASTNode* CreateAstNode(ASTNodeType type){
     ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
     if(node == NULL){
-        printf(" CreateAstNode error");
-        return NULL;
+        exit(99);
     }
 
     node->type = type;
@@ -35,8 +34,7 @@ ASTNode* CreateAstNode(ASTNodeType type){
 
 ASTNode* CreateCodeNode(ASTNode *node){
     if(node == NULL){
-        printf(" CreateCodeNode error");
-        return NULL;
+        exit(99);
     }
 
     ASTNode *temp = NULL;
@@ -53,8 +51,7 @@ ASTNode* CreateCodeNode(ASTNode *node){
         }else if(node->left != NULL){
             temp = node->left;
         }else{
-            printf(" CreateCodeNode error");
-            return NULL;
+            exit(99);
         }
     }else{
         if(node->left == NULL){
@@ -75,8 +72,7 @@ ASTNode* CreateCodeNode(ASTNode *node){
 
 ASTNode* CreateVarDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateVarDeclNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_VAR_DECL);
     return node->right;
@@ -84,8 +80,7 @@ ASTNode* CreateVarDeclNode(ASTNode *node){
 
 ASTNode* CreateConDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateConDeclNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_CON_DECL);
     return node->right;
@@ -93,8 +88,7 @@ ASTNode* CreateConDeclNode(ASTNode *node){
 
 ASTNode* CreateFunDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateFunDeclNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_FUN_DECL);
     return node->right;
@@ -111,8 +105,7 @@ ASTNode* CreateAssignemtNode(ASTNode *node){
 
 ASTNode* CreateIdNode(ASTNode *node, char *id){
     if(node == NULL){
-        printf("CreateIdNode error");
-        return NULL;
+        exit(99);
     }
 
     if(node->type == TYPE_VAR_DECL || node->type == TYPE_CON_DECL || node->type == TYPE_ASSIGNMENT || node->type == TYPE_FUN_DECL || node->type == TYPE_FUN_CALL){
@@ -120,32 +113,29 @@ ASTNode* CreateIdNode(ASTNode *node, char *id){
         node->left->data.str = strdup(id);      
         if(node->left->data.str == NULL){
             fprintf(stderr, "AST NODE: Memory allocation failed\n");
-            exit(-1);
+            exit(99);
         }
         return node;
     }else if(node->type == TYPE_WHILE || node->type == TYPE_IF_ELSE){
         if(node->left == NULL){
-            printf("error");
-            return NULL;
+            exit(99);
         }else{
             node->left->left = CreateAstNode(TYPE_ID);
             node->left->left->data.str = strdup(id);      
             if(node->left->left->data.str == NULL){
                 fprintf(stderr, "AST NODE: Memory allocation failed\n");
-                exit(-1);
+                exit(99);
             }
             return node;
         }
     }else{
-        printf("CreateIdNode error");
-        return NULL;
+        exit(99);
     }
 }
 
 ASTNode* CreateIfElseNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateIfElseNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_IF_ELSE);
     node->right->right = CreateAstNode(TYPE_BLOCK);
@@ -155,8 +145,7 @@ ASTNode* CreateIfElseNode(ASTNode *node){
 
 ASTNode* CreateIfNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE){
-        printf("CreateIfNode error");
-        return NULL;
+        exit(99);
     }
     node->right->left = CreateAstNode(TYPE_IF);
     return node->right;
@@ -164,8 +153,7 @@ ASTNode* CreateIfNode(ASTNode *node){
 
 ASTNode* CreateElseNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE){
-        printf("CreateElseNode error");
-        return NULL;
+        exit(99);
     }
     node->right->right = CreateAstNode(TYPE_ELSE);
     return node;
@@ -173,8 +161,7 @@ ASTNode* CreateElseNode(ASTNode *node){
 
 ASTNode* CreateWhileNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateWhileNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_WHILE);
     node->right->left = CreateAstNode(TYPE_WHILE1);
@@ -183,8 +170,7 @@ ASTNode* CreateWhileNode(ASTNode *node){
 
 ASTNode* CreateReturnNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
-        printf("CreateReturnNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_RETURN);
     return node->right;
@@ -192,8 +178,7 @@ ASTNode* CreateReturnNode(ASTNode *node){
 
 ASTNode* CreateFunCallNode(ASTNode *node){
     if((node->type != TYPE_CODE && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL && node->type != TYPE_ASSIGNMENT)|| node->right != NULL){
-        printf("CreateFunCallNode error");
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_FUN_CALL);
     return node->right;
@@ -201,8 +186,7 @@ ASTNode* CreateFunCallNode(ASTNode *node){
 
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     if(node->type != TYPE_FUN_CALL){
-        printf("CreateArgumentNode error");
-        return NULL;
+        exit(99);
     }
 
     ASTNode *temp = node;
@@ -213,7 +197,7 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     temp->right->data.str = strdup(id);
     if(temp->right->data.str == NULL){
         fprintf(stderr, "AST NODE: Memory allocation failed\n");
-        exit(-1);
+        exit(99);
     }
     return node;
 }
@@ -235,11 +219,6 @@ ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
 }
 
 ASTNode* CreateArgumentNodeF64(ASTNode *node, float value){
-    if(node->type != TYPE_FUN_CALL){
-        printf("CreateArgumentNode error");
-        return NULL;
-    }
-
     ASTNode *temp = node;
     while(temp->right != NULL){
         temp = temp->right;
@@ -251,11 +230,6 @@ ASTNode* CreateArgumentNodeF64(ASTNode *node, float value){
 }
 
 ASTNode* CreateArgumentNodeU8(ASTNode *node, char *string){
-    if(node->type != TYPE_FUN_CALL){
-        printf("CreateArgumentNode error");
-        return NULL;
-    }
-
     ASTNode *temp = node;
     while(temp->right != NULL){
         temp = temp->right;
@@ -265,18 +239,13 @@ ASTNode* CreateArgumentNodeU8(ASTNode *node, char *string){
     temp->right->data.str = strdup(string);
     if(temp->right->data.str == NULL){
         fprintf(stderr, "AST NODE: Memory allocation failed\n");
-        exit(-1);
+        exit(99);
     }
     
     return node;
 }
 
 ASTNode* CreateParamNode(ASTNode *node, char *id){
-    if(node->type != TYPE_FUN_DECL || node->left == NULL){
-        printf("CreateParamNode error");
-        return NULL;
-    }
-
     ASTNode *temp = node;
     while(temp->left != NULL){
         temp = temp->left;
@@ -285,7 +254,7 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
     temp->left->data.str = strdup(id);
     if(temp->left->data.str == NULL){
         fprintf(stderr, "AST NODE: Memory allocation failed\n");
-        exit(-1);
+        exit(99);
     }
     return node;
     
@@ -293,8 +262,7 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
 
 ASTNode* CreateTypeNode(ASTNode *node, DataType type){
     if((node->type != TYPE_FUN_DECL && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL) || node->left == NULL ){
-        printf("CreateTypeNode error");
-        return NULL;
+        exit(99);
     }
 
     ASTNode *temp = node->left;
@@ -311,14 +279,12 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
         }
     }
 
-    // PRIDANE PRE GENEROVANIE TYPE_RETURN_TYPE AK PRIDE TYPE_FUN_DECL KDE NEMAME PARAMETRRE
     if(node->left->right == NULL && node->type == TYPE_FUN_DECL && node->left->left == NULL){
         node->left->right = CreateAstNode(TYPE_RETURN_TYPE);
         node->left->right->data.type = type;
         return node;
     }
-    // PRIDANE PRE GENEROVANIE TYPE_RETURN_TYPE AK PRIDE TYPE_FUN_DECL KDE NEMAME PARAMETRRE
-
+    
     temp->right = CreateAstNode(TYPE_DATA_TYPE);
     temp->right->data.type = type;
     return node;
@@ -326,8 +292,7 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
 
 ASTNode* CreateNullNode(ASTNode *node){
     if(node != NULL || (node->type != TYPE_VAR_DECL && node->type != TYPE_ASSIGNMENT && node->type != TYPE_CON_DECL)){
-        //error
-        return NULL;
+        exit(99);
     }
     node->right = CreateAstNode(TYPE_NULL);
     return node;
@@ -389,7 +354,7 @@ ASTNode* GetArgNode(ASTNode *node){
 }
 
 char* GetId(ASTNode *node){
-    if(node == NULL){ //dobry by bol check ci existuje data.str
+    if(node == NULL){
         return NULL;
     }
     return node->data.str;
@@ -411,35 +376,35 @@ ASTNode* GetElseNode(ASTNode *node){
 
 ASTNode* GetNoNullId(ASTNode *node){
     if(node == NULL || node->left == NULL){
-        return NULL; //spravne by asi malo hadzat error ale co uz
+        return NULL;
     }
     return node->left->left;
 }
 
 ASTNode* GetConditionNode(ASTNode *node){
     if(node == NULL || node->left == NULL){
-        return NULL; //spravne by asi malo hadzat error ale co uz
+        return NULL;
     }
     return node->left->right;
 }
 
 Operator GetOperator(ASTNode* node){
     if(node == NULL || (node->type != TYPE_OPERATOR && node->type != TYPE_REL_OPERATOR)){
-        //error
+        exit(99);
     }
     return node->data.op;
 }
 
 ASTNode* GetRightOperand(ASTNode *node){
     if(node == NULL){
-        //error
+        return NULL;
     }
     return node->right;
 }
 
 ASTNode* GetLeftOperand(ASTNode *node){
     if(node == NULL){
-        //error
+        return NULL;
     }
     return node->left;
 }
@@ -457,25 +422,6 @@ float GetFloatValue(ASTNode *node){
     }
     return 0;
 }
-
-// int main(){
-//     //test
-//     ASTNode *ast = CreateAST();
-//     ASTNode *temp = CreateCodeNode(ast);
-//     ASTNode *temp1 = CreateCodeNode(ast);
-//     ASTNode *temp2 = CreateCodeNode(ast);
-//     ASTNode *temp3 = CreateCodeNode(temp1);
-//     temp3 = CreateIfElseNode(temp1);
-//     temp3 = CreateIdNode(temp3, "a");
-//     temp3 = CreateFunCallNode(temp);
-//     temp3 = CreateArgumentNode(temp3, "a");
-//     temp3 = CreateArgumentNode(temp3, "b");
-//     temp3 = CreateArgumentNode(temp3, "c");
-//     temp3 = CreateFunDeclNode(temp2);
-//     temp3 = CreateIdNode(temp3, "aaa");
-//     temp3 = CreateParamNode(temp3, "ab");
-//     temp3 = CreateParamNode(temp3, "abc");
-// }
 
 // ADDDED CHATGPT CREATED PRINT SHIT
 
@@ -611,7 +557,7 @@ ASTStack* CreateStackAST() {
     ASTStack *stack = (ASTStack*)malloc(sizeof(ASTStack));
     if (!stack) {
         fprintf(stderr, "Memory allocation failed\n");
-        exit(1);
+        exit(99);
     }
     stack->top = NULL;
     return stack;
@@ -621,7 +567,7 @@ void PushAST(ASTStack *stack, ASTNode *node) {
     StackNode *newNode = (StackNode*)malloc(sizeof(StackNode));
     if (!newNode) {
         fprintf(stderr, "Memory allocation failed\n");
-        exit(1);
+        exit(99);
     }
     newNode->node = node;
     newNode->next = stack->top;
