@@ -6,8 +6,8 @@ TokenList* InitTokenList()
 {
     TokenList* list = (TokenList*)malloc(sizeof(TokenList));
     if (list == NULL) {
-        fprintf(stderr, "TOKEN LIST: Memory allocation failed\n");
-        exit(1);
+        //printf(stderr, "TOKEN LIST: Memory allocation failed\n");
+        exit(99);
     }
     list->currToken = NULL;
     list->firstToken = NULL;
@@ -18,8 +18,8 @@ Token* InitToken()
 {
     Token* token = (Token*)malloc(sizeof(Token));
     if (token == NULL) {
-        fprintf(stderr, "TOKEN: Memory allocation failed\n");
-        exit(1);
+        //printf(stderr, "TOKEN: Memory allocation failed\n");
+        exit(99);
     }
     token->data=NULL;
     token->nextToken=NULL;

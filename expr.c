@@ -193,7 +193,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
     (*list)->currToken = (*list)->currToken->nextToken;
     skipWhitespaces(*list);
-    PrintToken((*list)->currToken);
+    //PrintToken((*list)->currToken);
     if ((*list)->currToken->type != TOKEN_DOT && (*list)->currToken->type != TOKEN_LEFT_PAR) 
     {
       (*list)->currToken = curr_token;
@@ -228,7 +228,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
       tableSign = precTable[topToken][incomingToken];
     }
 
-    DLLPrintTerms(linked_list);
+    //DLLPrintTerms(linked_list);
 
     if(tableSign == '<')
     {

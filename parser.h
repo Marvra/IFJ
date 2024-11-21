@@ -14,7 +14,6 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type);
 int NonTerminalParamsPush(Stack* stack, Tokentype type);
 int NonTerminalNextParamsPush(Stack* stack, Tokentype type);
 int NonTerminalBarsPush(Stack* stack, Tokentype type);
-int NonTerminalElsePush(Stack* stack, Tokentype type);
 int NonTerminalReturnTypePush(Stack* stack, Tokentype type);
 int NonTerminalTypePush(Stack* stack, Tokentype type);
 int NonTerminalVarOrConstPush(Stack* stack, Tokentype type);
@@ -46,8 +45,8 @@ ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 ASTNode* findFirstClosedIfNode(ASTNode** ast);
 ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast); 
 //CHAT GPT HOVNO
-void exportASTToDot(ASTNode* root);
-void printDotAST(ASTNode* node, FILE* file);
+// void exportASTToDot(ASTNode* root);
+// void printDotAST(ASTNode* node, FILE* file);
 
 void PrintStack(Stack* stack);
 

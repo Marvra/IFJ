@@ -22,20 +22,20 @@ int Lexer(FILE* file, TokenList* list)
 
         if(token->type == TOKEN_EOF)
         {
-            printf("FSM found EOF\n");
+            //printf("FSM found EOF\n");
             break;
         }
         
         if(fsmState == STATE_ERROR)
         {
-            printf("Error in FSM\n");
+            //printf("Error in FSM\n");
             return ERROR_LEXER;
         }
 
         GetNextToken(&token);
     }
 
-    PrintTokenList(list);
+    //PrintTokenList(list);
     return 0;
     
 }

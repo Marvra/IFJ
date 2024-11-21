@@ -43,7 +43,7 @@ int Parser(ASTNode** tree, TokenList* list)
 
             if(error != 0)
             {
-                printf("Error found in Parser (LLGrammar)! \n");
+                //printf("Error found in Parser (LLGrammar)! \n");
                 return ERROR_PARSER;
             }
 
@@ -55,20 +55,20 @@ int Parser(ASTNode** tree, TokenList* list)
             lastNonTerminal = NON_T_EXPR;
             errorExpr = expr_start(&expr_root, &list, Top(stack)->tokenType);
             if (errorExpr != 0) {
-                printf("Error found in EXPRESION (expr_start)! \n");
+                //printf("Error found in EXPRESION (expr_start)! \n");
                 return ERROR_PARSER;
             }
         }
 
         if(Top(stack)->tokenType != list->currToken->type)
         {
-            printf("Error found in Parser (Bad top)! \n");
-            PrintStack(stack);
-            printf(" Top: %s\n Current: %s\n", TokenTypeString(Top(stack)->tokenType), TokenTypeString(list->currToken->type));
+            //printf("Error found in Parser (Bad top)! \n");
+            //PrintStack(stack);
+            //printf(" Top: %s\n Current: %s\n", TokenTypeString(Top(stack)->tokenType), TokenTypeString(list->currToken->type));
             return ERROR_PARSER;
         }
         //PrintStack(stack);
-        printf("Popping from stack : %s\n", TokenTypeString(list->currToken->type));
+        //printf("Popping from stack : %s\n", TokenTypeString(list->currToken->type));
         Pop(stack);
 
         if(InterestingTokens(list->currToken->type))
@@ -98,10 +98,10 @@ int Parser(ASTNode** tree, TokenList* list)
         list->currToken = nextToken;
 
     }
-    printf("Parser finished successfully\n");
+    //printf("Parser finished successfully\n");
     FreeStack(stack);
 
-    exportASTToDot(root);
+    //exportASTToDot(root);
     *tree = ast;
 
     return 0;
@@ -148,9 +148,6 @@ int LLGrammar(Stack* stack, Tokentype type)
             case NON_T_BARS:
                 error = NonTerminalBarsPush(stack, type);
             break;
-            case NON_T_ELSE:
-                error = NonTerminalElsePush(stack, type);
-            break;
             case NON_T_PARAMS:
                 error = NonTerminalParamsPush(stack, type);
             break;
@@ -195,14 +192,9 @@ int NonTerminalBodyPush(Stack* stack,Tokentype type)
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_const, NON_TERMINAL_UNKOWN);
     }
-    //<body> := EOF
-    else if (type == TOKEN_EOF)
-    {
-        PushItem(stack, TOKEN_EOF, NON_TERMINAL_UNKOWN);
-    }
     else
     {
-        printf("Error in NonTerminalBodyPush! \n");
+        //printf("Error in NonTerminalBodyPush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -232,7 +224,7 @@ int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalAfterBodyPush! \n");
+        //printf("Error in NonTerminalAfterBodyPush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -240,15 +232,11 @@ int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
 
 int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 {
-    // <function_body> -> <var_or_const> ID <declaration_continue> <function_body>
+    // <function_body> -> <var_or_const> ID <declaration_continue>; <function_body>
     if(type == TOKEN_const || type == TOKEN_var)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
-        // PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
-        // PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
-        // PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
-        // PushItem(stack, TOKEN_COLON,NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_DECLARATION_CONTINUE);
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_VAR_OR_CONST);
@@ -258,11 +246,14 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_ID_HELPER);
     }
-    //<function_body> -> IF (expression) <bars> {<function_body>} <else> <function_body>
+    //<function_body> -> IF (expression) <bars> <eol> {<function_body>} ELSE {<function_body>} <function_body>
     else if(type == TOKEN_if)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_ELSE);
+        PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
+        PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
+        PushItem(stack, TOKEN_else, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
@@ -316,7 +307,7 @@ int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalDeclarationContinuePush! \n");
+        //printf("Error in NonTerminalDeclarationContinuePush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -343,7 +334,7 @@ int NonTerminalIdHelper(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalIdHelper! \n");
+        //printf("Error in NonTerminalIdHelper! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -375,7 +366,7 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalIdContinuePush! \n");
+        //printf("Error in NonTerminalIdContinuePush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -419,7 +410,7 @@ int NonTerminalVarOrConstPush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalVarOrConstPush! \n");
+        //printf("Error in NonTerminalVarOrConstPush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -467,21 +458,6 @@ int NonTerminalBarsPush(Stack* stack, Tokentype type)
     return 0;
 }
 
-int NonTerminalElsePush(Stack* stack, Tokentype type)
-{
-    // <else> -> ELSE {<function_body>}
-    if(type == TOKEN_else)
-    {
-        PushItem(stack, TOKEN_CURLY_RIGHT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
-        PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_else, NON_TERMINAL_UNKOWN);
-    }
-    // <else> -> ε
-
-    return 0;
-}
-
 int NonTerminalReturnTypePush(Stack* stack, Tokentype type)
 {
     // <return_type> -> <type>
@@ -496,9 +472,9 @@ int NonTerminalReturnTypePush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalReturnTypePush! \n");
-        PrintStack(stack);
-        printf("Got : %s \n", TokenTypeString(type));
+        //printf("Error in NonTerminalReturnTypePush! \n");
+        //PrintStack(stack);
+        //printf("Got : %s \n", TokenTypeString(type));
         return ERROR_PARSER;
     }
     return 0;
@@ -535,7 +511,7 @@ int NonTerminalTypePush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalTypePush! \n Got : %s \n Needed : %s \n", TokenTypeString(type), NonTerminalToString(stack->items[stack->top]->nonTerminal));
+        //printf("Error in NonTerminalTypePush! \n Got : %s \n Needed : %s \n", TokenTypeString(type), NonTerminalToString(stack->items[stack->top]->nonTerminal));
         return ERROR_PARSER;
     }
     return 0;
@@ -565,7 +541,7 @@ int NonTerminalTermPush(Stack* stack, Tokentype type)
     }
     else
     {
-        printf("Error in NonTerminalTermPush! \n");
+        //printf("Error in NonTerminalTermPush! \n");
         return ERROR_PARSER;
     }
     return 0;
@@ -1148,33 +1124,33 @@ int InterestingTokens(Tokentype type)
     }
 }
 
-// Function to print a single node and its children in DOT format
-void printDotAST(ASTNode* node, FILE* file) {
-    if (node == NULL) return;
+// // Function to print a single node and its children in DOT format
+// void printDotAST(ASTNode* node, FILE* file) {
+//     if (node == NULL) return;
 
-    // Print the current node's label, assuming `type` or similar gives a name for the node
-    fprintf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
+//     // Print the current node's label, assuming `type` or similar gives a name for the node
+//     f//printf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
 
-    // Print edges for left and right children if they exist
-    if (node->left) {
-        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
-        printDotAST(node->left, file);
-    }
-    if (node->right) {
-        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
-        printDotAST(node->right, file);
-    }
-}
+//     // Print edges for left and right children if they exist
+//     if (node->left) {
+//         f//printf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
+//         printDotAST(node->left, file);
+//     }
+//     if (node->right) {
+//         f//printf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
+//         printDotAST(node->right, file);
+//     }
+// }
 
-// Main function to export AST to a DOT file
-void exportASTToDot(ASTNode* root) {
-    FILE* file = fopen("ast.txt", "w");
-    if (file == NULL) {
-        perror("Failed to open file for DOT output");
-        return;
-    }
-    fprintf(file, "digraph AST {\n");
-    printDotAST(root, file);
-    fprintf(file, "}\n");
-    fclose(file);
-}
+// // Main function to export AST to a DOT file
+// void exportASTToDot(ASTNode* root) {
+//     FILE* file = fopen("ast.txt", "w");
+//     if (file == NULL) {
+//         perror("Failed to open file for DOT output");
+//         return;
+//     }
+//     f//printf(file, "digraph AST {\n");
+//     printDotAST(root, file);
+//     f//printf(file, "}\n");
+//     fclose(file);
+// }

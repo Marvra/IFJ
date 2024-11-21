@@ -15,7 +15,6 @@ typedef enum NonTerminal{
     NON_T_NEXT_PARAMS_ENTER,
     NON_T_VAR_OR_CONST,
     NON_T_BARS,
-    NON_T_ELSE,
     NON_T_PARAMS,
     NON_T_NEXT_PARAMS,
     NON_T_EOL,

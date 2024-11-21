@@ -95,7 +95,6 @@ char* NonTerminalToString(NonTerminal nonTerminal)
         case NON_T_PARAMS: return "NON_T_PARAMS";
         case NON_T_NEXT_PARAMS: return "NON_T_NEXT_PARAMS";
         case NON_T_BARS: return "NON_T_BARS";
-        case NON_T_ELSE: return "NON_T_ELSE";
         case NON_T_TYPE: return "NON_T_TYPE";
         case NON_T_RETURN_TYPE: return "NON_T_RETURN_TYPE";
         case NON_T_VAR_OR_CONST: return "NON_T_VAR_OR_CONST";

@@ -1,5 +1,4 @@
 <body> -> <eol> <body>
-<body> -> EOF 			!!! NEVIEM AKO MOC JE LEGIT PRAZDNY SUBOR/POPRIPADE LEN S PROLOGOM
 <body> -> CONST ID = IMPORT(STRING); <after_body>
 
 <after_body> -> <eol> <after_body>
@@ -8,7 +7,7 @@
 
 <function_body> -> <var_or_const> ID <declaration_continue> <function_body>
 <function_body> -> <id_helper>
-<function_body> -> IF (expression) <bars> <eol> {<function_body>} <else> <function_body>
+<function_body> -> IF (expression) <bars> <eol> {<function_body>} ELSE {<function_body>} <function_body>
 <function_body> -> WHILE (expression) <bars> <eol> {<function_body>} <function_body>
 <function_body> -> RETURN expression; <function_body>
 <function_body> -> <eol> <function_body>
@@ -34,8 +33,6 @@
 
 <bars> -> |ID|
 <bars> -> ε
-<else> -> ELSE {<function_body>}
-<else> -> ε
 
 <params> -> ε
 <params> -> ID : <type> <next_params>
