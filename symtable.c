@@ -215,13 +215,8 @@ int GetParameterCount(TNode *rootPtr, char *key, int *count){
     return -1;
 }
 
-int GetIsUsed(TNode *rootPtr, char *key, bool *used){
-    TNode *temp = SearchNode(rootPtr, key);
-    if(temp != NULL){
-        *used = temp->data.isUsed;
-        return 0;
-    }
-    return -1;
+bool GetIsUsed(TNode *node){
+    return node->data.isUsed;
 }
 
 int GetIsKnown(TNode *rootPtr, char *key, bool *known){
@@ -231,6 +226,20 @@ int GetIsKnown(TNode *rootPtr, char *key, bool *known){
         return 0;
     }
     return -1;
+}
+
+TNode* GetRightNode(TNode *rootPtr){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+    return rootPtr->rPtr;
+}
+
+TNode* GetLeftNode(TNode *rootPtr){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+    return rootPtr->lPtr;
 }
 
 void FreeTree(TNode *rootPtr){
@@ -264,7 +273,7 @@ SymList* CreateSymList(){
     SymList *list = (SymList*)malloc(sizeof(SymList));
     if(!list){
         fprintf(stderr, "Memory allocation failed\n");
-        exit(1);
+        exit(INTERNAL_ERROR);
     }
     list->last = NULL;
     return list;
@@ -274,7 +283,7 @@ void InsertTable(SymList *list, TNode *node){
     SymListNode *newNode = (SymListNode*)malloc(sizeof(SymListNode));
     if(!newNode){
         fprintf(stderr, "Memory allocation failed\n");
-        exit(1);
+        exit(INTERNAL_ERROR);
     }
     newNode->node = node;
     newNode->next = list->last;
