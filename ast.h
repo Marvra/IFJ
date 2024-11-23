@@ -124,15 +124,10 @@ ASTNode* GetLeftOperand(ASTNode *node);
 int GetIntValue(ASTNode *node);
 float GetFloatValue(ASTNode *node);
 
-/// added chagpt print shits
-void DisplayAST(ASTNode *node);
-void DisplayASTHelper(ASTNode *node, int depth, const char* prefix);
 const char* OperatorToString(Operator op);
 const char* NodeTypeToString(ASTNodeType type);
-void PrintIndent(int depth);
 void DisplayDataType(DataType dataType);
 
-//chatgpt
 ASTStack* CreateStackAST();
 void PushAST(ASTStack *stack, ASTNode *node);
 ASTNode* PopAST(ASTStack *stack);

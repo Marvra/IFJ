@@ -445,7 +445,6 @@ void insert(ASTNode **root, Token *curr_token)
   }
 }
 
-// helper function to build ast fot function calls 
 void tokenToParameter(Token *token, ASTNode **node) 
 {
   if (token->type == TOKEN_INTEGER)
