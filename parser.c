@@ -874,8 +874,8 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                     *ast = CreateParamNode(*ast, token->data);
                 }
             }
-            // param type
-            else if(token->type == TOKEN_void || token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            // return type
+            else if(token->type == TOKEN_void || token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8 || token->type == TOKEN_i32_NULL || token->type == TOKEN_f64_NULL || token->type == TOKEN_u8_NULL)
             {
                 *ast = findDeepestFunDecNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
@@ -897,7 +897,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestConstNode(&(*ast));
                 *ast = CreateIdNode(*ast, token->data);
             }
-            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8 || token->type == TOKEN_i32_NULL || token->type == TOKEN_f64_NULL || token->type == TOKEN_u8_NULL)
             {
                 *ast = findDeepestConstNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
@@ -921,7 +921,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestVarNode(&(*ast));
                 *ast = CreateIdNode(*ast, token->data);
             }
-            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8)
+            else if(token->type == TOKEN_i32 || token->type == TOKEN_f64 || token->type == TOKEN_u8 || token->type == TOKEN_i32_NULL || token->type == TOKEN_f64_NULL || token->type == TOKEN_u8_NULL)
             {
                 *ast = findDeepestVarNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
