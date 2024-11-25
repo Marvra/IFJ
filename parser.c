@@ -101,7 +101,7 @@ int Parser(ASTNode** tree, TokenList* list)
     //printf("Parser finished successfully\n");
     FreeStack(stack);
 
-    //exportASTToDot(root);
+    exportASTToDot(root);
     *tree = ast;
 
     return 0;
@@ -1124,33 +1124,33 @@ int InterestingTokens(Tokentype type)
     }
 }
 
-// // Function to print a single node and its children in DOT format
-// void printDotAST(ASTNode* node, FILE* file) {
-//     if (node == NULL) return;
+// Function to print a single node and its children in DOT format
+void printDotAST(ASTNode* node, FILE* file) {
+    if (node == NULL) return;
 
-//     // Print the current node's label, assuming `type` or similar gives a name for the node
-//     f//printf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
+    // Print the current node's label, assuming `type` or similar gives a name for the node
+    fprintf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
 
-//     // Print edges for left and right children if they exist
-//     if (node->left) {
-//         f//printf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
-//         printDotAST(node->left, file);
-//     }
-//     if (node->right) {
-//         f//printf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
-//         printDotAST(node->right, file);
-//     }
-// }
+    // Print edges for left and right children if they exist
+    if (node->left) {
+        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
+        printDotAST(node->left, file);
+    }
+    if (node->right) {
+        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
+        printDotAST(node->right, file);
+    }
+}
 
-// // Main function to export AST to a DOT file
-// void exportASTToDot(ASTNode* root) {
-//     FILE* file = fopen("ast.txt", "w");
-//     if (file == NULL) {
-//         perror("Failed to open file for DOT output");
-//         return;
-//     }
-//     f//printf(file, "digraph AST {\n");
-//     printDotAST(root, file);
-//     f//printf(file, "}\n");
-//     fclose(file);
-// }
+// Main function to export AST to a DOT file
+void exportASTToDot(ASTNode* root) {
+    FILE* file = fopen("ast.txt", "w");
+    if (file == NULL) {
+        perror("Failed to open file for DOT output");
+        return;
+    }
+    fprintf(file, "digraph AST {\n");
+    printDotAST(root, file);
+    fprintf(file, "}\n");
+    fclose(file);
+}

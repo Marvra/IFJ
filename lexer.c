@@ -276,16 +276,16 @@ State GetNullTypesTokenType(char c, State* state, Token* token)
     switch (*state)
     {
         case STATE_NULL_START:
-            if(isalnum(c)) state = STATE_NULL_TYPE;
-            else if(c == '[') state = STATE_NULL_RBRACKET;
+            if(isalnum(c)) *state = STATE_NULL_TYPE;
+            else if(c == '[') *state = STATE_NULL_RBRACKET;
             else return STATE_ERROR;
         break;
         case STATE_NULL_RBRACKET:
-            if(c == ']') state = STATE_NULL_TYPE;
+            if(c == ']') *state = STATE_NULL_TYPE;
             else return STATE_ERROR;
         break;
         case STATE_NULL_TYPE:
-            if(isalnum(c)) state = STATE_NULL_START;
+            if(isalnum(c)) *state = STATE_NULL_START;
             else token->type = TOKEN_NULL_TYPE;
         break;
         default:
