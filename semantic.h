@@ -5,6 +5,7 @@
 #include "symtable.h"
 
 int SemanticAnalysis(ASTNode *root);
+int TraverseAST(ASTNode *root);
 
 
 #endif

@@ -189,7 +189,6 @@ int AnalyzeFunDec(ASTNode *node, TNode **symtable){
     SetFunctionReturnType(*symtable, idFunction, DataTypeToNType(type));
     temp = GetParamNode(temp);
     while(temp != NULL){
-        char *id = GetId(temp);
         type = GetDataType(temp);
         SetParameter(*symtable, idFunction, DataTypeToNType(type));
         temp = GetParamNode(temp);
@@ -264,7 +263,7 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
             return NULL;
         }
         char *id = GetId(temp);
-        SymListNode *tempNode = GetLast(list);
+
         TNode *symNode = FindInSymlist(list, id);
         if(symNode == NULL){
             *error = 3;
@@ -809,10 +808,6 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
 }
 
 int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
-    if(node == NULL){
-        //error
-    }
-
     int error;
     *hasNullId = false;
 
@@ -973,6 +968,14 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else{
                         return 7;
                     }
+                }else{
+                    if(rightNType == TYPE_I32 && leftNType == TYPE_I32){
+                        return 0;
+                    }else if(rightNType == TYPE_F64 && leftNType == TYPE_F64){
+                        return 0;
+                    }else{
+                        return 7;
+                    }
                 }
             }else{
                 DataType leftDataType;
@@ -1061,6 +1064,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
         return 7;
     }
 
+    return 0;
 }
 
 int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
@@ -1164,6 +1168,8 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
     }else{
         return 6;
     }
+
+    return 0;
 }
 
 int CheckVariablesUsed(TNode *node){
@@ -1535,10 +1541,81 @@ ASTNode* createAST(){
     return root;
 }
 
+int TraverseAST(ASTNode *node){
+    int error = 0;
+    static int level = 0;
+    if(node == NULL){
+        level--;
+        return error;
+    }
+
+    for(int i = 0; i < level; i++){
+        printf("    ");
+    }
+
+    ASTNodeType type = GetNodeType(node);
+
+    switch(type){
+        case TYPE_PROGRAM:
+            printf("PROGRAM\n");
+            error = TraverseAST(GetCode(node));
+            break;
+        case TYPE_CODE:
+            level++;
+            error = TraverseAST(GetNode(node));
+            error = TraverseAST(GetCode(node));
+            break;
+        case TYPE_FUN_DECL:
+            printf("FUNCTION DECLARATION\n");
+            error = TraverseAST(GetNode(node));
+            break;
+        case TYPE_VAR_DECL:
+            printf("VARIABLE DECLARATION\n");
+            level--;
+            break;
+        case TYPE_CON_DECL:
+            printf("CONSTANT DECLARATION\n");
+            level--;
+            break;
+        case TYPE_FUN_CALL:
+            printf("FUNCTION CALL\n");
+            level--;
+            break;
+        case TYPE_RETURN:
+            printf("RETURN\n");
+            level--;
+            break;
+        case TYPE_ASSIGNMENT:
+            printf("ASSIGNMENT\n");
+            level--;
+            break;
+        case TYPE_IF_ELSE:
+            printf("IF ELSE\n");
+            error = TraverseAST(node->left->right);
+            error = TraverseAST(node->left->left);
+            break;
+        case TYPE_WHILE_CLOSED:
+            printf("WHILE\n");
+            error = TraverseAST(GetNode(node));
+            break;
+        case TYPE_IF_CLOSED:
+            printf("IF\n");
+            error = TraverseAST(GetCode(node));
+            break;
+        case TYPE_ELSE_CLOSED:
+            printf("ELSE\n");
+            error = TraverseAST(GetCode(node));
+            break;
+        default:
+            break;
+    }
+
+    return error;
+}
 
 /*int main(){
     ASTNode *root = createAST();
-    int a = SemanticAnalysis(root);
+    int a = TraverseAST(root);
     printf("%d", a);
     return 0;
 }*/
