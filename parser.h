@@ -44,9 +44,6 @@ ASTNode* findDeepestIfElseNode(ASTNode** ast);
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 ASTNode* findFirstClosedIfNode(ASTNode** ast);
 ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast); 
-//CHAT GPT HOVNO
-// void exportASTToDot(ASTNode* root);
-// void printDotAST(ASTNode* node, FILE* file);
 
 void PrintStack(Stack* stack);
 

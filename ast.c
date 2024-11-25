@@ -426,17 +426,6 @@ float GetFloatValue(ASTNode *node){
     return 0;
 }
 
-// ADDDED CHATGPT CREATED PRINT SHIT
-
-// Helper function to print spaces for indentation
-// Helper function to print spaces for indentation
-void PrintIndent(int depth) {
-    for (int i = 0; i < depth; i++) {
-     printf(" ");
-    }
-}
-
-// Helper function to display the AST node type as a string
 const char* NodeTypeToString(ASTNodeType type) {
     switch (type) {
         case TYPE_PROGRAM: return "Program";
@@ -471,7 +460,6 @@ const char* NodeTypeToString(ASTNodeType type) {
     }
 }
 
-// Helper function to display operator type as a string
 const char* OperatorToString(Operator op) {
     switch (op) {
         case OP_ADD: return "ADD (+)";
@@ -488,44 +476,6 @@ const char* OperatorToString(Operator op) {
         default: return "Unknown";
     }
 }
-
-// Recursive function to display the AST, with internal depth and direction management
-void DisplayASTHelper(ASTNode *node, int depth, const char* prefix) {
-    if (node == NULL) return;
-
-    // Print indentation for the current depth
-    
-    // Print the direction label (prefix), then node type
-    printf("%s %s", prefix, NodeTypeToString(node->type));
-
-    // Print additional node information if it exists
-    if (node->type == TYPE_ID || node->type == TYPE_STRING || node->type == TYPE_PARAMETER || node->type == TYPE_ARGUMENT) {
-        printf(": %s", node->data.str);
-    } else if (node->type == TYPE_OPERATOR || node->type == TYPE_REL_OPERATOR) {
-        printf(": %s", OperatorToString(node->data.op));
-    } /*else if (node->type == TYPE_VALUE) {
-        printf(": %f", node->data.value);    -------------------------------------------------------------------------------------------------------------
-    }*/ else if (node->type == TYPE_DATA_TYPE || node->type == TYPE_RETURN_TYPE) {
-        printf(":");
-        DisplayDataType(node->data.type);
-    }
-    // Recurse for left and right children, increasing depth and adding appropriate prefix
-    if(node->left != NULL || node->right != NULL)
-    {
-        printf("\n");
-        printf("DEPTH %i: ", depth);
-        depth++;
-        
-        if (node->left != NULL) {
-            DisplayASTHelper(node->left, depth, " L-->");
-        }
-        if (node->right != NULL) {
-            DisplayASTHelper(node->right, depth, " R-->");
-        }
-        printf("\n");
-    }
-}
-
 
 void DisplayDataType(DataType dataType) {
     switch (dataType) {
@@ -549,12 +499,6 @@ void DisplayDataType(DataType dataType) {
             break;
     }
 }
-
-// Wrapper function that starts the AST display from depth 0
-void DisplayAST(ASTNode *node) {
-    DisplayASTHelper(node, 0, "Root-->");
-}
-// ADDDED CHATGPT CREATED PRINT SHIT
 
 ASTStack* CreateStackAST() {
     ASTStack *stack = (ASTStack*)malloc(sizeof(ASTStack));
