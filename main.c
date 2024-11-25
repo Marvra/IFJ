@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
         return returnCode;
     }
 
+    ASTNode* currentNode = tree;
+    TraverseAST(currentNode);
     printf(".IFJcode24\n");
     
     return returnCode;
