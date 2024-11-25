@@ -67,9 +67,13 @@ typedef enum State{
 
 
 int Lexer(FILE* file, TokenList* list);
-int FSM(FILE* file, Token* token);
+State FSM(FILE* file, Token* token);
 State GetFirstState(char c);
 void CheckKeyword(Token* token);
-int CheckForNullType(Token* token);
+State CheckForNullType(Token* token);
+State GetPrologTokenType(char c, State* state, Token* token);
+State GetStringTokenType(char c, State* state, Token* token);
+State GetFloatTokenType(char c, State* state, Token* token);
+State GetNullTypesTokenType(char c, State* state, Token* token);
 
 #endif // LEXER_H 

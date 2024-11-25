@@ -11,39 +11,35 @@
 
 int Lexer(FILE* file, TokenList* list)
 {
-    bool valid = true;
     Token* token = InitToken();
+    Tokentype currType = TOKEN_UNKNOWN;
+    State errorState = STATE_OK;
     list->firstToken = token;
 
-    while (valid)
+    while (currType != TOKEN_EOF)
     {
         list->currToken = token;
-        int fsmState = FSM(file, token);
-
-        if(token->type == TOKEN_EOF)
-        {
-            //printf("FSM found EOF\n");
-            break;
-        }
+        errorState = FSM(file, token);
         
-        if(fsmState == STATE_ERROR)
+        if(errorState == STATE_ERROR)
         {
-            //printf("Error in FSM\n");
             return ERROR_LEXER;
         }
 
+        currType = token->type;
+
         GetNextToken(&token);
     }
-
-    //PrintTokenList(list);
+    
     return 0;
     
 }
 
-int FSM(FILE* file, Token* token)
+State FSM(FILE* file, Token* token)
 {
     char c;
     State state = STATE_START;
+    State errorState = STATE_OK;
 
     while(token->type == TOKEN_UNKNOWN)
     {
@@ -54,6 +50,7 @@ int FSM(FILE* file, Token* token)
             case STATE_START:
                 state = GetFirstState(c);
             break;
+
             case STATE_UNDERSCORE:
                 if(isalnum(c) || c == '_') state = STATE_VARIABLE;
                 else token->type = TOKEN_UNDERSCORE;
@@ -67,7 +64,7 @@ int FSM(FILE* file, Token* token)
             case STATE_ZERO:
                 if(c == '.') state = STATE_FLOAT_DOT;
                 else if(c == 'e' || c == 'E') state = STATE_FLOAT_EXP;
-                else if(isdigit(c)) return STATE_ERROR;
+                else if(isdigit(c)) errorState = STATE_ERROR;
                 else token->type = TOKEN_INTEGER;
             break;
 
@@ -83,121 +80,52 @@ int FSM(FILE* file, Token* token)
 
             // FLOAT START
             case STATE_FLOAT_DOT:
-                if(isdigit(c)) state = STATE_FLOAT_DIGIT;
-                else return STATE_ERROR;
-            break;
-
             case STATE_FLOAT_DIGIT:
-                if(isdigit(c)) state = STATE_FLOAT_DIGIT;
-                else if(c == 'e' || c == 'E') state = STATE_FLOAT_EXP;
-                else token->type = TOKEN_FLOAT;
-            break;
-
             case STATE_FLOAT_EXP:
-                if(c == '+' || c == '-') state = STATE_FLOAT_EXP_PM;
-                else if(isdigit(c)) state = STATE_FLOAT_END;
-                else return STATE_ERROR;
-            break;
-
-            // TIETO 2 VZTAHY SA MOZNO DOKAZU DAT DO JEDNEHO  { STATE_FLOAT_EXP ---{+,-}---> STATE_FLOAT_END && ---{0-9}---> STATE_FLOAT_END }
             case STATE_FLOAT_EXP_PM:
-                if(isdigit(c)) state = STATE_FLOAT_END;
-                else return STATE_ERROR;
-            break;
-
             case STATE_FLOAT_END:
-                if(isdigit(c)) state = STATE_FLOAT_END;
-                else token->type = TOKEN_FLOAT;
+                errorState = GetFloatTokenType(c, &state, token);
             break;
             // FLOAT END
             
             // STRING START
             case STATE_STRING_START:
-                if(c == '"') state = STATE_STRING_END;
-                else if(c == '\\') state = STATE_STRING_SLASH;
-                //else if(c >=32 && c <= 127)  state = STATE_STRING_START;
-                else if(c >=32)  state = STATE_STRING_START;
-                else return STATE_ERROR;
-            break;
-
             case STATE_STRING_SLASH:
-                if(c == 'n' || c == 'r' || c == 't' || c == '\'' || c == '"' || c=='\\') state = STATE_STRING_START;
-                else if(c == 'x') state = STATE_STRING_HEX1;
-                else return STATE_ERROR;
-            break;
-
             case STATE_STRING_HEX1:
-                if(isxdigit(c)) state = STATE_STRING_HEX2;
-                else return STATE_ERROR;
-            break;
-            
             case STATE_STRING_HEX2:
-                if(isxdigit(c)) state = STATE_STRING_START;
-                else return STATE_ERROR;
-            break;
-
             case STATE_STRING_END:
-                token->type = TOKEN_STRING;
+                errorState = GetStringTokenType(c, &state, token);
             break;
             // STRING END
 
-            // PROLOG START
             case STATE_PROLOG:
-                if(c == 'i') state = STATE_PROLOG_i;
-                else return STATE_ERROR;
-            break;
             case STATE_PROLOG_i:
-                if(c == 'm') state = STATE_PROLOG_m;
-                else return STATE_ERROR;
-            break;
             case STATE_PROLOG_m:
-                if(c == 'p') state = STATE_PROLOG_p;
-                else return STATE_ERROR;
-            break;  
             case STATE_PROLOG_p:
-                if(c == 'o') state = STATE_PROLOG_o;
-                else return STATE_ERROR;
-            break;
             case STATE_PROLOG_o:
-                if(c == 'r') state = STATE_PROLOG_r;
-                else return STATE_ERROR;
-            break;
             case STATE_PROLOG_r:
-                if(c == 't') state = STATE_PROLOG_t;
-                else return STATE_ERROR;
-            break;
             case STATE_PROLOG_t:
-                token->type = TOKEN_PROLOG;
+                errorState = GetPrologTokenType(c, &state, token);
             break;
-            // PROLOG END
+
 
             // NULL TYPE START
             case STATE_NULL_START:
-                if(isalnum(c)) state = STATE_NULL_TYPE;
-                else if(c == '[') state = STATE_NULL_RBRACKET;
-                else return STATE_ERROR;
-            break;
-
             case STATE_NULL_RBRACKET:
-                if(c == ']') state = STATE_NULL_TYPE;
-                else return STATE_ERROR;
-            break;
-
             case STATE_NULL_TYPE:
-                if(isalnum(c)) state = STATE_NULL_START;
-                else token->type = TOKEN_NULL_TYPE;
+                errorState = GetNullTypesTokenType(c, &state, token);
             break;
             // NULL TYPE END
 
             // u8 check start
             case STATE_SQUARE_LEFT_PAR:
                 if(c == ']') state = STATE_SQUARE_RIGHT_PAR;
-                else return STATE_ERROR;
+                else errorState = STATE_ERROR;
             break;
 
             case STATE_SQUARE_RIGHT_PAR:
                 if(isalnum(c)) state = STATE_VARIABLE;
-                else return STATE_ERROR;
+                else errorState = STATE_ERROR;
             break;
             // u8 check end
 
@@ -215,8 +143,6 @@ int FSM(FILE* file, Token* token)
                 else token->type = TOKEN_DIV;
             break;
             case STATE_COMMENT:
-                // if(!(c == '\n' || c==EOF)) state == STATE_COMMENT;
-                // else token->type = TOKEN_COMMENT;
                 if(c == '\n' || c==EOF) token->type = TOKEN_COMMENT;
             break;
             case STATE_ASSIGN:
@@ -284,8 +210,13 @@ int FSM(FILE* file, Token* token)
                 token->type = TOKEN_SPACE;
             break;
             default:
-                return STATE_ERROR;
+                errorState = STATE_ERROR;
             break;
+        }
+
+        if(errorState == STATE_ERROR)
+        {
+            return errorState;
         }
 
         if(token->type != TOKEN_UNKNOWN) 
@@ -300,12 +231,12 @@ int FSM(FILE* file, Token* token)
             }
 
             ungetc(c,file);
-            return STATE_OK;
+            return errorState;
         }
 
         DataToToken(c, token);
     }
-    return STATE_OK;
+    return errorState;
 }
 State GetFirstState(char c)
 {
@@ -340,7 +271,137 @@ State GetFirstState(char c)
     else return STATE_ERROR;
 }
 
-int CheckForNullType(Token* token)
+State GetNullTypesTokenType(char c, State* state, Token* token)
+{
+    switch (*state)
+    {
+        case STATE_NULL_START:
+            if(isalnum(c)) state = STATE_NULL_TYPE;
+            else if(c == '[') state = STATE_NULL_RBRACKET;
+            else return STATE_ERROR;
+        break;
+        case STATE_NULL_RBRACKET:
+            if(c == ']') state = STATE_NULL_TYPE;
+            else return STATE_ERROR;
+        break;
+        case STATE_NULL_TYPE:
+            if(isalnum(c)) state = STATE_NULL_START;
+            else token->type = TOKEN_NULL_TYPE;
+        break;
+        default:
+            return STATE_ERROR;
+        break;
+    }
+    return STATE_OK;
+}
+
+State GetFloatTokenType(char c, State* state, Token* token)
+{
+    switch (*state)
+    {
+        case STATE_FLOAT_DOT:
+            if(isdigit(c)) *state = STATE_FLOAT_DIGIT;
+            else return STATE_ERROR;
+        break;
+        case STATE_FLOAT_DIGIT:
+            if(isdigit(c)) *state = STATE_FLOAT_DIGIT;
+            else if(c == 'e' || c == 'E') *state = STATE_FLOAT_EXP;
+            else token->type = TOKEN_FLOAT;
+        break;
+        case STATE_FLOAT_EXP:
+            if(c == '+' || c == '-') *state = STATE_FLOAT_EXP_PM;
+            else if(isdigit(c)) *state = STATE_FLOAT_END;
+            else  return STATE_ERROR;
+        break;
+        case STATE_FLOAT_EXP_PM:
+            if(isdigit(c)) *state = STATE_FLOAT_END;
+            else  return STATE_ERROR;
+        break;
+        case STATE_FLOAT_END:
+            if(isdigit(c)) *state = STATE_FLOAT_END;
+            else  return STATE_ERROR;
+        break;
+        default:
+            return STATE_ERROR;
+        break;
+    }
+    return STATE_OK;
+}
+
+State GetStringTokenType(char c, State* state, Token* token)
+{
+    switch (*state)
+    {
+        case STATE_STRING_START:
+            if(c == '"') *state = STATE_STRING_END;
+            else if(c == '\\') *state = STATE_STRING_SLASH;
+            else if(c >= 32) *state = STATE_STRING_START;
+            else return STATE_ERROR;
+        break;
+        case STATE_STRING_SLASH:
+            if(c == 'n' || c == 'r' || c == 't' || c == '\'' || c == '"' || c == '\\') *state = STATE_STRING_START;
+            else if(c == 'x') *state = STATE_STRING_HEX1;
+            else return STATE_ERROR;
+        break;
+        case STATE_STRING_HEX1:
+            if(isxdigit(c)) *state = STATE_STRING_HEX2;
+            else return STATE_ERROR;
+        break;
+        case STATE_STRING_HEX2:
+            if(isxdigit(c)) *state = STATE_STRING_START;
+            else return STATE_ERROR;
+        break;
+        case STATE_STRING_END:
+            token->type = TOKEN_STRING;
+        break;
+        default:
+            return STATE_ERROR;
+        break;
+    }
+    return STATE_OK;
+}
+
+State GetPrologTokenType(char c, State* state, Token* token)
+{
+    switch (*state)
+    {
+        case STATE_PROLOG:
+            if(c == 'i') *state = STATE_PROLOG_i;
+            else return STATE_ERROR;
+        break;
+        case STATE_PROLOG_i:
+            if(c == 'm') *state = STATE_PROLOG_m;
+            else return STATE_ERROR;
+        break;
+        case STATE_PROLOG_m:
+            if(c == 'p') *state = STATE_PROLOG_p;
+            else return STATE_ERROR;
+        break;  
+        case STATE_PROLOG_p:
+            if(c == 'o') *state = STATE_PROLOG_o;
+            else return STATE_ERROR;
+        break;
+        case STATE_PROLOG_o:
+            if(c == 'r') *state = STATE_PROLOG_r;
+            else return STATE_ERROR;
+        break;
+        case STATE_PROLOG_r:
+            if(c == 't') *state = STATE_PROLOG_t;
+            else return STATE_ERROR;
+        break;
+        case STATE_PROLOG_t:
+            token->type = TOKEN_PROLOG;
+            return STATE_OK;
+        break;
+        default:
+            return STATE_ERROR;
+        break;
+    }
+    return STATE_OK;
+}
+
+
+State CheckForNullType(Token* token)
 {
     if(!strcmp(token->data, "?i32"))
     {
