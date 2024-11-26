@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -g -Wall -Wextra
 
 # Source files
-SOURCES = main.c lexer.c token.c stack.c parser.c ast.c symtable.c semantic.c linked_list.c expr.c
+SOURCES = main.c lexer.c token.c stack.c parser.c ast.c symtable.c semantic.c linked_list.c expr.c codegen.c
 
 # Object files (replace .c with .o)
 OBJECTS = $(SOURCES:.c=.o)
