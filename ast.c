@@ -193,10 +193,6 @@ ASTNode* CreateFunCallExpressionsNode(ASTNode *node){
 
 
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
-    if(node->type != TYPE_FUN_CALL){
-        exit(99);
-    }
-
     ASTNode *temp = node;
     while(temp->right != NULL){
         temp = temp->right;
@@ -210,21 +206,12 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     return node;
 }
 
-ASTNode* CreateArgumentNullNode(ASTNode *node, char *id){
-    if(node->type != TYPE_FUN_CALL){
-        exit(99);
-    }
-
+ASTNode* CreateArgumentNullNode(ASTNode *node){
     ASTNode *temp = node;
     while(temp->right != NULL){
         temp = temp->right;
     }
     temp->right = CreateAstNode(TYPE_NULL);
-    temp->right->data.str = strdup(id);
-    if(temp->right->data.str == NULL){
-        fprintf(stderr, "AST NODE: Memory allocation failed\n");
-        exit(99);
-    }
     return node;
 }
 

@@ -1055,7 +1055,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 else if (token->type == TOKEN_null)
                 {
                     *ast = (*ast)->right;
-                    *ast = CreateArgumentNullNode(*ast, token->data);
+                    *ast = CreateArgumentNullNode(*ast);
                 }
                 
                 saveToken = NULL;
