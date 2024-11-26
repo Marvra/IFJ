@@ -285,8 +285,10 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
             id = GetId(idNoNullNode);
             newSymtable = InsertNode(newSymtable, id);
             SetType(newSymtable, id, newType);
+        }else{
+            *error = 7;
         }
-        *error = 7;
+        
         return newSymtable;
     }
     return newSymtable;
@@ -429,7 +431,7 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
             }else{
                 return 4;
             }
-        }else if(nodeType == TYPE_ID){
+        }else if(nodeType == TYPE_ARGUMENT){
             char *argId = GetId(special);
             TNode *argumentNode = FindInSymlist(list, argId);
             if(argumentNode == NULL){
@@ -475,27 +477,8 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
                     return 4;
                 }
             }
-        }else if(nodeType == TYPE_OPERATOR){
-            DataType expType;
-            bool isKnown;
-            int error = AnalyzeExpression(special, list, &expType, &isKnown);
-            if(error){
-                return error;
-            }
-
-            if(expType == T_I32){
-                if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.i2f")){
-                    return 0;
-                }else{
-                    return 4;
-                }
-            }else{
-                if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.f2i")){
-                    return 0;
-                }else{
-                    return 4;
-                }
-            }
+        }else{
+            return 4;
         }
     }
 
@@ -902,6 +885,14 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else{
                         return 7;
                     }
+                }else{
+                    if(leftNType == TYPE_I32 && rightNType == TYPE_I32){
+                        return 0;
+                    }else if(leftNType == TYPE_F64 && rightNType == TYPE_F64){
+                        return 0;
+                    }else{
+                        return 7;
+                    }
                 }
             }else{
                 DataType rightDataType;
@@ -928,7 +919,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                 }else{
                     if(leftNType == TYPE_I32 && rightDataType == T_I32){
                         return 0;
-                    }else if(leftNType == TYPE_F64 && rightDataType == T_F64){
+                    }else if(leftNType == TYPE_F64 && (rightDataType == T_F64 || rightDataType == T_I32)){
                         return 0;
                     }else if(leftIsConst && leftIsKnown && rightDataType == T_F64){
                         return 0;
@@ -1002,7 +993,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                 }else{
                     if(rightNType == TYPE_I32 && leftDataType == T_I32){
                         return 0;
-                    }else if(rightNType == TYPE_F64 && leftDataType == T_F64){
+                    }else if(rightNType == TYPE_F64 && (leftDataType == T_F64 || leftDataType == T_I32)){
                         return 0;
                     }else if(rightIsConst && rightIsKnown && leftDataType == T_F64){
                         return 0;
@@ -1549,15 +1540,15 @@ int TraverseAST(ASTNode *node){
         return error;
     }
 
-    for(int i = 0; i < level; i++){
-        printf("    ");
-    }
-
     ASTNodeType type = GetNodeType(node);
 
     switch(type){
         case TYPE_PROGRAM:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("PROGRAM\n");
+
             error = TraverseAST(GetCode(node));
             break;
         case TYPE_CODE:
@@ -1566,47 +1557,89 @@ int TraverseAST(ASTNode *node){
             error = TraverseAST(GetCode(node));
             break;
         case TYPE_FUN_DECL:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("FUNCTION DECLARATION\n");
+
             error = TraverseAST(GetNode(node));
             break;
         case TYPE_VAR_DECL:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("VARIABLE DECLARATION\n");
+
             level--;
             break;
         case TYPE_CON_DECL:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("CONSTANT DECLARATION\n");
+
             level--;
             break;
         case TYPE_FUN_CALL:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("FUNCTION CALL\n");
+
             level--;
             break;
         case TYPE_RETURN:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("RETURN\n");
+
             level--;
             break;
         case TYPE_ASSIGNMENT:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("ASSIGNMENT\n");
+
             level--;
             break;
         case TYPE_IF_ELSE:
-            printf("IF ELSE\n");
-            error = TraverseAST(node->left->right);
-            error = TraverseAST(node->left->left);
+            /*for(int i = 0; i < level; i++){
+                printf("  ");
+            }
+            printf("IF ELSE\n");*/
+
+            error = TraverseAST(node->right->left);
+            level++;
+            error = TraverseAST(node->right->right);
             break;
         case TYPE_WHILE_CLOSED:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("WHILE\n");
+
             error = TraverseAST(GetNode(node));
             break;
         case TYPE_IF_CLOSED:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("IF\n");
+
             error = TraverseAST(GetCode(node));
             break;
         case TYPE_ELSE_CLOSED:
+            for(int i = 0; i < level; i++){
+                printf("  ");
+            }
             printf("ELSE\n");
+
             error = TraverseAST(GetCode(node));
             break;
         default:
+            printf("DEFAULT\n");
             break;
     }
 
