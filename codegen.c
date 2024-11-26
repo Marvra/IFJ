@@ -24,7 +24,43 @@ void CreateFunctionCall(char* function_id) {
     printf("CALL $%s\n", function_id);
 }
 
+void CreateVariable(char* var_id)
+{
+    printf("DEFVAR LF@%s\n", var_id);
+}
+
+void CreateNonVariableParams(int param)
+{
+    printf("DEFVAR TF@param%i\n", param);
+}
+
+void CreateNonVariableParamsData(ASTNode data,int param)
+{
+    if(data.type == TYPE_VALUE_I32)
+    {
+        printf("MOVE TF@param%i int@%i\n", param, data.data.i32);
+    }
+    else if(data.type == TYPE_VALUE_F64)
+    {
+        printf("MOVE TF@param%i float@%f\n", param, data.data.f64);
+    }
+    else if(data.type == TYPE_STRING)
+    {
+        printf("MOVE TF@param%i string@%s\n", param, data.data.str);
+    }
+    else if(data.type == TYPE_ARGUMENT)
+    {
+        printf("MOVE TF@param%i LF@%s\n", param, data.data.str);
+    }
+    else
+    {
+        printf("MOVE TF@param%i nil@nil\n", param);
+    }
+}
+
+
 int TraverseASTCodeGen(ASTNode *node){
+    int params = 1;
     int error = 0;
     static int level = 0;
     if(node == NULL){
@@ -32,16 +68,11 @@ int TraverseASTCodeGen(ASTNode *node){
         return error;
     }
 
-    // for(int i = 0; i < level; i++){
-    //     printf("    ");
-    // }
-
     ASTNodeType type = GetNodeType(node);
 
     switch(type){
         case TYPE_PROGRAM:
             CreateHeader();
-            //printf("PROGRAM\n");
             error = TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_CODE:
@@ -50,7 +81,6 @@ int TraverseASTCodeGen(ASTNode *node){
             error = TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_FUN_DECL:
-            //printf("FUNCTION DECLARATION\n");
             if(!strcmp(GetId(node->left), "main"))
             {
                 CreateMain();
@@ -62,40 +92,44 @@ int TraverseASTCodeGen(ASTNode *node){
             error = TraverseASTCodeGen(GetNode(node));
             break;
         case TYPE_VAR_DECL:
-            //printf("VARIABLE DECLARATION\n");
+            CreateVariable(GetId(node->left));
             level--;
             break;
         case TYPE_CON_DECL:
-            //printf("CONSTANT DECLARATION\n");
+            CreateVariable(GetId(node->left));
             level--;
             break;
         case TYPE_FUN_CALL:
-            //printf("FUNCTION CALL\n");
+            ASTNode *paramsNode = GetNode(node);
+            // TOTO AK NENI PARAMETER VARIABLE AK JE VARIABLE ASI TO BUDE INAK
+            while (paramsNode != NULL)
+            {
+                CreateNonVariableParams(params);
+                CreateNonVariableParamsData(*paramsNode, params);
+                params++;
+                paramsNode = GetArgNode(paramsNode);
+            }
+            CreateFunctionCall(GetId(node->left));
+            
             level--;
             break;
         case TYPE_RETURN:
-            //printf("RETURN\n");
             level--;
             break;
         case TYPE_ASSIGNMENT:
-            //printf("ASSIGNMENT\n");
             level--;
             break;
         case TYPE_IF_ELSE:
-            //printf("IF ELSE\n");
             error = TraverseASTCodeGen(node->left->right);
             error = TraverseASTCodeGen(node->left->left);
             break;
         case TYPE_WHILE_CLOSED:
-            //printf("WHILE\n");
             error = TraverseASTCodeGen(GetNode(node));
             break;
         case TYPE_IF_CLOSED:
-            //printf("IF\n");
             error = TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_ELSE_CLOSED:
-            //printf("ELSE\n");
             error = TraverseASTCodeGen(GetCode(node));
             break;
         default:
