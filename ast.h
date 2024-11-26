@@ -98,6 +98,7 @@ ASTNode* CreateReturnNode(ASTNode *node);
 ASTNode* CreateFunCallNode(ASTNode *node);
 ASTNode* CreateFunCallExpressionsNode(ASTNode *node);
 ASTNode* CreateArgumentNode(ASTNode *node, char *id);
+ASTNode* CreateArgumentNullNode(ASTNode *node, char *id);
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value);
 ASTNode* CreateArgumentNodeF64(ASTNode *node, float value);
 ASTNode* CreateArgumentNodeU8(ASTNode *node, char *value);

@@ -210,6 +210,24 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     return node;
 }
 
+ASTNode* CreateArgumentNullNode(ASTNode *node, char *id){
+    if(node->type != TYPE_FUN_CALL){
+        exit(99);
+    }
+
+    ASTNode *temp = node;
+    while(temp->right != NULL){
+        temp = temp->right;
+    }
+    temp->right = CreateAstNode(TYPE_NULL);
+    temp->right->data.str = strdup(id);
+    if(temp->right->data.str == NULL){
+        fprintf(stderr, "AST NODE: Memory allocation failed\n");
+        exit(99);
+    }
+    return node;
+}
+
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -451,6 +469,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_ID: return "ID";
         case TYPE_OPERATOR: return "Operator";
         case TYPE_VALUE_I32: return "ValueI32";
+        case TYPE_NULL: return "Null";
         //case TYPE_VALUE: return "Value"; ---------------------------------------------------------------------------------------------------
         case TYPE_STRING: return "String";
         case TYPE_REL_OPERATOR: return "RelOperator";
