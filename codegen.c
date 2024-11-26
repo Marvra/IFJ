@@ -1,5 +1,39 @@
 #include "codegen.h"
 
+// Print astNOde
+void print_ast_node(ASTNode* node, int depth) {
+    if (!node) return;
+
+    // Print indentation
+    for (int i = 0; i < depth; i++) printf("  ");
+
+    // Print node type and specific details
+    printf("%s", NodeTypeToString(node->type));
+    switch (node->type) {
+        case TYPE_ID: printf(" [%s]", node->data.str); break;
+        case TYPE_VALUE_I32: printf(" [%d]", node->data.i32); break;
+        case TYPE_VALUE_F64: printf(" [%f]", node->data.f64); break;
+        case TYPE_OPERATOR: printf(" [%s]", OperatorToString(node->data.op)); break;
+        case TYPE_DATA_TYPE: 
+            printf(" [");
+            DisplayDataType(node->data.type);
+            printf("]");
+            break;
+        default: break;
+    }
+    printf("\n");
+
+    // Recursively print children
+    if (node->left) print_ast_node(node->left, depth + 1);
+    if (node->right) print_ast_node(node->right, depth + 1);
+}
+
+void print_ast(ASTNode* node) {
+    print_ast_node(node, 0);
+}
+
+// Konec printu
+
 void CreateHeader()
 {
     printf(".IFJcode24\n");
@@ -58,7 +92,6 @@ void CreateNonVariableParamsData(ASTNode data,int param)
     }
 }
 
-
 int TraverseASTCodeGen(ASTNode *node){
     int params = 1;
     int error = 0;
@@ -93,10 +126,26 @@ int TraverseASTCodeGen(ASTNode *node){
             break;
         case TYPE_VAR_DECL:
             CreateVariable(GetId(node->left));
+            if (node->right->type == TYPE_OPERATOR)
+            {
+                if (node->right->left->type == TYPE_VALUE_I32)
+                {
+                    ExpressionsOperatorInt(GetId(node->left), node->right);
+                }
+                else
+                {
+                    ExpressionsOperatorFloat(GetId(node->left), node->right);
+                }
+            }
+            else
+            {
+                ExpressionsOperand(GetId(node->left), node->right);
+            }
             level--;
             break;
         case TYPE_CON_DECL:
             CreateVariable(GetId(node->left));
+            ExpressionsOperand(GetId(node->left), node->right);
             level--;
             break;
         case TYPE_FUN_CALL:
@@ -117,6 +166,21 @@ int TraverseASTCodeGen(ASTNode *node){
             level--;
             break;
         case TYPE_ASSIGNMENT:
+            if (node->right->type == TYPE_OPERATOR)
+            {
+                if (node->right->left->type == TYPE_VALUE_I32)
+                {
+                    ExpressionsOperatorInt(GetId(node->left), node->right);
+                }
+                else
+                {
+                    ExpressionsOperatorFloat(GetId(node->left), node->right);
+                }
+            }
+            else
+            {
+                ExpressionsOperand(GetId(node->left), node->right);
+            }
             level--;
             break;
         case TYPE_IF_ELSE:
@@ -138,94 +202,85 @@ int TraverseASTCodeGen(ASTNode *node){
 
     return error;
 }
+void ExpressionsOperand(char* id, ASTNode* Input)
+{
+    if (Input->type == TYPE_VALUE_I32)
+    {
+        printf("MOVE LF@%s int@%d\n", id, GetIntValue(Input));
+    }
+    else if (Input->type == TYPE_VALUE_F64)
+    {
+        printf("MOVE LF@%s float@%f\n", id, GetFloatValue(Input));
+    }
+    else
+    {
+        printf("MOVE LF@%s string@%s\n", id, GetId(Input));
+    }
+}
 
-// void appendFunctionParam(char* param_id)
-// { 
-//     printf("DEFVAR LF@%s\n",param_id);	
-// }
+void ExpressionsOperatorInt(char* id, ASTNode* Input)
+{
+    Operator operator = GetOperator(Input);
+    int value1 = GetIntValue(Input->left);
+    int value2 = GetIntValue(Input->right);
+    switch (operator)
+    {
+    case OP_ADD:
+        printf("ADD LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_SUB:
+        printf("SUB LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_MUL:
+        printf("MUL LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_DIV:
+        printf("DIV LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_EQ:
+        printf("EQ LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_GREATER:
+        printf("GT LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    case OP_LESS:
+        printf("LT LF@%s int@%d int@%d\n", id, value1, value2);
+        break;
+    default:
+        break;
+    }
+}
 
-// // DataTypes
-// void dataType(char* id,DataType type, char* input)
-// {
-//     printf("WRITE GF@%s\n", input);
-
-//     switch (type)
-//     {
-//         case T_F64:
-//         case T_F64_N:
-//             printf("READ LF@$%s int\n", id);
-//             break;
-//         case T_I32:
-//         case T_I32_N:
-//             printf("READ LF@$%s float\n", id);
-//             break;
-//         case T_U8:
-//         case T_U8_N:
-//             printf("READ LF@$%s string\n", id);
-//             break;
-//     }
-// }
-
-// // Var decleration
-
-// void varDeclaration(char *var_id, DataType type, char* input) 
-// {
-//     printf("DEFVAR LF@$%s\n", var_id);
-// }
-
-// void assignment(char *assig_id)
-// {
-//     printf("LABEL $%s\n", assig_id);
-// }
-
-// // header, jump on main
-// void header()
-// {
-//     printf(".IFJcode24\n");
-
-//     printf("JUMP $$main");
-// }
-
-// void expression(char *id, Operator operator)
-// {
-//     switch(operator)
-//     {
-//         case OP_ADD:
-//             printf("ADD LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_SUB:
-//             printf("SUB LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_MUL:
-//             printf("MUL LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_DIV:
-//             printf("DIV LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//     }
-// }
-
-// void relationalContidion(char *id, Operator operator)
-// {
-//     switch(operator)
-//     {
-//         case OP_EQ:
-//             printf("EQ LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_GREATER:
-//             printf("GT LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_LESS:
-//             printf("LT LF@$%s TF@%value1 TF@%value2", id);
-//             break;
-//         case OP_GE:
-
-//             break;
-//         case OP_NEQ:
-//             break;
-//         case OP_LE:
-//             break;
-//     }
-// }
-
+void ExpressionsOperatorFloat(char* id, ASTNode* Input)
+{
+    Operator operator = GetOperator(Input);
+    float value1 = GetFloatValue(Input->left);
+    float value2 = GetFloatValue(Input->right);
+    switch (operator)
+    {
+    case OP_ADD:
+        printf("ADD LF@%s float@%f float@%f\n", id, value1, value2);
+        break;
+    case OP_SUB:
+        printf("SUB LF@%s float@%f float@%f\n", id, value1, value2);
+        break;
+    case OP_MUL:
+        printf("MUL LF@%s float@%f float@%f\n", id, value1, value2);
+        break;
+    case OP_DIV:
+        printf("DIV LF@%s float@%f float@%f\n", id, value1, value2);
+        break;
+    case OP_EQ:
+        printf("EQ LF@%s int@%f int@%f\n", id, value1, value2);
+        break;
+    case OP_GREATER:
+        printf("GT LF@%s int@%f int@%f\n", id, value1, value2);
+        break;
+    case OP_LESS:
+        printf("LT LF@%s int@%f int@%f\n", id, value1, value2);
+        break;
+    default:
+        break;
+    }
+}
 
