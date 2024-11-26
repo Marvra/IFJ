@@ -53,6 +53,7 @@
 <type> -> STRING_NULL 
 
 <term> -> ID
+<term> -> NULL
 <term> -> VALUE_INT
 <term> -> VALUE_FLOAT
 <term> -> VALUE_STRING

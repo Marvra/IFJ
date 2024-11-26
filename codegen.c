@@ -1,37 +1,4 @@
 #include "codegen.h"
-
-// Print astNOde
-void print_ast_node(ASTNode* node, int depth) {
-    if (!node) return;
-
-    // Print indentation
-    for (int i = 0; i < depth; i++) printf("  ");
-
-    // Print node type and specific details
-    printf("%s", NodeTypeToString(node->type));
-    switch (node->type) {
-        case TYPE_ID: printf(" [%s]", node->data.str); break;
-        case TYPE_VALUE_I32: printf(" [%d]", node->data.i32); break;
-        case TYPE_VALUE_F64: printf(" [%f]", node->data.f64); break;
-        case TYPE_OPERATOR: printf(" [%s]", OperatorToString(node->data.op)); break;
-        case TYPE_DATA_TYPE: 
-            printf(" [");
-            DisplayDataType(node->data.type);
-            printf("]");
-            break;
-        default: break;
-    }
-    printf("\n");
-
-    // Recursively print children
-    if (node->left) print_ast_node(node->left, depth + 1);
-    if (node->right) print_ast_node(node->right, depth + 1);
-}
-
-void print_ast(ASTNode* node) {
-    print_ast_node(node, 0);
-}
-
 // Konec printu
 
 void CreateHeader()
