@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "semantic.h"
+#include "codegen.h"
 
 int main(int argc, char *argv[])
 {
@@ -45,9 +46,9 @@ int main(int argc, char *argv[])
         //printf("Error in Semantic : %d\n", returnCode);
         return returnCode;
     }
-
+    
     ASTNode* currentNode = tree;
-    TraverseAST(currentNode);
+    TraverseASTCodeGen(currentNode);
     
     return returnCode;
 }
