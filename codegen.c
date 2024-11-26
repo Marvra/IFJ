@@ -1,9 +1,10 @@
-#include "ast.h"
+#include "codegen.h"
 
 // Funkce
 void appendFunctionName(char* function_id) {
     printf("LABEL $%s\n", function_id);
 }
+
 void appendFunctionParam(char* param_id)
 { 
     printf("DEFVAR LF@%s\n",param_id);	
@@ -84,7 +85,7 @@ void relationalContidion(char *id, Operator operator)
             printf("LT LF@$%s TF@%value1 TF@%value2", id);
             break;
         case OP_GE:
-            
+
             break;
         case OP_NEQ:
             break;
