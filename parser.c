@@ -375,7 +375,7 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 int NonTerminalParamsEnterPush(Stack* stack, Tokentype type)
 {
     // <params_enter> -> <term> <next_params_enter>
-    if(type == TOKEN_INTEGER || type == TOKEN_FLOAT || type == TOKEN_STRING || type == TOKEN_VARIABLE)
+    if(type == TOKEN_INTEGER || type == TOKEN_FLOAT || type == TOKEN_STRING || type == TOKEN_VARIABLE || type == TOKEN_null)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_NEXT_PARAMS_ENTER);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_TERM);
@@ -461,7 +461,7 @@ int NonTerminalBarsPush(Stack* stack, Tokentype type)
 int NonTerminalReturnTypePush(Stack* stack, Tokentype type)
 {
     // <return_type> -> <type>
-    if(type == TOKEN_i32 || type == TOKEN_f64 || type == TOKEN_u8)
+    if(type == TOKEN_i32 || type == TOKEN_f64 || type == TOKEN_u8 || type == TOKEN_i32_NULL || type == TOKEN_f64_NULL || type == TOKEN_u8_NULL)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
     }
@@ -538,6 +538,11 @@ int NonTerminalTermPush(Stack* stack, Tokentype type)
     else if(type == TOKEN_STRING)
     {
         PushItem(stack, TOKEN_STRING, NON_TERMINAL_UNKOWN);
+    }
+    // <term> -> NULL
+    else if(type == TOKEN_null)
+    {
+        PushItem(stack, TOKEN_null, NON_TERMINAL_UNKOWN);
     }
     else
     {
@@ -1047,6 +1052,11 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                     *ast = (*ast)->right;
                     *ast = CreateArgumentNode(*ast, token->data);
                 }
+                else if (token->type == TOKEN_null)
+                {
+                    *ast = (*ast)->right;
+                    *ast = CreateArgumentNode(*ast, "null");
+                }
                 
                 saveToken = NULL;
             }
@@ -1121,10 +1131,8 @@ int InterestingTokens(Tokentype type)
             return 1;
         case TOKEN_CURLY_RIGHT_PAR:
             return 1;
-        break;
         case TOKEN_UNDERSCORE:
             return 1;
-        break;
         case TOKEN_VARIABLE:
             return lastNonTerminal == NON_T_ID_HELPER ? 1 : 0;
         default:

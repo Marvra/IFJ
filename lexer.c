@@ -30,7 +30,7 @@ int Lexer(FILE* file, TokenList* list)
 
         GetNextToken(&token);
     }
-    
+    //PrintTokenList(list);
     return 0;
     
 }
@@ -227,6 +227,7 @@ State FSM(FILE* file, Token* token)
             }
             else if(token->type == TOKEN_NULL_TYPE)
             {
+                ungetc(c,file);
                 return CheckForNullType(token);
             }
 
