@@ -1105,6 +1105,12 @@ DataType TokenTypeToDataType(Tokentype type)
             return T_F64;
         case TOKEN_u8:
             return T_U8;
+        case TOKEN_i32_NULL:
+            return T_I32_N;
+        case TOKEN_f64_NULL:
+            return T_F64_N;
+        case TOKEN_u8_NULL:
+            return T_U8_N;
         default:
             return T_DEFAULT;
     }
