@@ -1009,7 +1009,8 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             break;
         case TOKEN_VARIABLE:
-            if(lastNonTerminal == NON_T_ID_HELPER)
+        case TOKEN_UNDERSCORE:
+            if(lastNonTerminal == NON_T_ID_HELPER && interestingToken != TOKEN_UNDERSCORE)
             {
                 saveToken->data = strdup(token->data);
                 saveToken->type = token->type;
@@ -1072,6 +1073,10 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             {
                 strcat(saveToken->data,token->data);
             }
+            else if(token->type == TOKEN_UNDERSCORE)
+            {
+                saveToken->data = "_";
+            }
         default:
             break;
     }
@@ -1115,6 +1120,9 @@ int InterestingTokens(Tokentype type)
         case TOKEN_else:
             return 1;
         case TOKEN_CURLY_RIGHT_PAR:
+            return 1;
+        break;
+        case TOKEN_UNDERSCORE:
             return 1;
         break;
         case TOKEN_VARIABLE:
