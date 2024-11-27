@@ -614,6 +614,9 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
             if(error){
                 return error;
             }
+            if(rightType == TYPE_VOID){
+                return 7;
+            }
         }
     
         if(type == T_DEFAULT){
@@ -765,6 +768,9 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
             error = AnalyzeFunctionCall(temp, list, &rightType);
             if(error){
                 return error;
+            }
+            if(rightType == TYPE_VOID){
+                return 7;
             }
         }
 
@@ -1375,6 +1381,10 @@ int SemanticAnalysis(ASTNode *root){
                 if(error){
                     FreeSemantics(stack, symlist);
                     return error;
+                }
+                if(funReturnType != TYPE_VOID){
+                    FreeSemantics(stack, symlist);
+                    return 4;
                 }
                 currentNode = PopAST(stack);
                 currentNode = GetCode(currentNode);
