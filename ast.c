@@ -456,6 +456,7 @@ const char* NodeTypeToString(ASTNodeType type) {
         case TYPE_ID: return "ID";
         case TYPE_OPERATOR: return "Operator";
         case TYPE_VALUE_I32: return "ValueI32";
+        case TYPE_VALUE_F64: return "ValueF64";
         case TYPE_NULL: return "Null";
         //case TYPE_VALUE: return "Value"; ---------------------------------------------------------------------------------------------------
         case TYPE_STRING: return "String";

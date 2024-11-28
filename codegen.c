@@ -1,4 +1,103 @@
 #include "codegen.h"
+
+#define FUNCTION_substring \
+"LABEL ifj_substring\n" \
+"PUSHFRAME\n" \
+\
+"DEFVAR LF@result\n" \
+"DEFVAR LF@start\n" \
+"DEFVAR LF@end\n" \
+"DEFVAR LF@length\n" \
+"DEFVAR LF@temp\n" \
+\
+"MOVE LF@start LF@%2\n" \
+"MOVE LF@end LF@%3\n" \
+"STRLEN LF@length LF@%1\n" \
+\
+"# Kontrola platnosti indexů\n" \
+"LT LF@temp LF@start int@0\n" \
+"JUMPIFEQ substring_error LF@temp bool@true\n" \
+"LT LF@temp LF@end int@0\n" \
+"JUMPIFEQ substring_error LF@temp bool@true\n" \
+"GT LF@temp LF@start LF@length\n" \
+"JUMPIFEQ substring_error LF@temp bool@true\n" \
+"GT LF@temp LF@end LF@length\n" \
+"JUMPIFEQ substring_error LF@temp bool@true\n" \
+"GT LF@temp LF@start LF@end\n" \
+"JUMPIFEQ substring_error LF@temp bool@true\n" \
+\
+"# Vytvoření podřetězce\n" \
+"DEFVAR LF@i\n" \
+"MOVE LF@i LF@start\n" \
+"MOVE LF@result string@\n" \
+"LABEL substring_loop\n" \
+"LT LF@temp LF@i LF@end\n" \
+"JUMPIFEQ substring_end LF@temp bool@false\n" \
+"GETCHAR LF@temp LF@%1 LF@i\n" \
+"CONCAT LF@result LF@result LF@temp\n" \
+"ADD LF@i LF@i int@1\n" \
+"JUMP substring_loop\n" \
+\
+"LABEL substring_end\n" \
+"PUSHS LF@result\n" \
+"POPFRAME\n" \
+"RETURN\n" \
+\
+"LABEL substring_error\n" \
+"PUSHS nil@nil\n" \
+"POPFRAME\n" \
+"RETURN\n"
+
+#define FUNCTION_ord \
+"LABEL ifj_ord\n" \
+"PUSHFRAME\n" \
+\
+"DEFVAR LF@result\n" \
+"DEFVAR LF@length\n" \
+"DEFVAR LF@index\n" \
+"DEFVAR LF@char\n" \
+\
+"MOVE LF@index LF@%2\n" \
+"STRLEN LF@length LF@%1\n" \
+\
+"# Kontrola platnosti indexu\n" \
+"LT LF@result LF@index int@0\n" \
+"JUMPIFEQ ord_error LF@result bool@true\n" \
+"GT LF@result LF@index LF@length\n" \
+"JUMPIFEQ ord_error LF@result bool@true\n" \
+\
+"# Získání ASCII hodnoty znaku\n" \
+"STRI2INT LF@result LF@%1 LF@index\n" \
+"PUSHS LF@result\n" \
+"POPFRAME\n" \
+"RETURN\n" \
+\
+"LABEL ord_error\n" \
+"MOVE LF@result int@0\n" \
+"PUSHS LF@result\n" \
+"POPFRAME\n" \
+"RETURN\n"
+
+#define FUNCTION_chr \
+"LABEL ifj_chr\n" \
+"PUSHFRAME\n" \
+\
+"DEFVAR LF@result\n" \
+"INT2CHAR LF@result LF@%1\n" \
+\
+"PUSHS LF@result\n" \
+"POPFRAME\n" \
+"RETURN\n\n"
+
+// Zacatek printu
+void PrintASTNodeType(ASTNode *node) {
+    if (node == NULL) {
+        printf("Node is NULL\n");
+        return;
+    }
+    
+    printf("AST Node Type: %s\n", NodeTypeToString(node->type));
+}
 // Konec printu
 
 void CreateHeader()
@@ -9,6 +108,9 @@ void CreateHeader()
 
 void CreateMain()
 {
+    printf(FUNCTION_substring);
+    printf(FUNCTION_ord);
+    printf(FUNCTION_chr);
     printf("LABEL $main\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
@@ -21,13 +123,7 @@ void CreateFunction(char *function_id)
     printf("PUSHFRAME\n");
 }
 
-// Funkce
-/*void CreateFunctionCall(char* function_id) {
-    printf("CALL $%s\n", function_id);
-}*/
-
 void CreateFunctionCall(ASTNode *node) {
-    //printf("CALL $%s\n", function_id);
     char *functionId = GetId(node->left);
     if(!strcmp(functionId, "ifj.write")){
         ASTNodeType type = GetNodeType(node->right);
@@ -46,7 +142,9 @@ void CreateFunctionCall(ASTNode *node) {
             char *string = node->right->data.str;
             printf("WRITE string@%s\n",string);
         }
-    }else{
+    }
+    else
+    {
         printf("CALL $%s\n", functionId);
     }
 }
@@ -97,7 +195,119 @@ void CreateExpression(ASTNode *node){
         char *id = GetId(node);
         printf("PUSHS LF@%s\n", id);
     }else if(type == TYPE_FUN_CALL){
+        char *functionId = GetId(node->left);
+        // GOOD
+        if(!strcmp(functionId, "ifj.readstr"))
+        {
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("READ TF@res string\n");
+            printf("PUSHS TF@res\n");
+        }
+        // GOOD
+        else if(!strcmp(functionId, "ifj.readi32"))
+        {
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("READ TF@res int\n");
+            printf("PUSHS TF@res\n");
 
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.readf64"))
+        {
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("READ TF@res float\n");
+            printf("PUSHS TF@res\n");
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.i2f"))
+        {
+            int value = GetIntValue(node->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("INT2FLOAT TF@res int@%d\n", value);
+            printf("PUSHS TF@res\n");
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.f2i"))
+        {
+            float value = GetFloatValue(node->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("FLOAT@INT TF@res float@%f\n", value);
+            printf("PUSHS TF@res\n");
+        }
+        // GOOD
+        else if(!strcmp(functionId, "ifj.string"))
+        {
+            char* value = GetId(node->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("MOVE TF@res string@%s\n", value);
+            printf("PUSHS TF@res\n");
+        }
+        // GOOD
+        else if(!strcmp(functionId, "ifj.length"))
+        {
+            char* value = GetId(node->right->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("STRLEN TF@res string@%s\n", value);
+            printf("PUSHS TF@res\n");
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.concat"))
+        {
+            char* value1 = GetId(node->right);
+            char* value2 = GetId(node->right->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@res\n");
+            printf("CONCAT TF@res string@%s string@%s\n", value1, value2);
+            printf("PUSHS TF@res\n");
+        }
+        // Called with builtin functions
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.substring"))
+        {
+            int value1 = GetIntValue(node->right);
+            int value2 = GetIntValue(node->right->right);
+            int value3 = GetIntValue(node->right->right->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@%1\n");
+            printf("DEFVAR TF@%2\n");
+            printf("DEFVAR TF@%3\n");
+            printf("MOVE TF@%1 string@%d\n", value1);
+            printf("MOVE TF@%2 int@%d\n", value2);
+            printf("MOVE TF@%3 int@%d\n", value3);
+            printf("CALL ifj_substring\n");
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.ord"))
+        {
+            int value1 = GetIntValue(node->right);
+            int value2 = GetIntValue(node->right->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@%1\n");
+            printf("DEFVAR TF@%2\n");
+            printf("MOVE TF@%1 int@%d\n", value1);
+            printf("MOVE TF@%1 int@%d\n", value2);
+            printf("CALL ifj_ord\n");
+        }
+        // NOT TESTED
+        else if(!strcmp(functionId, "ifj.chr"))
+        {
+            int value = GetIntValue(node->right);
+            printf("CREATEFRAME\n");
+            printf("DEFVAR TF@%1\n");
+            printf("MOVE TF@%1 int@%d\n", value);
+            printf("CALL ifj_chr\n");
+        }
+        else
+        {
+            printf("CALL $%s\n", functionId);
+        }
     }else if(type == TYPE_OPERATOR){
         CreateExpression(node->left);
         CreateExpression(node->right);
@@ -115,6 +325,7 @@ void CreateExpression(ASTNode *node){
 }
 
 int TraverseASTCodeGen(ASTNode *node){
+    // PrintASTNodeType(node);
     int params = 1;
     int error = 0;
     static int level = 0;
@@ -149,30 +360,10 @@ int TraverseASTCodeGen(ASTNode *node){
         case TYPE_VAR_DECL:
         case TYPE_CON_DECL:
             CreateVariable(GetId(node->left));
-            /*if (node->right->type == TYPE_OPERATOR)
-            {
-                if (node->right->left->type == TYPE_VALUE_I32)
-                {
-                    ExpressionsOperatorInt(GetId(node->left), node->right);
-                }
-                else
-                {
-                    ExpressionsOperatorFloat(GetId(node->left), node->right);
-                }
-            }
-            else
-            {
-                ExpressionsOperand(GetId(node->left), node->right);
-            }*/
             CreateExpression(node->right);
             printf("POPS LF@%s\n",GetId(node->left));
             level--;
             break;
-        /*case TYPE_CON_DECL:
-            CreateVariable(GetId(node->left));
-            ExpressionsOperand(GetId(node->left), node->right);
-            level--;
-            break;*/
         case TYPE_FUN_CALL:
             /*ASTNode *paramsNode = GetNode(node);
             // TOTO AK NENI PARAMETER VARIABLE AK JE VARIABLE ASI TO BUDE INAK
@@ -193,21 +384,6 @@ int TraverseASTCodeGen(ASTNode *node){
         case TYPE_ASSIGNMENT:
             CreateExpression(node->right);
             printf("POPS LF@%s\n",GetId(node->left));
-            /*if (node->right->type == TYPE_OPERATOR)
-            {
-                if (node->right->left->type == TYPE_VALUE_I32)
-                {
-                    ExpressionsOperatorInt(GetId(node->left), node->right);
-                }
-                else
-                {
-                    ExpressionsOperatorFloat(GetId(node->left), node->right);
-                }
-            }
-            else
-            {
-                ExpressionsOperand(GetId(node->left), node->right);
-            }*/
             level--;
             break;
         case TYPE_IF_ELSE:
@@ -229,85 +405,3 @@ int TraverseASTCodeGen(ASTNode *node){
 
     return error;
 }
-void ExpressionsOperand(char* id, ASTNode* Input)
-{
-    if (Input->type == TYPE_VALUE_I32)
-    {
-        printf("MOVE LF@%s int@%d\n", id, GetIntValue(Input));
-    }
-    else if (Input->type == TYPE_VALUE_F64)
-    {
-        printf("MOVE LF@%s float@%f\n", id, GetFloatValue(Input));
-    }
-    else
-    {
-        printf("MOVE LF@%s string@%s\n", id, GetId(Input));
-    }
-}
-
-void ExpressionsOperatorInt(char* id, ASTNode* Input)
-{
-    Operator operator = GetOperator(Input);
-    int value1 = GetIntValue(Input->left);
-    int value2 = GetIntValue(Input->right);
-    switch (operator)
-    {
-    case OP_ADD:
-        printf("ADD LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_SUB:
-        printf("SUB LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_MUL:
-        printf("MUL LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_DIV:
-        printf("DIV LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_EQ:
-        printf("EQ LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_GREATER:
-        printf("GT LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    case OP_LESS:
-        printf("LT LF@%s int@%d int@%d\n", id, value1, value2);
-        break;
-    default:
-        break;
-    }
-}
-
-void ExpressionsOperatorFloat(char* id, ASTNode* Input)
-{
-    Operator operator = GetOperator(Input);
-    float value1 = GetFloatValue(Input->left);
-    float value2 = GetFloatValue(Input->right);
-    switch (operator)
-    {
-    case OP_ADD:
-        printf("ADD LF@%s float@%f float@%f\n", id, value1, value2);
-        break;
-    case OP_SUB:
-        printf("SUB LF@%s float@%f float@%f\n", id, value1, value2);
-        break;
-    case OP_MUL:
-        printf("MUL LF@%s float@%f float@%f\n", id, value1, value2);
-        break;
-    case OP_DIV:
-        printf("DIV LF@%s float@%f float@%f\n", id, value1, value2);
-        break;
-    case OP_EQ:
-        printf("EQ LF@%s int@%f int@%f\n", id, value1, value2);
-        break;
-    case OP_GREATER:
-        printf("GT LF@%s int@%f int@%f\n", id, value1, value2);
-        break;
-    case OP_LESS:
-        printf("LT LF@%s int@%f int@%f\n", id, value1, value2);
-        break;
-    default:
-        break;
-    }
-}
-
