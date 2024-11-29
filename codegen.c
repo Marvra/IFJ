@@ -2,6 +2,7 @@
 
 #define FUNCTION_substring \
 "LABEL ifj_substring\n" \
+"CREATEFRAME\n" \
 "PUSHFRAME\n" \
 \
 "DEFVAR LF@result\n" \
@@ -46,10 +47,11 @@
 "LABEL substring_error\n" \
 "PUSHS nil@nil\n" \
 "POPFRAME\n" \
-"RETURN\n"
+"RETURN\n\n"
 
 #define FUNCTION_ord \
 "LABEL ifj_ord\n" \
+"CREATEFRAME\n" \
 "PUSHFRAME\n" \
 \
 "DEFVAR LF@result\n" \
@@ -76,10 +78,11 @@
 "MOVE LF@result int@0\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
-"RETURN\n"
+"RETURN\n\n"
 
 #define FUNCTION_chr \
 "LABEL ifj_chr\n" \
+"CREATEFRAME\n" \
 "PUSHFRAME\n" \
 \
 "DEFVAR LF@result\n" \
@@ -104,13 +107,13 @@ void CreateHeader()
 {
     printf(".IFJcode24\n");
     printf("JUMP $main\n\n");
+    printf(FUNCTION_substring);
+    printf(FUNCTION_ord);
+    printf(FUNCTION_chr);
 }
 
 void CreateMain()
 {
-    printf(FUNCTION_substring);
-    printf(FUNCTION_ord);
-    printf(FUNCTION_chr);
     printf("LABEL $main\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
@@ -308,7 +311,9 @@ void CreateExpression(ASTNode *node){
         {
             printf("CALL $%s\n", functionId);
         }
-    }else if(type == TYPE_OPERATOR){
+    }
+    else if(type == TYPE_OPERATOR)
+    {
         CreateExpression(node->left);
         CreateExpression(node->right);
         Operator op = GetOperator(node);
@@ -324,10 +329,85 @@ void CreateExpression(ASTNode *node){
     }
 }
 
+void RelOperator(ASTNode *node)
+{
+    ASTNodeType type = GetNodeType(node);
+    if(type == TYPE_VALUE_I32)
+    {
+        int value = node->data.i32;
+        printf("PUSHS int@%d\n", value);
+    }
+    else if(type == TYPE_VALUE_F64)
+    {
+        float value = node->data.f64;
+        printf("PUSHS float@%f\n", value);
+    }
+    else if(type == TYPE_ID)
+    {
+        char *id = GetId(node);
+        printf("PUSHS LF@%s\n", id);
+    }
+    else if (type==TYPE_REL_OPERATOR)
+    {
+        CreateExpression(node->left);
+        CreateExpression(node->right);
+        Operator op = GetOperator(node);
+        if (op == OP_EQ)
+        {
+            printf("EQS\n");
+        }
+        else if (op == OP_GREATER)
+        {
+            printf("GTS\n");
+        }
+        else if(op == OP_LESS)
+        {
+            printf("LTS\n");
+        }
+        else if (op == OP_NEQ)
+        {
+            printf("EQS\n");
+            printf("NOTS\n");
+        }
+        // I don't know if this work
+        else if (op == OP_GE)
+        {
+            printf("GTS\n");
+            CreateExpression(node->left);
+            CreateExpression(node->right);
+            printf("EQS\n");
+            printf("ORS\n");
+        }
+        // I don't know if this work
+        else if (op == OP_LE)
+        {
+            printf("LTS\n");
+            CreateExpression(node->left);
+            CreateExpression(node->right);
+            printf("EQS\n");
+            printf("ORS\n");
+        }
+    }
+}
+
+void CreateIfElse(ASTNode *node, int cond)
+{
+    printf("CREATEFRAME\n");
+    printf("LABEL $START$IFELSE%d\n", cond);
+    RelOperator(node->left->right);
+    printf("PUSHS bool@true\n");
+    printf("JUMPIFNEQS $NOT$IF%d\n", cond);
+    TraverseASTCodeGen(node->right->left);
+    printf("JUMP $END$IFELSE%d\n", cond); 
+    printf("LABEL $NOT$IF%d\n", cond);
+    TraverseASTCodeGen(node->right->right); 
+    printf("LABEL $END$IFELSE%d\n", cond);
+}
+
 int TraverseASTCodeGen(ASTNode *node){
-    // PrintASTNodeType(node);
     int params = 1;
     int error = 0;
+    int cond = 1;
     static int level = 0;
     if(node == NULL){
         level--;
@@ -387,8 +467,10 @@ int TraverseASTCodeGen(ASTNode *node){
             level--;
             break;
         case TYPE_IF_ELSE:
+            CreateIfElse(node, cond);
             error = TraverseASTCodeGen(node->left->right);
             error = TraverseASTCodeGen(node->left->left);
+            level++;
             break;
         case TYPE_WHILE_CLOSED:
             error = TraverseASTCodeGen(GetNode(node));
