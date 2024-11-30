@@ -241,61 +241,99 @@
 #define FUNCTION_comp
 "\n # Built-in function ifj.strcmp"
 "\n LABEL ifj_strcmp"
-"\n CREATEFRAME"         // Vytvoření nového dočasného rámce pro funkci
-"\n PUSHFRAME"           // Přesunutí dočasného rámce na zásobník rámců
+"\n CREATEFRAME"         
+"\n PUSHFRAME"          
 
-"\n DEFVAR LF@result"    // Definice lokální proměnné 'result'
-"\n DEFVAR LF@temp"      // Definice lokální proměnné 'temp'
-"\n STRCMP LF@temp LF@%1 LF@%2" // Lexikografické porovnání dvou řetězců
+"\n DEFVAR LF@result"    
+"\n DEFVAR LF@s1"        
+"\n DEFVAR LF@s2"        
+"\n DEFVAR LF@char1"     
+"\n DEFVAR LF@char2"     
+"\n DEFVAR LF@i"         
+"\n DEFVAR LF@len1"      
+"\n DEFVAR LF@len2"     
+"\n DEFVAR LF@cond"      
 
-"\n JUMPIFEQ strcmp_equal LF@temp int@0" // Pokud jsou řetězce rovny, skoč na strcmp_equal
-"\n JUMPIFLT strcmp_less LF@temp int@0"  // Pokud je s1 < s2, skoč na strcmp_less
-"\n MOVE LF@result int@1"                // Jinak s1 > s2
+"\n MOVE LF@s1 LF@%1"    
+"\n MOVE LF@s2 LF@%2"    
+
+"\n STRLEN LF@len1 LF@s1" 
+"\n STRLEN LF@len2 LF@s2" 
+"\n MOVE LF@i int@0"     
+
+"\n LABEL strcmp_loop"
+"\n LT LF@cond LF@i LF@len1" 
+"\n JUMPIFEQ strcmp_end LF@cond bool@false" 
+"\n LT LF@cond LF@i LF@len2" 
+"\n JUMPIFEQ strcmp_end LF@cond bool@false" 
+
+"\n GETCHAR LF@char1 LF@s1 LF@i" 
+"\n GETCHAR LF@char2 LF@s2 LF@i" 
+"\n JUMPIFNEQ strcmp_diff LF@char1 LF@char2" 
+
+"\n ADD LF@i LF@i int@1" 
+"\n JUMP strcmp_loop"     
+
+"\n LABEL strcmp_diff"
+"\n LT LF@cond LF@char1 LF@char2" 
+"\n JUMPIFEQ strcmp_less LF@cond bool@true" 
+"\n MOVE LF@result int@1" 
 "\n JUMP strcmp_end"
 
 "\n LABEL strcmp_less"
-"\n MOVE LF@result int@-1"
+"\n MOVE LF@result int@-1" 
 "\n JUMP strcmp_end"
 
-"\n LABEL strcmp_equal"
-"\n MOVE LF@result int@0"
-
 "\n LABEL strcmp_end"
-"\n PUSHS LF@result"     // Uložení výsledku na zásobník
-"\n POPFRAME"            // Odstranění aktuálního rámce z vrcholu zásobníku rámců
-"\n RETURN"              // Návrat z funkce
+"\n LT LF@cond LF@len1 LF@len2" 
+"\n JUMPIFEQ strcmp_less LF@cond bool@true" 
+"\n GT LF@cond LF@len1 LF@len2" 
+"\n JUMPIFEQ strcmp_greater LF@cond bool@true" 
+"\n MOVE LF@result int@0" 
+
+"\n LABEL strcmp_greater"
+"\n MOVE LF@result int@1" 
+
+"\n PUSHS LF@result"    
+"\n POPFRAME"            
+"\n RETURN"              
 // pub fn ifj.ord(𝑠 : []u8, 𝑖 : i32) i32
 #define FUNCTION_ord
 "\n # Built-in function ifj.ord"
 "\n LABEL ifj_ord"
-"\n CREATEFRAME"         // Vytvoření nového dočasného rámce pro funkci
-"\n PUSHFRAME"           // Přesunutí dočasného rámce na zásobník rámců
+"\n CREATEFRAME"         
+"\n PUSHFRAME"           
 
-"\n DEFVAR LF@result"    // Definice lokální proměnné 'result'
-"\n DEFVAR LF@length"    // Definice lokální proměnné 'length'
-"\n DEFVAR LF@index"     // Definice lokální proměnné 'index'
-"\n DEFVAR LF@char"      // Definice lokální proměnné 'char'
+"\n DEFVAR LF@result"   
+"\n DEFVAR LF@str"      
+"\n DEFVAR LF@index"    
+"\n DEFVAR LF@char"     
+"\n DEFVAR LF@strlen"    
+"\n DEFVAR LF@cond"     
 
-"\n MOVE LF@index LF@%2" // Přesunutí hodnoty argumentu 'i' do 'index'
-"\n STRLEN LF@length LF@%1" // Zjištění délky řetězce a uložení do 'length'
+"\n MOVE LF@str LF@%1"   
+"\n MOVE LF@index LF@%2" 
 
-"\n # Kontrola platnosti indexu"
-"\n LT LF@result LF@index int@0"
-"\n JUMPIFEQ ord_error LF@result bool@true"
-"\n GE LF@result LF@index LF@length"
-"\n JUMPIFEQ ord_error LF@result bool@true"
+"\n STRLEN LF@strlen LF@str" 
 
-"\n # Získání ASCII hodnoty znaku"
-"\n STRI2INT LF@result LF@%1 LF@index"
-"\n PUSHS LF@result"
-"\n POPFRAME"
-"\n RETURN"
 
-"\n LABEL ord_error"
-"\n MOVE LF@result int@0"
-"\n PUSHS LF@result"
-"\n POPFRAME"
-"\n RETURN"
+"\n JUMPIFEQ ord_out_of_bounds LF@strlen int@0" 
+"\n LT LF@cond LF@index LF@strlen" 
+"\n JUMPIFEQ ord_out_of_bounds LF@cond bool@false" 
+"\n LT LF@cond LF@index int@0" 
+"\n JUMPIFEQ ord_out_of_bounds LF@cond bool@true" 
+
+"\n GETCHAR LF@char LF@str LF@index" 
+"\n STRI2INT LF@result LF@str LF@index" 
+"\n JUMP ord_end"
+
+"\n LABEL ord_out_of_bounds"
+"\n MOVE LF@result int@0" 
+
+"\n LABEL ord_end"
+"\n PUSHS LF@result"    
+"\n POPFRAME"            
+"\n RETURN"              
 // pub fn ifj.chr(i32) []u8
 #define FUNCTION_chr
 "\n # Built-in function ifj.chr"
