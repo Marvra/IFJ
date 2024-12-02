@@ -12,9 +12,7 @@ void createMain();
 void createFunction(char *function_id);
 void createFunctionCall(char* function_id);
 int TraverseASTCodeGen(ASTNode *node);
-void ExpressionsOperand(char* id, ASTNode* Input);
-void ExpressionsOperatorInt(char* id, ASTNode* Input);
-void ExpressionsOperatorFloat(char* id, ASTNode* Input);
+char* WriteString(ASTNode* node);
 
 #endif
 
