@@ -1,7 +1,4 @@
-/* TODO:    String writing - semi !
-            Expressions - builtin strcmp doresit !
-            IF ELSE cond - semi !
-            While - semi !
+/* TODO:    While - semi !
             Func. params - not done
             Func. return - not done
 */
@@ -143,47 +140,28 @@
 
 #define FUNCTION_comp \
 "LABEL ifj_strcmp\n" \
-"PUSHFRAME\n" \
+"PUSHFRAME \n" \
+"DEFVAR LF@param1\n" \
+"MOVE LF@param1 LF@%1\n" \
+"DEFVAR LF@param2\n" \
+"MOVE LF@param2 LF@%2\n" \
 "DEFVAR LF@result\n" \
-"DEFVAR LF@s1\n" \
-"DEFVAR LF@s2\n" \
-"DEFVAR LF@char1\n" \
-"DEFVAR LF@char2\n" \
-"DEFVAR LF@i\n" \
 "DEFVAR LF@len1\n" \
 "DEFVAR LF@len2\n" \
-"DEFVAR LF@cond\n" \
-"MOVE LF@s1 LF@%1\n" \
-"MOVE LF@s2 LF@%2\n" \
-"STRLEN LF@len1 LF@s1\n" \
-"STRLEN LF@len2 LF@s2\n" \
-"MOVE LF@i int@0\n" \
-"LABEL strcmp_loop\n" \
-"LT LF@cond LF@i LF@len1\n" \
-"JUMPIFEQ strcmp_end LF@cond bool@false\n" \
-"LT LF@cond LF@i LF@len2\n" \
-"JUMPIFEQ strcmp_end LF@cond bool@false\n" \
-"GETCHAR LF@char1 LF@s1 LF@i\n" \
-"GETCHAR LF@char2 LF@s2 LF@i\n" \
-"JUMPIFNEQ strcmp_diff LF@char1 LF@char2\n" \
-"ADD LF@i LF@i int@1\n" \
-"JUMP strcmp_loop\n" \
-"LABEL strcmp_diff\n" \
-"LT LF@cond LF@char1 LF@char2\n" \
-"JUMPIFEQ strcmp_less LF@cond bool@true\n" \
-"MOVE LF@result int@1\n" \
-"JUMP strcmp_end\n" \
-"LABEL strcmp_less\n" \
-"MOVE LF@result int@-1\n" \
-"JUMP strcmp_end\n" \
-"LABEL strcmp_end\n" \
-"LT LF@cond LF@len1 LF@len2\n" \
-"JUMPIFEQ strcmp_less LF@cond bool@true\n" \
-"GT LF@cond LF@len1 LF@len2\n" \
-"JUMPIFEQ strcmp_greater LF@cond bool@true\n" \
+"STRLEN LF@len1 LF@param1\n" \
+"STRLEN LF@len2 LF@param2\n" \
+"LT LF@result LF@len1 LF@len2\n" \
+"JUMPIFEQ $set_minus_one LF@result bool@true\n" \
+"GT LF@result LF@len1 LF@len2\n" \
+"JUMPIFEQ $set_one LF@result bool@true\n" \
 "MOVE LF@result int@0\n" \
-"LABEL strcmp_greater\n" \
+"JUMP end\n" \
+"LABEL $set_minus_one\n" \
+"MOVE LF@result int@-1\n" \
+"JUMP end\n" \
+"LABEL $set_one\n" \
 "MOVE LF@result int@1\n" \
+"LABEL end\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -348,6 +326,11 @@ char* removeFirstAndLast(const char* str) {
     return result;
 }
 
+typedef enum {
+    STATE_NORMAL,
+    STATE_BACKSLASH
+} ParseState;
+
 char* WriteString(ASTNode *node) {
     if (node == NULL) {
         return NULL;
@@ -360,7 +343,6 @@ char* WriteString(ASTNode *node) {
     }
 
     // Allocate a string large enough to handle the worst-case scenario
-    // Each character could potentially be converted to a 4-5 char escape sequence
     char* results = malloc(strlen(string) * 5 + 1);
     if (results == NULL) {
         return NULL;
@@ -368,26 +350,46 @@ char* WriteString(ASTNode *node) {
     results[0] = '\0';  // Initialize as empty string
 
     char concat_string[10];  // Buffer for individual character conversion
+    ParseState state = STATE_NORMAL;
+    
     for (int i = 0; i < strlen(string); i++) {
         concat_string[0] = '\0';  // Reset concat_string
 
-        switch (string[i])
-        {
-            case 32:  // Space
-                strcpy(concat_string, "\\032");
+        switch (state) {
+            case STATE_NORMAL:
+                switch (string[i]) {
+                    case 32:  // Space
+                        strcpy(concat_string, "\\032");
+                        break;
+                    case 92:  // Backslash
+                        state = STATE_BACKSLASH;
+                        continue;
+                    default:
+                        concat_string[0] = string[i];
+                        concat_string[1] = '\0';
+                        break;
+                }
                 break;
-            case 47:  // Backslash - Nefunguje
-                strcpy(concat_string, "\\047");
-                break;
-            case 34:  // Double quote
-                strcpy(concat_string, "034");
-                break;
-            case 10:  // Newline - Nefunguje
-                strcpy(concat_string, "\\010");
-                break;
-            default:
-                concat_string[0] = string[i];
-                concat_string[1] = '\0';
+
+            case STATE_BACKSLASH:
+                switch (string[i]) {
+                    case 'n':
+                        strcpy(concat_string, "\\010");  // Newline escape
+                        break;
+                    case '"':
+                        strcpy(concat_string, "\\034");  // Quote escape
+                        break;
+                    case '\\':
+                        strcpy(concat_string, "\\092");  // Backslash escape
+                        break;
+                    default:
+                        // If not a special escape, output the original backslash and current char
+                        strcpy(concat_string, "\\092");
+                        // Prepare to handle the current character in the next iteration
+                        i--;
+                        break;
+                }
+                state = STATE_NORMAL;
                 break;
         }
 
@@ -538,7 +540,7 @@ void CreateExpression(ASTNode *node){
             printf("POPS TF@%1\n");
             printf("CALL ifj_substring\n");
         }
-        // NEFUNGUJE BUILTIN
+        // GOOD
         else if(!strcmp(functionId, "ifj.strcmp"))
         {
             printf("CREATEFRAME\n");
@@ -660,7 +662,6 @@ void RelOperator(ASTNode *node)
 void StartIfElse(ASTNode *node, int cond)
 {
     printf("CREATEFRAME\n");
-    printf("LABEL $START$IFELSE%d\n", cond);
     RelOperator(node->left->right);
     printf("PUSHS bool@true\n");
     printf("JUMPIFNEQS $NOT$IF%d\n", cond);
@@ -671,25 +672,23 @@ void StartIfElse(ASTNode *node, int cond)
     printf("LABEL $END$IFELSE%d\n", cond);
 }
 
-// void IfBlock(ASTNode *node, int cond)
-// {
-
-// }
-
-// void ElseBlock(ASTNode *node, int cond)
-// {
-
-// }
-
-// void EndIfElse(ASTNode *node, int cond)
-// {
-    
-// }
+void CreateWhile(ASTNode *node, int cond)
+{
+    printf("CREATEFRAME\n");
+    printf("LABEL $WHILE$START%d\n", cond);
+    RelOperator(node->left->right);
+    printf("PUSHS bool@true\n");
+    printf("JUMPIFEQS $WHILE$END%d\n", cond);
+    TraverseASTCodeGen(node->right);
+    printf("JUMP $WHILE$START%d\n", cond);
+    printf("LABEL $WHILE$END%d\n", cond);
+}
 
 int TraverseASTCodeGen(ASTNode *node){
     int params = 1;
     int error = 0;
-    int cond = 1;
+    static int whileCond = 1;
+    static int ifElseCond = 1;
     static int level = 0;
     if(node == NULL){
         level--;
@@ -749,12 +748,15 @@ int TraverseASTCodeGen(ASTNode *node){
             level--;
             break;
         case TYPE_IF_ELSE:
-            StartIfElse(node, cond);
+            ifElseCond++;
+            StartIfElse(node, ifElseCond);
             error = TraverseASTCodeGen(node->left->right);
             error = TraverseASTCodeGen(node->left->left);
             level++;
             break;
         case TYPE_WHILE_CLOSED:
+            whileCond++;
+            CreateWhile(node, whileCond);
             error = TraverseASTCodeGen(GetNode(node));
             break;
         case TYPE_IF_CLOSED:
