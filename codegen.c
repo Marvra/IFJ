@@ -1,8 +1,7 @@
-/* TODO:    String writing - not done !
-            Rel. Operator - semi !
-            Expressions - builtin strcmp doresit!
-            IF ELSE cond - semi
-            While - not done
+/* TODO:    String writing - semi !
+            Expressions - builtin strcmp doresit !
+            IF ELSE cond - semi !
+            While - semi !
             Func. params - not done
             Func. return - not done
 */
@@ -306,34 +305,106 @@ void CreateNonVariableParams(int param)
     printf("DEFVAR TF@param%i\n", param);
 }
 
-char* WriteString(ASTNode *node)
-{
+char* concat(const char *s1, const char *s2) {
+    // Check for NULL inputs
+    if (s1 == NULL) s1 = "";
+    if (s2 == NULL) s2 = "";
+
+    // Allocate memory for the concatenated string
+    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for null-terminator
+    if (result == NULL) {
+        // Handle memory allocation failure
+        return NULL;
+    }
+
+    // Concatenate strings
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
+
+char* removeFirstAndLast(const char* str) {
+    // Check for NULL input or empty string
+    if (str == NULL || str[0] == '\0') {
+        return NULL;
+    }
+
+    // Check if string is too short (less than 2 characters)
+    size_t len = strlen(str);
+    if (len < 2) {
+        return strdup(""); // Return empty string
+    }
+
+    // Allocate memory for the new string
+    char* result = malloc(len - 1); // -1 to remove first and last chars
+    if (result == NULL) {
+        return NULL; // Memory allocation failed
+    }
+
+    // Copy the substring (skipping first and last characters)
+    strncpy(result, str + 1, len - 2);
+    result[len - 2] = '\0'; // Null-terminate the string
+
+    return result;
+}
+
+char* WriteString(ASTNode *node) {
     if (node == NULL) {
         return NULL;
     }
 
     char* string = node->data.str;
-
-    for (int i = 0; i < strlen(string); i++)
-    {
-        if (string[i] == 32) // Space
-        {
- 
-        }
-        if (string[i] == 47) // Backslash
-        {
- 
-        }
-        else if (string[i] == 34) // ASCII for "
-        {
- 
-        }
-        else if (string[i] == 10) // ASCII for newline
-        {
- 
-        }
+    string = removeFirstAndLast(string);
+    if (string == NULL) {
+        return NULL;
     }
-    return string;
+
+    // Allocate a string large enough to handle the worst-case scenario
+    // Each character could potentially be converted to a 4-5 char escape sequence
+    char* results = malloc(strlen(string) * 5 + 1);
+    if (results == NULL) {
+        return NULL;
+    }
+    results[0] = '\0';  // Initialize as empty string
+
+    char concat_string[10];  // Buffer for individual character conversion
+    for (int i = 0; i < strlen(string); i++) {
+        concat_string[0] = '\0';  // Reset concat_string
+
+        switch (string[i])
+        {
+            case 32:  // Space
+                strcpy(concat_string, "\\032");
+                break;
+            case 47:  // Backslash - Nefunguje
+                strcpy(concat_string, "\\047");
+                break;
+            case 34:  // Double quote
+                strcpy(concat_string, "034");
+                break;
+            case 10:  // Newline - Nefunguje
+                strcpy(concat_string, "\\010");
+                break;
+            default:
+                concat_string[0] = string[i];
+                concat_string[1] = '\0';
+                break;
+        }
+
+        // Temporary variable to store the new concatenated result
+        char* temp = concat(results, concat_string);
+        if (temp == NULL) {
+            // Handle concatenation failure
+            free(results);
+            return NULL;
+        }
+
+        // Free the old results and update with the new concatenation
+        free(results);
+        results = temp;
+    }
+
+    return results;
 }
 
 void CreateNonVariableParamsData(ASTNode data,int param)
@@ -540,6 +611,11 @@ void RelOperator(ASTNode *node)
         char *id = GetId(node);
         printf("PUSHS LF@%s\n", id);
     }
+    else if(type == TYPE_ARGUMENT)
+    {
+        char *id = GetId(node);
+        printf("PUSHS LF@%s\n", id);
+    }
     else if (type==TYPE_REL_OPERATOR)
     {
         CreateExpression(node->left);
@@ -562,7 +638,6 @@ void RelOperator(ASTNode *node)
             printf("EQS\n");
             printf("NOTS\n");
         }
-        // I don't know if this work
         else if (op == OP_GE)
         {
             printf("GTS\n");
@@ -571,7 +646,6 @@ void RelOperator(ASTNode *node)
             printf("EQS\n");
             printf("ORS\n");
         }
-        // I don't know if this work
         else if (op == OP_LE)
         {
             printf("LTS\n");

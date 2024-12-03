@@ -1,0 +1,211 @@
+.IFJcode24
+JUMP $main
+
+LABEL ifj_readstr
+CREATEFRAME
+PUSHFRAME
+DEFVAR LF@out
+READ LF@out string
+PUSHS LF@out
+POPFRAME
+RETURN
+
+LABEL ifj_readi32
+CREATEFRAME
+PUSHFRAME
+DEFVAR LF@out
+DEFVAR LF@err
+MOVE LF@err int@0
+READ LF@out int
+JUMPIFEQ $readi32_end LF@out nil@nil
+PUSHS LF@out
+POPFRAME
+RETURN
+LABEL $readi32_end
+MOVE LF@err int@1
+PUSHS nil@nil
+PUSHS LF@err
+POPFRAME
+RETURN
+
+LABEL ifj_readf64
+CREATEFRAME
+PUSHFRAME
+DEFVAR LF@out
+DEFVAR LF@err
+MOVE LF@err int@0
+READ LF@out float
+JUMPIFEQ $readf64_end LF@out nil@nil
+PUSHS LF@out
+POPFRAME
+RETURN
+LABEL $readf64_end
+MOVE LF@err int@1
+PUSHS nil@nil
+PUSHS LF@err
+POPFRAME
+RETURN
+
+LABEL ifj_f2i
+PUSHFRAME
+DEFVAR LF@result
+FLOAT2INT LF@result LF@%1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_i2f
+PUSHFRAME
+DEFVAR LF@result
+INT2FLOAT LF@result LF@%1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_concat
+PUSHFRAME
+DEFVAR LF@result
+CONCAT LF@result LF@%1 LF@%2
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_string
+PUSHFRAME
+DEFVAR LF@result
+MOVE LF@result LF@%1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_length
+PUSHFRAME
+DEFVAR LF@result
+STRLEN LF@result LF@%1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_substring
+PUSHFRAME
+DEFVAR LF@result
+DEFVAR LF@start
+DEFVAR LF@end
+DEFVAR LF@length
+DEFVAR LF@temp
+MOVE LF@start LF@%2
+MOVE LF@end LF@%3
+STRLEN LF@length LF@%1
+LT LF@temp LF@start int@0
+JUMPIFEQ substring_error LF@temp bool@true
+LT LF@temp LF@end int@0
+JUMPIFEQ substring_error LF@temp bool@true
+GT LF@temp LF@start LF@length
+JUMPIFEQ substring_error LF@temp bool@true
+GT LF@temp LF@end LF@length
+JUMPIFEQ substring_error LF@temp bool@true
+GT LF@temp LF@start LF@end
+JUMPIFEQ substring_error LF@temp bool@true
+DEFVAR LF@i
+MOVE LF@i LF@start
+MOVE LF@result string@
+LABEL substring_loop
+LT LF@temp LF@i LF@end
+JUMPIFEQ substring_end LF@temp bool@false
+GETCHAR LF@temp LF@%1 LF@i
+CONCAT LF@result LF@result LF@temp
+ADD LF@i LF@i int@1
+JUMP substring_loop
+LABEL substring_end
+PUSHS LF@result
+POPFRAME
+RETURN
+LABEL substring_error
+PUSHS nil@nil
+POPFRAME
+RETURN
+
+LABEL ifj_strcmp
+PUSHFRAME
+DEFVAR LF@result
+DEFVAR LF@s1
+DEFVAR LF@s2
+DEFVAR LF@char1
+DEFVAR LF@char2
+DEFVAR LF@i
+DEFVAR LF@len1
+DEFVAR LF@len2
+DEFVAR LF@cond
+MOVE LF@s1 LF@%1
+MOVE LF@s2 LF@%2
+STRLEN LF@len1 LF@s1
+STRLEN LF@len2 LF@s2
+MOVE LF@i int@0
+LABEL strcmp_loop
+LT LF@cond LF@i LF@len1
+JUMPIFEQ strcmp_end LF@cond bool@false
+LT LF@cond LF@i LF@len2
+JUMPIFEQ strcmp_end LF@cond bool@false
+GETCHAR LF@char1 LF@s1 LF@i
+GETCHAR LF@char2 LF@s2 LF@i
+JUMPIFNEQ strcmp_diff LF@char1 LF@char2
+ADD LF@i LF@i int@1
+JUMP strcmp_loop
+LABEL strcmp_diff
+LT LF@cond LF@char1 LF@char2
+JUMPIFEQ strcmp_less LF@cond bool@true
+MOVE LF@result int@1
+JUMP strcmp_end
+LABEL strcmp_less
+MOVE LF@result int@-1
+JUMP strcmp_end
+LABEL strcmp_end
+LT LF@cond LF@len1 LF@len2
+JUMPIFEQ strcmp_less LF@cond bool@true
+GT LF@cond LF@len1 LF@len2
+JUMPIFEQ strcmp_greater LF@cond bool@true
+MOVE LF@result int@0
+LABEL strcmp_greater
+MOVE LF@result int@1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_ord
+PUSHFRAME
+DEFVAR LF@result
+DEFVAR LF@str
+DEFVAR LF@index
+DEFVAR LF@char
+DEFVAR LF@strlen
+DEFVAR LF@cond
+MOVE LF@str LF@%1
+MOVE LF@index LF@%2
+STRLEN LF@strlen LF@str
+JUMPIFEQ ord_out_of_bounds LF@strlen int@0
+LT LF@cond LF@index LF@strlen
+JUMPIFEQ ord_out_of_bounds LF@cond bool@false
+LT LF@cond LF@index int@0
+JUMPIFEQ ord_out_of_bounds LF@cond bool@true
+GETCHAR LF@char LF@str LF@index
+STRI2INT LF@result LF@str LF@index
+JUMP ord_end
+LABEL ord_out_of_bounds
+MOVE LF@result int@0
+LABEL ord_end
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL ifj_chr
+PUSHFRAME
+DEFVAR LF@result
+INT2CHAR LF@result LF@%1
+PUSHS LF@result
+POPFRAME
+RETURN
+
+LABEL $main
+CREATEFRAME
+PUSHFRAME
+WRITE string@
