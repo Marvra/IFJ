@@ -1,11 +1,10 @@
 /**
  * Project: IFJ24 2024
  * Robin Kurilla (xkuril03)
+ * Jaroslav Doktor (xdoktoj00)
  */
 
 /* TODO:    While - semi !
-            Func. params - not done
-            Func. return - not done
 */
 
 #include "codegen.h"
@@ -361,6 +360,12 @@ char* WriteString(ASTNode *node) {
                     case '\\':
                         strcpy(concat_string, "\\092");  // Backslash escape
                         break;
+                    case 'r':
+                        strcpy(concat_string, "\\013");
+                        break;
+                    case 't':
+                        strcpy(concat_string, "\\009");
+                        break;
                     default:
                         // If not a special escape, output the original backslash and current char
                         strcpy(concat_string, "\\092");
@@ -432,7 +437,7 @@ void CreateFunctionCall(ASTNode *node) {
             printf("WRITE int@%d\n",value);
         }else if(type == TYPE_VALUE_F64){
             float value = node->right->data.f64;
-            printf("WRITE float@0x%fp+0\n",value);
+            printf("WRITE float@%a\n",value);
         }else if(type == TYPE_STRING){
             char *string = WriteString(node->right);
             printf("WRITE string@%s\n",string);
@@ -682,11 +687,41 @@ void RelOperator(ASTNode *node, int cond)
             printf("EQS\n");
             printf("NOTS\n");
             printf("LABEL %%%dend\n",cond);
-    
         }else{
-            //ID s NULL
+            char *condVar = GetId(node->left);
+            printf("DEFVAR LF@%s\n", condVar);
+            printf("DEFVAR TF@%%type\n");
+            printf("TYPE TF@%%type LF@%s\n", id);
+            // STRING
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@string\n");
+            printf("JUMPIFNEQS NOSTRING%%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            char* s = "";
+            printf("PUSHS string@%s\n", s);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            // FLOATS AND INTS
+            printf("LABEL NOSTRING%%%d\n", cond);
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@int\n");
+            printf("JUMPIFEQS %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            float f = 0.0;
+            printf("PUSHS float@%a\n", f);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            printf("LABEL %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("PUSHS int@0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("LABEL %%%dend\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("POPS LF@%s\n", condVar);
         }
-
     }
     else if(type == TYPE_NULL)
     {
