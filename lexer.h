@@ -1,3 +1,9 @@
+/**
+ * @file lexer.h
+ * @author Martin Vrablec
+ * @brief  header file for lexical analysis, fsm states and function declarations
+ * @todo
+ */
 #ifndef LEXER_H
 #define LEXER_H
 

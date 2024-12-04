@@ -1,3 +1,9 @@
+/**
+ * @file token.h
+ * @author Martin Vrablec
+ * @brief  header file for implemantion of double linked list of tokens, token structure, token types and declaration of functions for creating the list
+ * @todo
+ */
 #ifndef TOKEN_H
 #define TOKEN_H
 typedef enum Tokentype{
