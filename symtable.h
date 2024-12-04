@@ -1,6 +1,7 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file symtable.h
+ * @author Robin Kurilla
+ * @brief  header file for symbol table
  */
 
 #ifndef SYMTABLE_H
@@ -25,8 +26,8 @@ typedef struct{
     NType functionReturnType;
     int paramCount;
     NType *paramTypes;
-    bool isUsed;
-    bool isKnown;
+    bool isUsed;                //var/const is used
+    bool isKnown;               //value is known when compiling
 } NData;
 
 typedef struct tnode{
@@ -47,69 +48,51 @@ typedef struct {
     SymListNode *last;
 } SymList;
 
-//Pomocná funkcia na vytváranie nody
+//create/insert node
 TNode* CreateNode(char *key);
-//Vkladá(vytvára) nodu v tabuľke symbolov
 TNode* InsertNode(TNode *rootPtr, char *key);
-//Rotácia vpravo
+
+//rotations 
 TNode* RotateRight(TNode *rootPtr);
-//Rotácia vľavo
 TNode* RotateLeft(TNode *rootPtr);
-//Vracia najdenú nodu aleno null
+
+//search node
 TNode* SearchNode(TNode *rootPtr, char *key);
-//Vracia pravú nodu
+//get nodes
 TNode* GetRightNode(TNode *rootPtr);
-//Vracia ľavú nodu
 TNode* GetLeftNode(TNode *rootPtr);
 
-//Nastavuje typ nody
+//set functions
 int SetType(TNode *rootPtr, char *key, NType type);
-//Nastavuje návratový typ funkcie
 int SetFunctionReturnType(TNode *rootPtr, char *key, NType type);
-//Nastavuje premennú na konštantu
 int SetIsConstant(TNode *rootPtr, char *key, bool b);
-//Pridáva parameter funkcii
 int SetParameter(TNode *rootPtr, char *key, NType type);
-//Nastavuje že bola použitá
 int SetIsUsed(TNode *rootPtr, char *key);
-//Nastavuje že je známa pri preklade
 int SetIsKnown(TNode *rootPtr, char *key);
 
-//Vracia typ nody
+//get functions
 int GetType(TNode *rootPtr, char *key, NType *value);
-//Vracia návratový typ funkcie
 int GetFunctionReturnType(TNode *rootPtr, char *key, NType *value);
-//Vracia či je to konštanta
 int GetIsConstant(TNode *rootPtr, char *key, bool *value);
-//Vracia parametre
 int GetParameters(TNode *rootPtr, char *key, NType *params);
-//Vracia počet parametrov
 int GetParameterCount(TNode *rootPtr, char *key, int *count);
-//Vracia či bola použitá
 bool GetIsUsed(TNode *node);
-//Vracia či je známa pri preklade
 int GetIsKnown(TNode *rootPtr, char *key, bool *known);
-
-//Uvoľnuje pamäť
-void FreeTree(TNode *rootPtr);
-//Maximum z a,b
-int Max(int a, int b);
-//Vracia výšku uzlu
 int Height(TNode *rootPtr);
 
-//Vytvára zoznam tabuliek symbolov
+//free symtable
+void FreeTree(TNode *rootPtr);
+
+//maximum from a,b
+int Max(int a, int b);
+
+//function for SymList
 SymList* CreateSymList();
-//Vkladá tabuľku symbolov do zoznamu
 void InsertTable(SymList *list, TNode *node);
-//Vracia posledný prvok zoznamu
 SymListNode* GetLast(SymList *list);
-//Vracia nasledujúcu prvok zoznamu
 SymListNode* GetNext(SymListNode *node);
-//Získava tabuľku symbolov z prvku zoznamu
 TNode* GetTableNode(SymListNode *node);
-//Uvoľnuje posledny prvok spolu s jeho tabuľkou symbolov
 void DeleteTable(SymList *list);
-//Uvoľnuje cely zoznam
 void FreeSymlist(SymList *list);
 
 #endif

@@ -1,6 +1,7 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file ast.h
+ * @author Robin Kurilla
+ * @brief  header file for abstract syntax tree
  */
 
 #ifndef AST_H
@@ -87,11 +88,11 @@ typedef struct{
     StackNode *top;
 }ASTStack;
 
-//Vytvára AST
+//Create AST
 ASTNode* CreateAST();
-//Pomocná funkcia pre vytváranie
+
+//Create node functions
 ASTNode* CreateAstNode(ASTNodeType type);
-//Vytvárajú nody 
 ASTNode* CreateCodeNode(ASTNode *node);
 ASTNode* CreateVarDeclNode(ASTNode *node);
 ASTNode* CreateConDeclNode(ASTNode *node);
@@ -114,7 +115,7 @@ ASTNode* CreateParamNode(ASTNode *node, char *id);
 ASTNode* CreateTypeNode(ASTNode *node, DataType type);
 ASTNode* CreateNullNode(ASTNode *node);
 
-//Vracajú data
+//Get functions
 ASTNode* GetCode(ASTNode *node);
 ASTNode* GetNode(ASTNode *node);
 ASTNodeType GetNodeType(ASTNode *node);
@@ -134,16 +135,11 @@ ASTNode* GetLeftOperand(ASTNode *node);
 int GetIntValue(ASTNode *node);
 float GetFloatValue(ASTNode *node);
 
-const char* OperatorToString(Operator op);
-const char* NodeTypeToString(ASTNodeType type);
-void DisplayDataType(DataType dataType);
+void FreeAST(ASTNode *node);
 
-//Vytvára stack pre AST
+//ASTStack functions
 ASTStack* CreateStackAST();
-//Vkladá na stack
 void PushAST(ASTStack *stack, ASTNode *node);
-//Berie zo stacku
 ASTNode* PopAST(ASTStack *stack);
-//Vyprázdňuje stack
 void FreeStackAST(ASTStack *stack);
 #endif

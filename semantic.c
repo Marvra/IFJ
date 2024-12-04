@@ -1,6 +1,7 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file semantic.c
+ * @author Robin Kurilla
+ * @brief  source file for semantic analysis
  */
 
 #include "semantic.h"
@@ -10,7 +11,11 @@
 #include <math.h>
 #include "error.h"
 
-//Prevádzanie typu DataType na NType
+/**
+ * @brief converts DataType to NType
+ * @param type type to be converted
+ * @return corresponding NType
+ */
 NType DataTypeToNType(DataType type){
     switch(type){
         case T_F64:
@@ -32,7 +37,11 @@ NType DataTypeToNType(DataType type){
     }
 }
 
-//Prevádzanie typu NType na DataType
+/**
+ * @brief converts NType to DataType
+ * @param type type to be converted
+ * @return corresponding DataType
+ */
 DataType NTypeToDataType(NType type){
     switch(type){
         case TYPE_F64:
@@ -54,13 +63,20 @@ DataType NTypeToDataType(NType type){
     }
 }
 
-//Uvoľnenie zdrojov
+/**
+ * @brief frees resources
+ * @param stack ASTStack to be freed
+ * @param list SymList to be freed
+ */
 void FreeSemantics(ASTStack *stack, SymList *list){
     FreeStackAST(stack);
     FreeSymlist(list);
 }
 
-//Pridáva built in funkcie do tabuľky symbolov
+/**
+ * @brief adds built in functions into symtable
+ * @param symtable symtable in which we add built in functions
+ */
 void AddBuiltInFunctionsToSymtable(TNode **symtable){
     char *id = "ifj.readstr";
     *symtable = InsertNode(*symtable, id);
@@ -141,7 +157,11 @@ void AddBuiltInFunctionsToSymtable(TNode **symtable){
     SetParameter(*symtable, id, TYPE_I32);
 }
 
-//Hľadá returny v definícii funkcie
+/**
+ * @brief recursively checks for return nodes in function 
+ * @param node node that is checked
+ * @return 1 if node is TYPE_RETURN or both if else branches has return node, else 0 or calls itself with next node
+ */
 int LookForReturnNodes(ASTNode *node){
     if(node == NULL){
         return 0;
@@ -175,7 +195,12 @@ int LookForReturnNodes(ASTNode *node){
     }
 }
 
-//Analýza deklarácie funkcie
+/**
+ * @brief analyzes function declaration and adds function into symtable
+ * @param node node that is checked
+ * @param symtable symbol table
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeFunDec(ASTNode *node, TNode **symtable){
     if(node == NULL || node->type != TYPE_FUN_DECL){
         return ERROR_SEMANTIC_OTHERS;
@@ -210,7 +235,11 @@ int AnalyzeFunDec(ASTNode *node, TNode **symtable){
 
 }
 
-//Analýza správnosti main funkcie v programe
+/**
+ * @brief checks from symtable if main function is in right format
+ * @param symtable symbol table
+ * @return 0 if successful, error code if not
+ */
 int CheckForMainFunction(TNode **symtable){
     NType type;
     int error = GetType(*symtable, "main", &type);
@@ -229,7 +258,12 @@ int CheckForMainFunction(TNode **symtable){
     return 0;
 }
 
-//Zostavenie tabuľky symbolov pri definícii funkcie -> argumenty ako lokálne premenné
+/**
+ * @brief creates symtable when enteting function definition
+ * @param node node from which we further get params
+ * @param retType function return type 
+ * @return new symtable
+ */
 TNode* GetFunctionSymtable(ASTNode *node, DataType *retType){
     TNode *newSymtable = NULL;
     ASTNode *idNode = GetIdNode(node);
@@ -248,7 +282,12 @@ TNode* GetFunctionSymtable(ASTNode *node, DataType *retType){
     return newSymtable;
 }
 
-//Hľadá id v SymListe (všetkých tabuľkách symbolov)
+/**
+ * @brief looks for node in symtables that are in SymList
+ * @param list SymList
+ * @param id id of record that we are looking for
+ * @return found TNode or NULL
+ */
 TNode* FindInSymlist(SymList *list, char *id){
     TNode *node = NULL;
     SymListNode *currentSymListNode = GetLast(list);
@@ -267,7 +306,13 @@ TNode* FindInSymlist(SymList *list, char *id){
     return node;
 }
 
-//Vytvára tabuľku symbolov pre if/else, while -> ak existuje id bez null tak ho pridá do TS
+/**
+ * @brief creates symtable when entering blocks (if,else,while)
+ * @param node node from which we get id without null if exists
+ * @param list SymList
+ * @param error error code
+ * @return new symtable
+ */
 TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
     TNode *newSymtable = NULL;
     ASTNode *idNoNullNode = GetNoNullId(node);
@@ -310,8 +355,14 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
     return newSymtable;
 }
 
-
-//Analýza výrazov, cez expType vracia dátovy typ, cez isKnows či je známa pri preklade
+/**
+ * @brief recursively analyzes expressions
+ * @param node node that is checked
+ * @param list SymList
+ * @param expType expression type
+ * @param isKnown if value is known when compiling
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isKnown){
     if(node == NULL){
         return INTERNAL_ERROR;
@@ -405,7 +456,13 @@ int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isK
     return error;
 }
 
-//Analýza volania funkcie, type vracia návratový typ funkcie
+/**
+ * @brief analyzes function call
+ * @param node highest node from which we analyze
+ * @param list SymList
+ * @param type returns function return type
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
@@ -561,7 +618,12 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
     return 0;
 }
 
-//Analýza deklarácie premennej/konštanty
+/**
+ * @brief analyzes variable/constant declaration
+ * @param node highest node from which we analyze further
+ * @param list SymList
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
@@ -702,7 +764,12 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     return 0;
 }
 
-//Analýza priradenia
+/**
+ * @brief analyzes assignment
+ * @param node highest node from which we analyze
+ * @param list SymList
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeAssignment(ASTNode *node, SymList *list){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
@@ -817,7 +884,13 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
    return 0;
 }
 
-//Analýza kondície v if/else, while, hasNullId vracia true ak v kondicii je premenná s nullable typom
+/**
+ * @brief analyzes condition
+ * @param node highest node from which we analyze
+ * @param list SymList
+ * @param hasNullIde returns true if in condition is variable that is nullable
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
     int error;
     *hasNullId = false;
@@ -1086,7 +1159,13 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
     return 0;
 }
 
-//Analýza returnu, returnType je očakávaný návratový typ
+/**
+ * @brief analyzes return nodes, if they are the same as expected return type
+ * @param node highest node from which we analyze
+ * @param list SymList
+ * @param returnType expected return type
+ * @return 0 if successful, error code if not
+ */
 int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
     ASTNode *temp = GetNode(node);
     
@@ -1192,7 +1271,11 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
     return 0;
 }
 
-//Zistí či všetky premenné v danom bloku boli použité
+/**
+ * @brief checks if all variables created inside block were used
+ * @param node symtable top
+ * @return 0 if successful, error code if not
+ */
 int CheckVariablesUsed(TNode *node){
     if(node == NULL){
         return 0;
@@ -1209,7 +1292,11 @@ int CheckVariablesUsed(TNode *node){
     return error;
 }
 
-// Sémantická analýza, ak nastane error vracia chybový kód inak 0
+/**
+ * @brief semantic analysis
+ * @param root AST root
+ * @return 0 if successful, error code if not
+ */
 int SemanticAnalysis(ASTNode *root){
     if(root == NULL){
         return INTERNAL_ERROR;
@@ -1222,6 +1309,7 @@ int SemanticAnalysis(ASTNode *root){
 
     AddBuiltInFunctionsToSymtable(&symtable);
 
+    // first pass that gets functions into symtable
     while(currentNode != NULL){
         ASTNode *temp = GetNode(currentNode);
         if(temp == NULL){
@@ -1229,12 +1317,14 @@ int SemanticAnalysis(ASTNode *root){
         }
         ASTNodeType type = GetNodeType(temp);
         if(type != TYPE_FUN_DECL){
+            fprintf(stderr, "Error in semantincs: %d\n", error);
             FreeStackAST(stack);
             FreeTree(symtable);
             return ERROR_SEMANTIC_OTHERS;
         }
         error = AnalyzeFunDec(temp, &symtable);
         if(error){
+            fprintf(stderr, "Error in semantincs: %d\n", error);
             FreeStackAST(stack);
             FreeTree(symtable);
             return error;
@@ -1244,6 +1334,7 @@ int SemanticAnalysis(ASTNode *root){
 
     error = CheckForMainFunction(&symtable);
     if(error){
+        fprintf(stderr, "Error in semantincs: %d\n", error);
         FreeStackAST(stack);
         FreeTree(symtable);
         return error;
@@ -1255,6 +1346,8 @@ int SemanticAnalysis(ASTNode *root){
     ASTNode *conNode;
     currentNode = GetCode(root);
     int level = 0;
+
+    //second pass that analyzes semantics 
     while(currentNode != NULL || level != 0){
         if(currentNode == NULL){
             level--;
@@ -1270,6 +1363,7 @@ int SemanticAnalysis(ASTNode *root){
                 if(type == TYPE_ELSE_CLOSED){
                     error = CheckVariablesUsed(symtable);
                     if(error){
+                        fprintf(stderr, "Error in semantincs: %d\n", error);
                         FreeSemantics(stack, symlist);
                         return error;
                     }
@@ -1281,6 +1375,7 @@ int SemanticAnalysis(ASTNode *root){
                 if(type == TYPE_FUN_DECL){
                     error = CheckVariablesUsed(symtable);
                     if(error){
+                        fprintf(stderr, "Error in semantincs: %d\n", error);
                         FreeSemantics(stack, symlist);
                         return error;
                     }
@@ -1292,6 +1387,7 @@ int SemanticAnalysis(ASTNode *root){
                 if(type == TYPE_WHILE_CLOSED){
                     error = CheckVariablesUsed(symtable);
                     if(error){
+                        fprintf(stderr, "Error in semantincs: %d\n", error);
                         FreeSemantics(stack, symlist);
                         return error;
                     }
@@ -1321,6 +1417,7 @@ int SemanticAnalysis(ASTNode *root){
                     PushAST(stack, currentNode);
                     currentNode = GetNode(currentNode);
                 }else{
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return ERROR_SEMANTIC_OTHERS;
                 }
@@ -1328,6 +1425,7 @@ int SemanticAnalysis(ASTNode *root){
             case TYPE_RETURN:
                 error = AnalyzeReturnNode(currentNode, symlist, currentFunctionReturnType);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
@@ -1340,15 +1438,18 @@ int SemanticAnalysis(ASTNode *root){
                 conNode = GetConditionNode(currentNode);
                 error = AnalyzeCondition(conNode, symlist, &hasNullId);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
                 symtable = GetBlockSymtable(currentNode, symlist, &error);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
                 if(symtable != NULL && !hasNullId){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return ERROR_TYPE_COMPABILITY;
                 }
@@ -1361,15 +1462,18 @@ int SemanticAnalysis(ASTNode *root){
                 conNode = GetConditionNode(currentNode);
                 error = AnalyzeCondition(conNode, symlist, &hasNullId);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
                 symtable = GetBlockSymtable(currentNode, symlist, &error);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
                 if(symtable != NULL && !hasNullId){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return ERROR_TYPE_COMPABILITY;
                 }
@@ -1381,6 +1485,7 @@ int SemanticAnalysis(ASTNode *root){
             case TYPE_CON_DECL:
                 error = AnalyzeVariableDeclaration(currentNode, symlist);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
@@ -1393,6 +1498,7 @@ int SemanticAnalysis(ASTNode *root){
             case TYPE_ASSIGNMENT:
                 error = AnalyzeAssignment(currentNode, symlist);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
@@ -1404,10 +1510,12 @@ int SemanticAnalysis(ASTNode *root){
                 NType funReturnType;
                 error = AnalyzeFunctionCall(currentNode, symlist, &funReturnType);
                 if(error){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return error;
                 }
                 if(funReturnType != TYPE_VOID){
+                    fprintf(stderr, "Error in semantincs: %d\n", error);
                     FreeSemantics(stack, symlist);
                     return ERROR_PARAMTERS;
                 }

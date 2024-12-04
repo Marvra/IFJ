@@ -59,7 +59,7 @@
 "LABEL ifj_i2f\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@result\n" \
-"INT2FLOAT LF@result LF@%1\n" \
+"INT2FLOAT LF@result LF@%%1\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -68,7 +68,7 @@
 "LABEL ifj_f2i\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@result\n" \
-"FLOAT2INT LF@result LF@%1\n" \
+"FLOAT2INT LF@result LF@%%1\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -77,7 +77,7 @@
 "LABEL ifj_string\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@result\n" \
-"MOVE LF@result LF@%1\n" \
+"MOVE LF@result LF@%%1\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -86,7 +86,7 @@
 "LABEL ifj_length\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@result\n" \
-"STRLEN LF@result LF@%1\n" \
+"STRLEN LF@result LF@%%1\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -95,7 +95,7 @@
 "LABEL ifj_concat\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@result\n" \
-"CONCAT LF@result LF@%1 LF@%2\n" \
+"CONCAT LF@result LF@%%1 LF@%%2\n" \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
@@ -108,9 +108,9 @@
 "DEFVAR LF@end\n" \
 "DEFVAR LF@length\n" \
 "DEFVAR LF@temp\n" \
-"MOVE LF@start LF@%2\n" \
-"MOVE LF@end LF@%3\n" \
-"STRLEN LF@length LF@%1\n" \
+"MOVE LF@start LF@%%2\n" \
+"MOVE LF@end LF@%%3\n" \
+"STRLEN LF@length LF@%%1\n" \
 "LT LF@temp LF@start int@0\n" \
 "JUMPIFEQ substring_error LF@temp bool@true\n" \
 "LT LF@temp LF@end int@0\n" \
@@ -127,7 +127,7 @@
 "LABEL substring_loop\n" \
 "LT LF@temp LF@i LF@end\n" \
 "JUMPIFEQ substring_end LF@temp bool@false\n" \
-"GETCHAR LF@temp LF@%1 LF@i\n" \
+"GETCHAR LF@temp LF@%%1 LF@i\n" \
 "CONCAT LF@result LF@result LF@temp\n" \
 "ADD LF@i LF@i int@1\n" \
 "JUMP substring_loop\n" \
@@ -144,9 +144,9 @@
 "LABEL ifj_strcmp\n" \
 "PUSHFRAME \n" \
 "DEFVAR LF@param1\n" \
-"MOVE LF@param1 LF@%1\n" \
+"MOVE LF@param1 LF@%%1\n" \
 "DEFVAR LF@param2\n" \
-"MOVE LF@param2 LF@%2\n" \
+"MOVE LF@param2 LF@%%2\n" \
 "DEFVAR LF@result\n" \
 "DEFVAR LF@len1\n" \
 "DEFVAR LF@len2\n" \
@@ -177,8 +177,8 @@
 "DEFVAR LF@char\n" \
 "DEFVAR LF@strlen\n" \
 "DEFVAR LF@cond\n" \
-"MOVE LF@str LF@%1\n" \
-"MOVE LF@index LF@%2\n" \
+"MOVE LF@str LF@%%1\n" \
+"MOVE LF@index LF@%%2\n" \
 "STRLEN LF@strlen LF@str\n" \
 "JUMPIFEQ ord_out_of_bounds LF@strlen int@0\n" \
 "LT LF@cond LF@index LF@strlen\n" \
@@ -200,7 +200,7 @@
 "PUSHFRAME\n" \
 \
 "DEFVAR LF@result\n" \
-"INT2CHAR LF@result LF@%1\n" \
+"INT2CHAR LF@result LF@%%1\n" \
 \
 "PUSHS LF@result\n" \
 "POPFRAME\n" \
@@ -362,7 +362,7 @@ char* WriteString(ASTNode *node)
     
     // Checks every char in string, if there is special character, 
     // replace it with ascii code ex. of newline /010 
-    for (int i = 0; i < strlen(string); i++) {
+    for (long unsigned int i = 0; i < strlen(string); i++) {
         concat_string[0] = '\0';  
 
         switch (state) {
@@ -565,32 +565,32 @@ void CreateExpression(ASTNode *node){
         {
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
-            printf("DEFVAR TF@%1\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_i2f\n");
         }
         else if(!strcmp(functionId, "ifj.f2i"))
         {
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
-            printf("DEFVAR TF@%1\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_f2i\n");
         }
         else if(!strcmp(functionId, "ifj.string"))
         {
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
-            printf("DEFVAR TF@%1\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_string\n");
         }
         else if(!strcmp(functionId, "ifj.length"))
         {
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
-            printf("DEFVAR TF@%1\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_length\n");
         }
         else if(!strcmp(functionId, "ifj.concat"))
@@ -598,10 +598,10 @@ void CreateExpression(ASTNode *node){
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
             CreateExpression(node->right->right);
-            printf("DEFVAR TF@%1\n");
-            printf("DEFVAR TF@%2\n");
-            printf("POPS TF@%2\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("DEFVAR TF@%%2\n");
+            printf("POPS TF@%%2\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_concat\n");
         }
         else if(!strcmp(functionId, "ifj.substring"))
@@ -610,12 +610,12 @@ void CreateExpression(ASTNode *node){
             CreateExpression(node->right);
             CreateExpression(node->right->right);
             CreateExpression(node->right->right->right);
-            printf("DEFVAR TF@%1\n");
-            printf("DEFVAR TF@%2\n");
-            printf("DEFVAR TF@%3\n");
-            printf("POPS TF@%3\n");
-            printf("POPS TF@%2\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("DEFVAR TF@%%2\n");
+            printf("DEFVAR TF@%%3\n");
+            printf("POPS TF@%%3\n");
+            printf("POPS TF@%%2\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_substring\n");
         }
         else if(!strcmp(functionId, "ifj.strcmp"))
@@ -623,10 +623,10 @@ void CreateExpression(ASTNode *node){
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
             CreateExpression(node->right->right);
-            printf("DEFVAR TF@%1\n");
-            printf("DEFVAR TF@%2\n");
-            printf("POPS TF@%2\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("DEFVAR TF@%%2\n");
+            printf("POPS TF@%%2\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_strcmp\n");
         }
         else if(!strcmp(functionId, "ifj.ord"))
@@ -634,18 +634,18 @@ void CreateExpression(ASTNode *node){
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
             CreateExpression(node->right->right);
-            printf("DEFVAR TF@%1\n");
-            printf("DEFVAR TF@%2\n");
-            printf("POPS TF@%2\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("DEFVAR TF@%%2\n");
+            printf("POPS TF@%%2\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_ord\n");
         }
         else if(!strcmp(functionId, "ifj.chr"))
         {
             printf("CREATEFRAME\n");
             CreateExpression(node->right);
-            printf("DEFVAR TF@%1\n");
-            printf("POPS TF@%1\n");
+            printf("DEFVAR TF@%%1\n");
+            printf("POPS TF@%%1\n");
             printf("CALL ifj_chr\n");
         }
         else
@@ -996,7 +996,6 @@ void CreateWhile(ASTNode *node, int cond)
  * @param node current AST node;
  */
 void TraverseASTCodeGen(ASTNode *node){
-    int params = 1;
     static int whileCond = 1;
     static int ifElseCond = 1;
     static int level = 0;

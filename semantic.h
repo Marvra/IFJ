@@ -1,6 +1,7 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file semantic.h
+ * @author Robin Kurilla
+ * @brief  header file for semantic analysis
  */
 
 #ifndef SEMANTIC_H
@@ -9,8 +10,10 @@
 #include "ast.h"
 #include "symtable.h"
 
+//Conversion functions
 NType DataTypeToNType(DataType type);
 DataType NTypeToDataType(NType type);
+
 void FreeSemantics(ASTStack *stack, SymList *list);
 void AddBuiltInFunctionsToSymtable(TNode **symtable);
 int LookForReturnNodes(ASTNode *node);
@@ -26,7 +29,6 @@ int AnalyzeAssignment(ASTNode *node, SymList *list);
 int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId);
 int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType);
 int CheckVariablesUsed(TNode *node);
-// Sémantická analýza, ak nastane error vracia chybový kód inak 0
 int SemanticAnalysis(ASTNode *root);
 
 #endif

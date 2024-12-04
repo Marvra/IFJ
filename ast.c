@@ -1,6 +1,7 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file ast.c
+ * @author Robin Kurilla
+ * @brief  source file for abstract syntax tree
  */
 
 #include "ast.h"
@@ -8,10 +9,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @brief creates AST
+ * @return created AST structure
+ */
 ASTNode* CreateAST(){
     return CreateAstNode(TYPE_PROGRAM);
 }
 
+/**
+ * @brief creates AST node
+ * @param type node type
+ * @return created node
+ */
 ASTNode* CreateAstNode(ASTNodeType type){
     ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
     if(node == NULL){
@@ -37,6 +47,11 @@ ASTNode* CreateAstNode(ASTNodeType type){
     return node;
 }
 
+/**
+ * @brief creates TYPE_CODE node
+ * @param node higher node
+ * @return created code node
+ */
 ASTNode* CreateCodeNode(ASTNode *node){
     if(node == NULL){
         exit(99);
@@ -75,6 +90,11 @@ ASTNode* CreateCodeNode(ASTNode *node){
     return temp->left;
 }
 
+/**
+ * @brief creates TYPE_VAR_DECL node - variable
+ * @param node higher node
+ * @return created var declaration node
+ */
 ASTNode* CreateVarDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -83,6 +103,11 @@ ASTNode* CreateVarDeclNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_CON_DECL node - constant
+ * @param node higher node
+ * @return created constant declaration node
+ */
 ASTNode* CreateConDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -91,6 +116,11 @@ ASTNode* CreateConDeclNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_FUN_DECL node - function declaration
+ * @param node higher node
+ * @return created function declaration node
+ */
 ASTNode* CreateFunDeclNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -99,6 +129,11 @@ ASTNode* CreateFunDeclNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_ASSIGNMENT node
+ * @param node higher node
+ * @return created assignment node
+ */
 ASTNode* CreateAssignemtNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         printf("CreateFunDeclNode error");
@@ -108,6 +143,11 @@ ASTNode* CreateAssignemtNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_ID node - identificator
+ * @param node higher node
+ * @return higher node
+ */
 ASTNode* CreateIdNode(ASTNode *node, char *id){
     if(node == NULL){
         exit(99);
@@ -138,6 +178,11 @@ ASTNode* CreateIdNode(ASTNode *node, char *id){
     }
 }
 
+/**
+ * @brief creates TYPE_IF_ELSE node
+ * @param node higher node
+ * @return created if else node
+ */
 ASTNode* CreateIfElseNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -148,6 +193,11 @@ ASTNode* CreateIfElseNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_IF node
+ * @param node higher node
+ * @return helper node 
+ */
 ASTNode* CreateIfNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE){
         exit(99);
@@ -156,6 +206,11 @@ ASTNode* CreateIfNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_ELSE node
+ * @param node higher node
+ * @return higher node
+ */
 ASTNode* CreateElseNode(ASTNode *node){
     if(node->type != TYPE_IF_ELSE){
         exit(99);
@@ -164,6 +219,11 @@ ASTNode* CreateElseNode(ASTNode *node){
     return node;
 }
 
+/**
+ * @brief creates TYPE_WHILE node
+ * @param node higher node
+ * @return created while node
+ */
 ASTNode* CreateWhileNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -173,6 +233,11 @@ ASTNode* CreateWhileNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_RETURN node
+ * @param node higher node
+ * @return created return node
+ */
 ASTNode* CreateReturnNode(ASTNode *node){
     if(node->type != TYPE_CODE || node->right != NULL){
         exit(99);
@@ -181,6 +246,11 @@ ASTNode* CreateReturnNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_FUN_CALL node - function call
+ * @param node higher node
+ * @return created function call node
+ */
 ASTNode* CreateFunCallNode(ASTNode *node){
     if((node->type != TYPE_CODE && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL && node->type != TYPE_ASSIGNMENT)|| node->right != NULL){
         exit(99);
@@ -189,6 +259,11 @@ ASTNode* CreateFunCallNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief creates TYPE_FUN_CALL node when expression missing
+ * @param node expression node
+ * @return created node or expression node
+ */
 ASTNode* CreateFunCallExpressionsNode(ASTNode *node){
     if(node==NULL){
         node = CreateAstNode(TYPE_FUN_CALL);
@@ -196,7 +271,12 @@ ASTNode* CreateFunCallExpressionsNode(ASTNode *node){
     return node;
 }
 
-
+/**
+ * @brief creates TYPE_ARGUMENT node
+ * @param node higher node
+ * @param id argument identificator
+ * @return higher node
+ */
 ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -211,6 +291,11 @@ ASTNode* CreateArgumentNode(ASTNode *node, char *id){
     return node;
 }
 
+/**
+ * @brief creates TYPE_NULL node - null as argument
+ * @param node higher node
+ * @return higher node
+ */
 ASTNode* CreateArgumentNullNode(ASTNode *node){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -220,6 +305,12 @@ ASTNode* CreateArgumentNullNode(ASTNode *node){
     return node;
 }
 
+/**
+ * @brief creates TYPE_VALUE_I32 node - i32 as argument
+ * @param node higher node
+ * @param value value
+ * @return higher node
+ */
 ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -231,6 +322,12 @@ ASTNode* CreateArgumentNodeI32(ASTNode *node, int value){
     return node;
 }
 
+/**
+ * @brief creates TYPE_VALUE_F64 node - f64 as argument
+ * @param node higher node
+ * @param value value
+ * @return higher node
+ */
 ASTNode* CreateArgumentNodeF64(ASTNode *node, float value){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -242,6 +339,12 @@ ASTNode* CreateArgumentNodeF64(ASTNode *node, float value){
     return node;
 }
 
+/**
+ * @brief creates TYPE_VALUE_U8 node - string as argument
+ * @param node higher node
+ * @param value value
+ * @return higher node
+ */
 ASTNode* CreateArgumentNodeU8(ASTNode *node, char *string){
     ASTNode *temp = node;
     while(temp->right != NULL){
@@ -258,6 +361,12 @@ ASTNode* CreateArgumentNodeU8(ASTNode *node, char *string){
     return node;
 }
 
+/**
+ * @brief creates TYPE_PARAMETER node
+ * @param node higher node
+ * @param id parameter identificator
+ * @return higher node
+ */
 ASTNode* CreateParamNode(ASTNode *node, char *id){
     ASTNode *temp = node;
     while(temp->left != NULL){
@@ -273,6 +382,12 @@ ASTNode* CreateParamNode(ASTNode *node, char *id){
     
 }
 
+/**
+ * @brief creates TYPE_DATA_TYPE or TYPE_RETURN_TYPE node - identificator data type or function return type
+ * @param node higher node
+ * @param type data/return type
+ * @return higher node
+ */
 ASTNode* CreateTypeNode(ASTNode *node, DataType type){
     if((node->type != TYPE_FUN_DECL && node->type != TYPE_VAR_DECL && node->type != TYPE_CON_DECL) || node->left == NULL ){
         exit(99);
@@ -303,6 +418,11 @@ ASTNode* CreateTypeNode(ASTNode *node, DataType type){
     return node;
 }
 
+/**
+ * @brief creates TYPE_NULL node
+ * @param node higher node
+ * @return higher node
+ */
 ASTNode* CreateNullNode(ASTNode *node){
     if(node != NULL || (node->type != TYPE_VAR_DECL && node->type != TYPE_ASSIGNMENT && node->type != TYPE_CON_DECL)){
         exit(99);
@@ -313,6 +433,11 @@ ASTNode* CreateNullNode(ASTNode *node){
 
 // ------------------------- GET ---------------------------
 
+/**
+ * @brief gets code node
+ * @param node higher node
+ * @return code node from node
+ */
 ASTNode* GetCode(ASTNode *node){
     if(node == NULL){
         return NULL;
@@ -320,6 +445,11 @@ ASTNode* GetCode(ASTNode *node){
     return node->left;
 }
 
+/**
+ * @brief gets right node
+ * @param node higher node
+ * @return right node from node
+ */
 ASTNode* GetNode(ASTNode *node){
     if(node == NULL){
         return NULL;
@@ -327,10 +457,20 @@ ASTNode* GetNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief gets node type
+ * @param node node from which we want type
+ * @return node type
+ */
 ASTNodeType GetNodeType(ASTNode *node){
     return node->type;
 }
 
+/**
+ * @brief gets data type
+ * @param node higher node - id/param
+ * @return node data type or T_DEFAULT
+ */
 DataType GetDataType(ASTNode *node){
     if(node->right == NULL){
         return T_DEFAULT;
@@ -338,6 +478,11 @@ DataType GetDataType(ASTNode *node){
     return node->right->data.type;
 }
 
+/**
+ * @brief gets data type
+ * @param node current node
+ * @return node data type from current node or T_DEFAULT
+ */
 DataType GetDataTypeCurrentNode(ASTNode *node){
     if(node == NULL){
         return T_DEFAULT;
@@ -345,6 +490,11 @@ DataType GetDataTypeCurrentNode(ASTNode *node){
     return node->data.type;
 }
 
+/**
+ * @brief gets id node
+ * @param node higher node
+ * @return id node or null
+ */
 ASTNode* GetIdNode(ASTNode *node){
     if(node == NULL || node->left == NULL){
         return NULL;
@@ -352,6 +502,11 @@ ASTNode* GetIdNode(ASTNode *node){
     return node->left;
 }
 
+/**
+ * @brief gets param node
+ * @param node higher node
+ * @return param node or null
+ */
 ASTNode* GetParamNode(ASTNode *node){
     if(node == NULL || node->left == NULL){
         return NULL;
@@ -359,6 +514,11 @@ ASTNode* GetParamNode(ASTNode *node){
     return node->left;
 }
 
+/**
+ * @brief gets argument node
+ * @param node higher node
+ * @return argument node or null
+ */
 ASTNode* GetArgNode(ASTNode *node){
     if(node == NULL || node->right == NULL){
         return NULL;
@@ -366,6 +526,11 @@ ASTNode* GetArgNode(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief gets id
+ * @param node node from which we want id
+ * @return id or null
+ */
 char* GetId(ASTNode *node){
     if(node == NULL){
         return NULL;
@@ -373,6 +538,11 @@ char* GetId(ASTNode *node){
     return node->data.str;
 }
 
+/**
+ * @brief gets if node
+ * @param node higher node
+ * @return if node or null
+ */
 ASTNode* GetIfNode(ASTNode *node){
     if(node == NULL || node->right == NULL){
         return NULL;
@@ -380,6 +550,11 @@ ASTNode* GetIfNode(ASTNode *node){
     return node->right->left;
 }
 
+/**
+ * @brief gets else node
+ * @param node higher node
+ * @return else node or null
+ */
 ASTNode* GetElseNode(ASTNode *node){
     if(node == NULL || node->right == NULL){
         return NULL;
@@ -387,6 +562,11 @@ ASTNode* GetElseNode(ASTNode *node){
     return node->right->right;
 }
 
+/**
+ * @brief gets no null id node
+ * @param node higher node
+ * @return id node or null
+ */
 ASTNode* GetNoNullId(ASTNode *node){
     if(node == NULL || node->left == NULL){
         return NULL;
@@ -394,6 +574,11 @@ ASTNode* GetNoNullId(ASTNode *node){
     return node->left->left;
 }
 
+/**
+ * @brief gets condition node
+ * @param node higher node
+ * @return condition node or null
+ */
 ASTNode* GetConditionNode(ASTNode *node){
     if(node == NULL || node->left == NULL){
         return NULL;
@@ -401,6 +586,11 @@ ASTNode* GetConditionNode(ASTNode *node){
     return node->left->right;
 }
 
+/**
+ * @brief gets operator
+ * @param node operator node
+ * @return operator
+ */
 Operator GetOperator(ASTNode* node){
     if(node == NULL || (node->type != TYPE_OPERATOR && node->type != TYPE_REL_OPERATOR)){
         exit(99);
@@ -408,6 +598,11 @@ Operator GetOperator(ASTNode* node){
     return node->data.op;
 }
 
+/**
+ * @brief gets right node
+ * @param node higher node
+ * @return right node or null
+ */
 ASTNode* GetRightOperand(ASTNode *node){
     if(node == NULL){
         return NULL;
@@ -415,6 +610,11 @@ ASTNode* GetRightOperand(ASTNode *node){
     return node->right;
 }
 
+/**
+ * @brief gets left node
+ * @param node higher node
+ * @return left node or null
+ */
 ASTNode* GetLeftOperand(ASTNode *node){
     if(node == NULL){
         return NULL;
@@ -422,6 +622,11 @@ ASTNode* GetLeftOperand(ASTNode *node){
     return node->left;
 }
 
+/**
+ * @brief gets i32 value
+ * @param node i32 value node
+ * @return int value
+ */
 int GetIntValue(ASTNode *node){
     if(node->type == TYPE_VALUE_I32){
         return node->data.i32;
@@ -429,6 +634,11 @@ int GetIntValue(ASTNode *node){
     return 0;
 }
 
+/**
+ * @brief gets f64 value
+ * @param node f64 value node
+ * @return float value
+ */
 float GetFloatValue(ASTNode *node){
     if(node->type == TYPE_VALUE_F64){
         return node->data.f64;
@@ -436,82 +646,26 @@ float GetFloatValue(ASTNode *node){
     return 0;
 }
 
-const char* NodeTypeToString(ASTNodeType type) {
-    switch (type) {
-        case TYPE_PROGRAM: return "Program";
-        case TYPE_CODE: return "Code";
-        case TYPE_VAR_DECL: return "VarDecl";
-        case TYPE_CON_DECL: return "ConDecl";
-        case TYPE_FUN_DECL: return "FunDecl";
-        case TYPE_ASSIGNMENT: return "Assignment";
-        case TYPE_RETURN: return "Return";
-        case TYPE_IF_ELSE: return "IfElse";
-        case TYPE_IF_ELSE1: return "IfElse1";
-        case TYPE_IF: return "If";
-        case TYPE_IF_CLOSED: return "IfEnd";
-        case TYPE_ELSE: return "Else";
-        case TYPE_ELSE_CLOSED: return "ElseEnd";
-        case TYPE_BLOCK: return "Block";
-        case TYPE_WHILE: return "While";
-        case TYPE_WHILE1: return "While1";
-        case TYPE_WHILE_CLOSED: return "WhileEnd";
-        case TYPE_FUN_CALL: return "FunCall";
-        case TYPE_ARGUMENT: return "Argument";
-        case TYPE_PARAMETER: return "Parameter";
-        case TYPE_ID: return "ID";
-        case TYPE_OPERATOR: return "Operator";
-        case TYPE_VALUE_I32: return "ValueI32";
-        case TYPE_VALUE_F64: return "ValueF64";
-        case TYPE_NULL: return "Null";
-        //case TYPE_VALUE: return "Value"; ---------------------------------------------------------------------------------------------------
-        case TYPE_STRING: return "String";
-        case TYPE_REL_OPERATOR: return "RelOperator";
-        case TYPE_DATA_TYPE: return "DataType";
-        case TYPE_RETURN_TYPE: return "ReturnType";
-        default: return "Unknown";
+/**
+ * @brief frees ast
+ * @param node AST root
+ */
+void FreeAST(ASTNode *node){
+    if(node == NULL){
+        return;
     }
+    FreeAST(node->right);
+    FreeAST(node->left);
+    if(node->type == TYPE_ID || node->type == TYPE_ARGUMENT || node->type == TYPE_PARAMETER || node->type == TYPE_STRING){
+        free(node->data.str);
+    }
+    free(node);
 }
 
-const char* OperatorToString(Operator op) {
-    switch (op) {
-        case OP_ADD: return "ADD (+)";
-        case OP_SUB: return "SUB (-)";
-        case OP_MUL: return "MUL (*)";
-        case OP_DIV: return "DIV (/)";
-        case OP_EQ: return "EQ (==)";
-        case OP_NEQ: return "NEQ (!=)";
-        case OP_GREATER: return "GREATER (>)";
-        case OP_LESS: return "LESS (<)";
-        case OP_GE: return "GE (>=)";
-        case OP_LE: return "LE (<=)";
-        case OP_DEFAULT: return "DEFAULT";
-        default: return "Unknown";
-    }
-}
-
-void DisplayDataType(DataType dataType) {
-    switch (dataType) {
-        case T_DEFAULT:
-            printf("DEFAULT\n");
-            break;
-        case T_VOID:
-            printf("VOID\n");
-            break;
-        case T_I32:
-            printf("I32\n");
-            break;
-        case T_F64:
-            printf("F64\n");
-            break;
-        case T_U8:
-            printf("U8\n");
-            break;
-        default:
-            printf("UNKNOWN\n");
-            break;
-    }
-}
-
+/**
+ * @brief creates AST stack
+ * @return created AST stack
+ */
 ASTStack* CreateStackAST() {
     ASTStack *stack = (ASTStack*)malloc(sizeof(ASTStack));
     if (!stack) {
@@ -523,6 +677,11 @@ ASTStack* CreateStackAST() {
     return stack;
 }
 
+/**
+ * @brief pushs ast node onto stack
+ * @param stack AST stack
+ * @param node node to be pushed
+ */
 void PushAST(ASTStack *stack, ASTNode *node) {
     StackNode *newNode = (StackNode*)malloc(sizeof(StackNode));
     if (!newNode) {
@@ -535,6 +694,11 @@ void PushAST(ASTStack *stack, ASTNode *node) {
     stack->top = newNode;
 }
 
+/**
+ * @brief pops top from ast stack 
+ * @param stack AST stack
+ * @return popped node
+ */
 ASTNode* PopAST(ASTStack *stack) {
     if (stack->top == NULL) {
         return NULL;
@@ -547,7 +711,10 @@ ASTNode* PopAST(ASTStack *stack) {
     return node;
 }
 
-
+/**
+ * @brief frees ast stack
+ * @param stack AST stack
+ */
 void FreeStackAST(ASTStack *stack) {
     if(stack == NULL){
         return;

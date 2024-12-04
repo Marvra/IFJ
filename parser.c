@@ -36,7 +36,7 @@ int Parser(ASTNode** tree, TokenList* list)
     // Create base ast
     ASTNode *ast = CreateAST(); 
     ASTNode *root = ast;
-    ASTNode *baseCode = CreateCodeNode(ast);
+    CreateCodeNode(ast);
     ASTNode *expr_root = NULL;
     Tokentype lastInteresingToken = TOKEN_UNKNOWN;
 
