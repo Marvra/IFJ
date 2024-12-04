@@ -1,11 +1,9 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
- * Jaroslav Doktor (xdoktoj00)
+ * @file codegen.c
+ * @author Robin Kurilla, Jaroslav Doktor
+ * @brief  source file for generating code
+ * @todo
  */
-
-/* TODO:    While - semi !
-*/
 
 #include "codegen.h"
 
@@ -208,17 +206,12 @@
 "POPFRAME\n" \
 "RETURN\n\n"
 
-// Zacatek printu
-void PrintASTNodeType(ASTNode *node) {
-    if (node == NULL) {
-        printf("Node is NULL\n");
-        return;
-    }
-    
-    printf("AST Node Type: %s\n", NodeTypeToString(node->type));
-}
-// Konec printu
-
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateHeader()
 {
     printf(".IFJcode24\n");
@@ -237,6 +230,12 @@ void CreateHeader()
     printf(FUNCTION_chr);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateMain()
 {
     printf("LABEL $main\n");
@@ -244,6 +243,12 @@ void CreateMain()
     printf("PUSHFRAME\n");
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateFunction(char *function_id)
 {
     printf("LABEL $%s\n", function_id);
@@ -251,64 +256,79 @@ void CreateFunction(char *function_id)
     printf("PUSHFRAME\n");
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateVariable(char* var_id)
 {
     printf("DEFVAR LF@%s\n", var_id);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateNonVariableParams(int param)
 {
     printf("DEFVAR TF@param%i\n", param);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 char* concat(const char *s1, const char *s2) {
     // Check for NULL inputs
     if (s1 == NULL) s1 = "";
     if (s2 == NULL) s2 = "";
 
-    // Allocate memory for the concatenated string
-    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for null-terminator
+    char *result = malloc(strlen(s1) + strlen(s2) + 1);
     if (result == NULL) {
-        // Handle memory allocation failure
         return NULL;
     }
 
-    // Concatenate strings
     strcpy(result, s1);
     strcat(result, s2);
     return result;
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 char* removeFirstAndLast(const char* str) {
-    // Check for NULL input or empty string
     if (str == NULL || str[0] == '\0') {
         return NULL;
     }
-
-    // Check if string is too short (less than 2 characters)
     size_t len = strlen(str);
     if (len < 2) {
-        return strdup(""); // Return empty string
+        return strdup("");
     }
-
-    // Allocate memory for the new string
-    char* result = malloc(len - 1); // -1 to remove first and last chars
+    char* result = malloc(len - 1);
     if (result == NULL) {
-        return NULL; // Memory allocation failed
+        return NULL;
     }
-
-    // Copy the substring (skipping first and last characters)
     strncpy(result, str + 1, len - 2);
-    result[len - 2] = '\0'; // Null-terminate the string
+    result[len - 2] = '\0'; 
 
     return result;
 }
 
-typedef enum {
-    STATE_NORMAL,
-    STATE_BACKSLASH
-} ParseState;
-
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 char* WriteString(ASTNode *node) {
     if (node == NULL) {
         return NULL;
@@ -320,7 +340,7 @@ char* WriteString(ASTNode *node) {
         return NULL;
     }
 
-    // Allocate a string large enough to handle the worst-case scenario
+    // Allocate for the worst case
     char* results = malloc(strlen(string) * 5 + 1);
     if (results == NULL) {
         return NULL;
@@ -328,19 +348,19 @@ char* WriteString(ASTNode *node) {
     results[0] = '\0';  // Initialize as empty string
 
     char concat_string[10];  // Buffer for individual character conversion
-    ParseState state = STATE_NORMAL;
+    char state = 'a';
     
     for (int i = 0; i < strlen(string); i++) {
-        concat_string[0] = '\0';  // Reset concat_string
+        concat_string[0] = '\0';  
 
         switch (state) {
-            case STATE_NORMAL:
+            case 'a':
                 switch (string[i]) {
                     case 32:  // Space
                         strcpy(concat_string, "\\032");
                         break;
-                    case 92:  // Backslash
-                        state = STATE_BACKSLASH;
+                    case 92:  // /
+                        state = '/';
                         continue;
                     default:
                         concat_string[0] = string[i];
@@ -349,43 +369,39 @@ char* WriteString(ASTNode *node) {
                 }
                 break;
 
-            case STATE_BACKSLASH:
+            case '/':
                 switch (string[i]) {
                     case 'n':
-                        strcpy(concat_string, "\\010");  // Newline escape
+                        strcpy(concat_string, "\\010");  // n
                         break;
                     case '"':
-                        strcpy(concat_string, "\\034");  // Quote escape
+                        strcpy(concat_string, "\\034");  // "
                         break;
                     case '\\':
-                        strcpy(concat_string, "\\092");  // Backslash escape
+                        strcpy(concat_string, "\\092");  // /
                         break;
                     case 'r':
-                        strcpy(concat_string, "\\013");
+                        strcpy(concat_string, "\\013"); // r
                         break;
                     case 't':
-                        strcpy(concat_string, "\\009");
+                        strcpy(concat_string, "\\009"); // t
                         break;
                     default:
-                        // If not a special escape, output the original backslash and current char
                         strcpy(concat_string, "\\092");
                         // Prepare to handle the current character in the next iteration
                         i--;
                         break;
                 }
-                state = STATE_NORMAL;
+                state = 'a';
                 break;
         }
 
-        // Temporary variable to store the new concatenated result
         char* temp = concat(results, concat_string);
         if (temp == NULL) {
-            // Handle concatenation failure
             free(results);
             return NULL;
         }
 
-        // Free the old results and update with the new concatenation
         free(results);
         results = temp;
     }
@@ -393,6 +409,12 @@ char* WriteString(ASTNode *node) {
     return results;
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateArguments(ASTNode *node){
     if(node == NULL){
         return;
@@ -414,6 +436,12 @@ void CreateArguments(ASTNode *node){
     CreateArguments(node->right);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateParams(ASTNode *node){
     if(node == NULL){
         return;
@@ -423,6 +451,12 @@ void CreateParams(ASTNode *node){
     printf("POPS LF@%s\n", node->data.str);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateFunctionCall(ASTNode *node) {
     char *functionId = GetId(node->left);
     if(!strcmp(functionId, "ifj.write")){
@@ -450,6 +484,12 @@ void CreateFunctionCall(ASTNode *node) {
     }
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateNonVariableParamsData(ASTNode data,int param)
 {
     if(data.type == TYPE_VALUE_I32)
@@ -474,6 +514,12 @@ void CreateNonVariableParamsData(ASTNode data,int param)
     }
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateExpression(ASTNode *node){
     ASTNodeType type = GetNodeType(node);
     if(type == TYPE_VALUE_I32)
@@ -513,7 +559,7 @@ void CreateExpression(ASTNode *node){
         {
             printf("CALL ifj_readi32\n");
         }
-        // NO IDEA
+        // GOOD
         else if(!strcmp(functionId, "ifj.readf64"))
         {
             printf("CALL ifj_readf64\n");
@@ -636,6 +682,12 @@ void CreateExpression(ASTNode *node){
     }
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateReturn(ASTNode *node){
     if(node == NULL){
         
@@ -646,6 +698,12 @@ void CreateReturn(ASTNode *node){
     printf("RETURN\n");
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void RelOperator(ASTNode *node, int cond)
 {
     ASTNodeType type = GetNodeType(node->right);
@@ -768,6 +826,146 @@ void RelOperator(ASTNode *node, int cond)
     }
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
+void RelOperatorWhile(ASTNode *node, int cond)
+{
+    ASTNodeType type = GetNodeType(node->right);
+    if(type == TYPE_VALUE_I32)
+    {
+        int value = node->right->data.i32;
+        printf("LABEL $WHILE$START%d\n", cond);
+        printf("PUSHS int@%d\n", value);
+        printf("PUSHS int@0\n");
+        printf("EQS\n");
+        printf("NOTS\n");
+    }
+    else if(type == TYPE_VALUE_F64)
+    {
+        float value = node->right->data.f64;
+        printf("LABEL $WHILE$START%d\n", cond);
+        printf("PUSHS float@%a\n", value);
+        float f = 0.0;
+        printf("PUSHS float@%a\n", f);
+        printf("EQS\n");
+        printf("NOTS\n");
+    }
+    else if(type == TYPE_ID)
+    {
+        char *id = GetId(node->right);
+        if(node->left == NULL){
+            printf("DEFVAR TF@%%type\n");
+            printf("LABEL $WHILE$START%d\n", cond);
+            printf("TYPE TF@%%type LF@%s\n", id);
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@int\n");
+            printf("JUMPIFEQS %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            float f = 0.0;
+            printf("PUSHS float@%a\n", f);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            printf("LABEL %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("PUSHS int@0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("LABEL %%%dend\n",cond);
+        }else{
+            char *condVar = GetId(node->left);
+            printf("DEFVAR LF@%s\n", condVar);
+            printf("DEFVAR TF@%%type\n");
+            printf("LABEL $WHILE$START%d\n", cond);
+            printf("TYPE TF@%%type LF@%s\n", id);
+            // STRING
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@string\n");
+            printf("JUMPIFNEQS NOSTRING%%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            char* s = "";
+            printf("PUSHS string@%s\n", s);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            // FLOATS AND INTS
+            printf("LABEL NOSTRING%%%d\n", cond);
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@int\n");
+            printf("JUMPIFEQS %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            float f = 0.0;
+            printf("PUSHS float@%a\n", f);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            printf("LABEL %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("PUSHS int@0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("LABEL %%%dend\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("POPS LF@%s\n", condVar);
+        }
+    }
+    else if(type == TYPE_NULL)
+    {
+        printf("LABEL $WHILE$START%d\n", cond);
+        printf("PUSHS bool@false\n");
+    }
+    else if (type==TYPE_REL_OPERATOR)
+    {
+        printf("LABEL $WHILE$START%d\n", cond);
+        CreateExpression(node->right->left);
+        CreateExpression(node->right->right);
+        Operator op = GetOperator(node->right);
+        if (op == OP_EQ)
+        {
+            printf("EQS\n");
+        }
+        else if (op == OP_GREATER)
+        {
+            printf("GTS\n");
+        }
+        else if(op == OP_LESS)
+        {
+            printf("LTS\n");
+        }
+        else if (op == OP_NEQ)
+        {
+            printf("EQS\n");
+            printf("NOTS\n");
+        }
+        else if (op == OP_GE)
+        {
+            printf("GTS\n");
+            CreateExpression(node->right->left);
+            CreateExpression(node->right->right);
+            printf("EQS\n");
+            printf("ORS\n");
+        }
+        else if (op == OP_LE)
+        {
+            printf("LTS\n");
+            CreateExpression(node->right->left);
+            CreateExpression(node->right->right);
+            printf("EQS\n");
+            printf("ORS\n");
+        }
+    }
+}
+
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void StartIfElse(ASTNode *node, int cond)
 {
     printf("CREATEFRAME\n");
@@ -781,18 +979,29 @@ void StartIfElse(ASTNode *node, int cond)
     printf("LABEL $END$IFELSE%d\n", cond);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void CreateWhile(ASTNode *node, int cond)
 {
     printf("CREATEFRAME\n");
-    printf("LABEL $WHILE$START%d\n", cond);
-    RelOperator(node->left, cond);
+    RelOperatorWhile(node->left, cond);
     printf("PUSHS bool@true\n");
-    printf("JUMPIFEQS $WHILE$END%d\n", cond);
+    printf("JUMPIFNEQS $WHILE$END%d\n", cond);
     TraverseASTCodeGen(node->right);
     printf("JUMP $WHILE$START%d\n", cond);
     printf("LABEL $WHILE$END%d\n", cond);
 }
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 void TraverseASTCodeGen(ASTNode *node){
     int params = 1;
     static int whileCond = 1;
@@ -860,7 +1069,7 @@ void TraverseASTCodeGen(ASTNode *node){
         case TYPE_WHILE_CLOSED:
             whileCond++;
             CreateWhile(node, whileCond);
-            TraverseASTCodeGen(GetNode(node));
+            // TraverseASTCodeGen(GetNode(node));
             break;
         case TYPE_IF_CLOSED:
             TraverseASTCodeGen(GetCode(node));

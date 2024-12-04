@@ -1,16 +1,18 @@
 /**
- * Project: IFJ24 2024
- * Robin Kurilla (xkuril03)
+ * @file codegen.h
+ * @author Robin Kurilla, Jaroslav Doktor
+ * @brief  header file for generarting code
+ * @todo
  */
 
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "ast.h"
-#include "semantic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ast.h"
+#include "semantic.h"
 
 void createHeader();
 void createMain();
