@@ -362,6 +362,7 @@ int listTopIndex(DLList linked_list)
 }
 
 // --------------------------------- AST CREATION ---------------------------------
+
 void insert(ASTNode **root, Token *curr_token) {
   if (expr_getTermFromToken(curr_token) == TERM_variable) 
   {
@@ -423,7 +424,7 @@ void insert(ASTNode **root, Token *curr_token) {
       return;
     }
 
-    if (getAstPrecedance(*root) < new_precedence) 
+    if (getAstPrecedance(*root) <= new_precedence) 
     {
       new_node->left = *root;
       *root = new_node;
