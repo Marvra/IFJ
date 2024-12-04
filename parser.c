@@ -95,6 +95,7 @@ int Parser(ASTNode** tree, TokenList* list)
         // based on last interesting token build AST
         if (lastInteresingToken != TOKEN_UNKNOWN )
         {
+            // somwhow works dont change
             if(lastInteresingToken == TOKEN_CURLY_RIGHT_PAR && list->currToken->type == TOKEN_CURLY_RIGHT_PAR)
             {
                 BuildAST(&expr_root, &ast, lastInteresingToken, list->currToken, saveToken);
@@ -116,7 +117,6 @@ int Parser(ASTNode** tree, TokenList* list)
     }
     FreeStack(stack);
 
-    exportASTToDot(root);
     *tree = ast;
 
     return 0;
@@ -712,6 +712,8 @@ ASTNode* findDeepestParamNode(ASTNode** ast)
  */
 ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
 {
+    // special types of traversing through AST because of nested if else and while
+    // based on how we agreed to create AST
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
 
@@ -850,11 +852,18 @@ ASTNode* findDeepestReturnNode(ASTNode** ast)
     }
 }
 
+/**
+ * @brief finds deepest if node in functions in ast tree, helper function to findDeepestIfElseNode
+ * @param ast pointer to AST
+ * @return pointer to deepest if node
+ */
 ASTNode* findDeepestIfElseNodeHelp(ASTNode** ast)
 {
+    // special types of traversing through AST because of nested if else and while
+    // based on how we agreed to create AST
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
-        temp = (*ast)->right; // saving while
+        temp = (*ast)->right;
         return (*ast)->right->right == NULL ? temp : findDeepestIfElseNodeHelp(&(*ast)->right->right);
     } 
     else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
@@ -877,6 +886,11 @@ ASTNode* findDeepestIfElseNodeHelp(ASTNode** ast)
     return *ast;
 }
 
+/**
+ * @brief finds deepest if else node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest if else node
+ */
 ASTNode* findDeepestIfElseNode(ASTNode** ast) {
 
     *ast = findDeepestFunDecNode(&(*ast));
@@ -895,10 +909,15 @@ ASTNode* findDeepestIfElseNode(ASTNode** ast) {
     }
 }
 
+/**
+ * @brief finds deepest non closed node, used as helper function for findDeepestWhileNode
+ * @param ast pointer to AST
+ * @return pointer to deepest non closed node
+ */
 ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
-        temp = (*ast)->right; // saving while
+        temp = (*ast)->right;
         return (*ast)->right->right == NULL ? temp : findDeepestWhileNodeHelp(&(*ast)->right->right);
     } 
     else if((*ast)->left == NULL && (*ast)->right->type == TYPE_IF_ELSE && (*ast)->right->right->left->type == TYPE_IF) 
@@ -921,6 +940,11 @@ ASTNode* findDeepestWhileNodeHelp(ASTNode** ast) {
     return *ast;
 }
 
+/**
+ * @brief finds deepest non closed node (if, else, while)
+ * @param ast pointer to AST
+ * @return pointer to deepest non closed node
+ */
 ASTNode* findDeepestWhileNode(ASTNode** ast) {
 
     *ast = findDeepestFunDecNode(&(*ast));
@@ -939,6 +963,11 @@ ASTNode* findDeepestWhileNode(ASTNode** ast) {
     }
 }
 
+/**
+ * @brief finds first closed if node in functions in ast tree, helpser function for findFirstClosedIfNode
+ * @param ast pointer to AST
+ * @return pointer to first closed if node
+ */
 ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast) {
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
     {
@@ -962,6 +991,11 @@ ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast) {
     }
 }
 
+/**
+ * @brief finds first closed if node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to first closed if node
+ */
 ASTNode* findFirstClosedIfNode(ASTNode** ast) {
 
     *ast = findDeepestFunDecNode(&(*ast));
@@ -980,7 +1014,14 @@ ASTNode* findFirstClosedIfNode(ASTNode** ast) {
     }
 }
 
-
+/**
+ * @brief main function for building AST, based on token types and AST nodes
+ * @param expr_root pointer to expression root, used only for expressions
+ * @param ast pointer to AST, used for creating AST
+ * @param interestingToken token type
+ * @param token pointer to token
+ * @param saveToken pointer to token, used for saving names of functions or variables for later use in assignment or funccalls
+ */
 void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token, Token* saveToken)
 {
     switch (interestingToken)
@@ -989,7 +1030,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             if(token->type == TOKEN_fn)
             {
                 *ast = findDeepestCodeNode(&(*ast));
-                if((*ast)->right != NULL)   // creates new code node under the top one (bo musime zapisat func do dalsej code node)
+                if((*ast)->right != NULL)
                 {
                     *ast = CreateCodeNode(*ast);
                 }
@@ -997,8 +1038,8 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             else if(token->type == TOKEN_VARIABLE)
             {
-                // function id 
                 *ast = findDeepestFunDecNode(&(*ast));
+                // function id 
                 if((*ast)->left == NULL)
                 {
                     *ast = CreateIdNode(*ast, token->data);
@@ -1017,8 +1058,9 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
         break;
         case TOKEN_const:
+            // dont check const for prolog 
             if(lastNonTerminal == NON_T_BODY){
-                break; // dont check const for prolog 
+                break;
             }
             if(token->type == TOKEN_const)
             {
@@ -1026,9 +1068,9 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateCodeNode(*ast);
                 *ast = CreateConDeclNode(*ast);
             }
+            // id 
             else if(token->type == TOKEN_VARIABLE)
             {
-                // function id 
                 *ast = findDeepestConstNode(&(*ast));
                 *ast = CreateIdNode(*ast, token->data);
             }
@@ -1037,6 +1079,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestConstNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
             }
+            // join expression
             else if(lastNonTerminal == NON_T_EXPR)
             {
                 *ast = findDeepestConstNode(&(*ast));
@@ -1050,9 +1093,9 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateCodeNode(*ast);
                 *ast = CreateVarDeclNode(*ast);
             }
+            // id
             else if(token->type == TOKEN_VARIABLE)
             {
-                // function id 
                 *ast = findDeepestVarNode(&(*ast));
                 *ast = CreateIdNode(*ast, token->data);
             }
@@ -1061,6 +1104,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = findDeepestVarNode(&(*ast));
                 *ast = CreateTypeNode(*ast, TokenTypeToDataType(token->type));
             }
+            // join expression
             else if(lastNonTerminal == NON_T_EXPR)
             {
                 *ast = findDeepestVarNode(&(*ast));
@@ -1074,6 +1118,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateCodeNode(*ast);
                 *ast = CreateReturnNode(*ast);
             }
+            // join expression
             else if(lastNonTerminal == NON_T_EXPR)
             {
                 *ast = findDeepestReturnNode(&(*ast));
@@ -1081,6 +1126,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             break;
         case TOKEN_if:
+            // creates needed nodes for if else
             if(token->type == TOKEN_if)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -1100,6 +1146,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             break;
         case TOKEN_while:
+            // creates needed nodes for while
             if(token->type == TOKEN_while)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -1118,6 +1165,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             break;
         case TOKEN_else:
+            // first closed if means that else is going to start 
             *ast = findFirstClosedIfNode(&(*ast));
             if(*ast != NULL)
             {
@@ -1125,6 +1173,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             }
             break;
         case TOKEN_CURLY_RIGHT_PAR:
+            // finds deepests possibly nested if else or while and closes it 
             *ast = findDeepestWhileNode(&(*ast));
             *ast = temp;
             if(*ast != NULL)
@@ -1145,12 +1194,14 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             break;
         case TOKEN_VARIABLE:
         case TOKEN_UNDERSCORE:
+            // save token name for id
             if(lastNonTerminal == NON_T_ID_HELPER && interestingToken != TOKEN_UNDERSCORE)
             {
                 saveToken->data = strdup(token->data);
                 saveToken->type = token->type;
                 saveToken->dataLength = token->dataLength;
             }
+            // create needed nodes for function call
             else if(token->type == TOKEN_LEFT_PAR)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -1159,6 +1210,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateIdNode(*ast, saveToken->data);
                 saveToken = NULL;
             }
+            // create needed nodes for parameters for functoin calls
             else if (lastNonTerminal == NON_T_TERM)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -1190,6 +1242,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 
                 saveToken = NULL;
             }
+            // create needed nodes for assignment
             else if(token->type == TOKEN_ASSIGN)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -1198,13 +1251,14 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 *ast = CreateIdNode(*ast, saveToken->data);
                 saveToken = NULL;
             }
+            // used to join expression with assignment
             else if(lastNonTerminal == NON_T_EXPR)
             {
                 *ast = findDeepestAssignmentNode(&(*ast));
                 (*ast)->right = *expr_root;
                 saveToken = NULL;
             }
-            // TOTO KVOLI ifj.write() funkciam etc
+            // concat because of functions like ifj.write, because those are 3 tokens
             else if(token->type == TOKEN_DOT)
             {
                 strcat(saveToken->data,token->data);
@@ -1285,35 +1339,4 @@ int InterestingTokens(Tokentype type)
         default:
             return 0;
     }
-}
-
-// Function to print a single node and its children in DOT format
-void printDotAST(ASTNode* node, FILE* file) {
-    if (node == NULL) return;
-
-    // Print the current node's label, assuming `type` or similar gives a name for the node
-    fprintf(file, "    \"%p\" [label=\"%s\"];\n", (void*)node, NodeTypeToString(node->type));
-
-    // Print edges for left and right children if they exist
-    if (node->left) {
-        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->left);
-        printDotAST(node->left, file);
-    }
-    if (node->right) {
-        fprintf(file, "    \"%p\" -> \"%p\";\n", (void*)node, (void*)node->right);
-        printDotAST(node->right, file);
-    }
-}
-
-// Main function to export AST to a DOT file
-void exportASTToDot(ASTNode* root) {
-    FILE* file = fopen("ast.txt", "w");
-    if (file == NULL) {
-        perror("Failed to open file for DOT output");
-        return;
-    }
-    fprintf(file, "digraph AST {\n");
-    printDotAST(root, file);
-    fprintf(file, "}\n");
-    fclose(file);
 }
