@@ -22,17 +22,8 @@
 "CREATEFRAME\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@out\n" \
-"DEFVAR LF@err\n" \
-"MOVE LF@err int@0\n" \
 "READ LF@out int\n" \
-"JUMPIFEQ $readi32_end LF@out nil@nil\n" \
 "PUSHS LF@out\n" \
-"POPFRAME\n" \
-"RETURN\n" \
-"LABEL $readi32_end\n" \
-"MOVE LF@err int@1\n" \
-"PUSHS nil@nil\n" \
-"PUSHS LF@err\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
 
@@ -41,17 +32,8 @@
 "CREATEFRAME\n" \
 "PUSHFRAME\n" \
 "DEFVAR LF@out\n" \
-"DEFVAR LF@err\n" \
-"MOVE LF@err int@0\n" \
 "READ LF@out float\n" \
-"JUMPIFEQ $readf64_end LF@out nil@nil\n" \
 "PUSHS LF@out\n" \
-"POPFRAME\n" \
-"RETURN\n" \
-"LABEL $readf64_end\n" \
-"MOVE LF@err int@1\n" \
-"PUSHS nil@nil\n" \
-"PUSHS LF@err\n" \
 "POPFRAME\n" \
 "RETURN\n\n"
 
