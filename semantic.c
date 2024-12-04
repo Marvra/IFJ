@@ -1,9 +1,16 @@
+/**
+ * Project: IFJ24 2024
+ * Robin Kurilla (xkuril03)
+ */
+
 #include "semantic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "error.h"
 
+//Prevádzanie typu DataType na NType
 NType DataTypeToNType(DataType type){
     switch(type){
         case T_F64:
@@ -25,6 +32,7 @@ NType DataTypeToNType(DataType type){
     }
 }
 
+//Prevádzanie typu NType na DataType
 DataType NTypeToDataType(NType type){
     switch(type){
         case TYPE_F64:
@@ -46,11 +54,13 @@ DataType NTypeToDataType(NType type){
     }
 }
 
+//Uvoľnenie zdrojov
 void FreeSemantics(ASTStack *stack, SymList *list){
     FreeStackAST(stack);
     FreeSymlist(list);
 }
 
+//Pridáva built in funkcie do tabuľky symbolov
 void AddBuiltInFunctionsToSymtable(TNode **symtable){
     char *id = "ifj.readstr";
     *symtable = InsertNode(*symtable, id);
@@ -131,6 +141,7 @@ void AddBuiltInFunctionsToSymtable(TNode **symtable){
     SetParameter(*symtable, id, TYPE_I32);
 }
 
+//Hľadá returny v definícii funkcie
 int LookForReturnNodes(ASTNode *node){
     if(node == NULL){
         return 0;
@@ -164,16 +175,17 @@ int LookForReturnNodes(ASTNode *node){
     }
 }
 
+//Analýza deklarácie funkcie
 int AnalyzeFunDec(ASTNode *node, TNode **symtable){
     if(node == NULL || node->type != TYPE_FUN_DECL){
-        return 10;
+        return ERROR_SEMANTIC_OTHERS;
     }
     ASTNode *temp = GetIdNode(node);
     char *idFunction = GetId(temp);
 
     TNode *exists = SearchNode(*symtable, idFunction);
     if(exists){
-        return 5;
+        return ERROR_REDEFINITION;
     }
     *symtable = InsertNode(*symtable,idFunction);
     SetType(*symtable, idFunction, TYPE_FUNCTION);
@@ -182,7 +194,7 @@ int AnalyzeFunDec(ASTNode *node, TNode **symtable){
     if(type != T_VOID){
         int ret = LookForReturnNodes(GetNode(node));
         if(!ret){
-            return 6;
+            return ERROR_BAD_RETURN;
         }
     }
 
@@ -198,24 +210,26 @@ int AnalyzeFunDec(ASTNode *node, TNode **symtable){
 
 }
 
+//Analýza správnosti main funkcie v programe
 int CheckForMainFunction(TNode **symtable){
     NType type;
     int error = GetType(*symtable, "main", &type);
     if(error == -1 || type != TYPE_FUNCTION){
-        return 3;
+        return ERROR_UNDEFINED;
     }
     int count;
     error = GetParameterCount(*symtable, "main", &count);
     if(error == -1 || count != 0){
-        return 4;
+        return ERROR_PARAMTERS;
     }
     error = GetFunctionReturnType(*symtable, "main", &type);
     if(error == -1 || type != TYPE_VOID){
-        return 4;
+        return ERROR_PARAMTERS;
     }
     return 0;
 }
 
+//Zostavenie tabuľky symbolov pri definícii funkcie -> argumenty ako lokálne premenné
 TNode* GetFunctionSymtable(ASTNode *node, DataType *retType){
     TNode *newSymtable = NULL;
     ASTNode *idNode = GetIdNode(node);
@@ -234,6 +248,7 @@ TNode* GetFunctionSymtable(ASTNode *node, DataType *retType){
     return newSymtable;
 }
 
+//Hľadá id v SymListe (všetkých tabuľkách symbolov)
 TNode* FindInSymlist(SymList *list, char *id){
     TNode *node = NULL;
     SymListNode *currentSymListNode = GetLast(list);
@@ -252,6 +267,7 @@ TNode* FindInSymlist(SymList *list, char *id){
     return node;
 }
 
+//Vytvára tabuľku symbolov pre if/else, while -> ak existuje id bez null tak ho pridá do TS
 TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
     TNode *newSymtable = NULL;
     ASTNode *idNoNullNode = GetNoNullId(node);
@@ -294,9 +310,11 @@ TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error){
     return newSymtable;
 }
 
+
+//Analýza výrazov, cez expType vracia dátovy typ, cez isKnows či je známa pri preklade
 int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isKnown){
     if(node == NULL){
-        return -1;
+        return INTERNAL_ERROR;
     }
 
     int error = 0;
@@ -328,7 +346,7 @@ int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isK
                 *expType = T_F64;
                 return 0;
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(expTypeL == T_F64){
             if(expTypeR == T_I32){
@@ -338,17 +356,17 @@ int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isK
                 *expType = T_F64;
                 return 0;
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else{
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
 
     }else if(type == TYPE_ID){
         char *id = GetId(node);
         TNode *idNode = FindInSymlist(list, id);
         if(idNode == NULL){
-            return 3;
+            return ERROR_UNDEFINED;
         }
 
         bool known;
@@ -369,7 +387,7 @@ int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isK
             *expType = T_F64;
             return 0;
         }else{
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
     }else if(type == TYPE_VALUE_I32){
         *isKnown = true;
@@ -380,19 +398,20 @@ int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isK
         *expType = T_F64;
         return 0;
     }else if(type == TYPE_STRING){
-        return 8;
+        return ERROR_TYPE_NOT_DEFINED;
     }else{
-        return 7;
+        return ERROR_TYPE_COMPABILITY;
     }
     return error;
 }
 
+//Analýza volania funkcie, type vracia návratový typ funkcie
 int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
     TNode *tableNode = FindInSymlist(list, id);
     if(tableNode == NULL){
-        return 3;
+        return ERROR_UNDEFINED;
     }
     
     NType returnType;
@@ -411,31 +430,31 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
             if(!strcmp(id, "ifj.write")){
                 return 0;
             }else{
-                return 4;
+                return ERROR_PARAMTERS;
             }
         }else if(nodeType == TYPE_STRING){
             if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.string")){
                 return 0;
             }else{
-                return 4;
+                return ERROR_PARAMTERS;
             }
         }else if(nodeType == TYPE_VALUE_I32){
             if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.i2f")){
                 return 0;
             }else{
-                return 4;
+                return ERROR_PARAMTERS;
             }
         }else if(nodeType == TYPE_VALUE_F64){
             if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.f2i")){
                 return 0;
             }else{
-                return 4;
+                return ERROR_PARAMTERS;
             }
         }else if(nodeType == TYPE_ARGUMENT){
             char *argId = GetId(special);
             TNode *argumentNode = FindInSymlist(list, argId);
             if(argumentNode == NULL){
-                return 3;
+                return ERROR_UNDEFINED;
             }
             SetIsUsed(argumentNode, argId);
             NType argtype;
@@ -444,41 +463,41 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
                 if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.i2f")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }else if(argtype == TYPE_I32_N){
                 if(!strcmp(id, "ifj.write")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }else if(argtype == TYPE_F64){
                 if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.f2i")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }else if(argtype == TYPE_F64_N){
                 if(!strcmp(id, "ifj.write")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }else if(argtype == TYPE_U8){
                 if(!strcmp(id, "ifj.write") || !strcmp(id, "ifj.string")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }else if(argtype == TYPE_U8_N){
                 if(!strcmp(id, "ifj.write")){
                     return 0;
                 }else{
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
             }
         }else{
-            return 4;
+            return ERROR_PARAMTERS;
         }
     }
 
@@ -493,7 +512,7 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
                 char *argId = GetId(temp);
                 TNode *argumentNode = FindInSymlist(list, argId);
                 if(argumentNode == NULL){
-                    return 3;
+                    return ERROR_UNDEFINED;
                 }
                 SetIsUsed(argumentNode, argId);
                 NType argtype;
@@ -529,25 +548,26 @@ int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type){
                 }
             }
 
-            return 4;
+            return ERROR_PARAMTERS;
         }else{
-            return 4;
+            return ERROR_PARAMTERS;
         }
     }
 
     if(paramCount != argCount){
-        return 4;
+        return ERROR_PARAMTERS;
     }
 
     return 0;
 }
 
+//Analýza deklarácie premennej/konštanty
 int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
 
     if(!strcmp(id, "_")){
-        return 10;
+        return ERROR_SEMANTIC_OTHERS;
     }
 
     DataType type = GetDataType(idNode);
@@ -555,16 +575,16 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     int error = 0;
 
     if(type == T_VOID){
-        return -1;
+        return ERROR_SEMANTIC_OTHERS;
     }
 
     if(tableNode != NULL){
-        return 5;
+        return ERROR_REDEFINITION;
     }
 
     ASTNode *temp = GetNode(node);
     if(temp == NULL){
-        return -1;
+        return INTERNAL_ERROR;
     }
 
     SymListNode *symtableListNode = GetLast(list);
@@ -575,9 +595,9 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
 
     if(astType == TYPE_NULL){
         if(type == T_DEFAULT){
-            return 8;
+            return ERROR_TYPE_NOT_DEFINED;
         }else if(type == T_F64 || type == T_I32 || type == T_U8){
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }else{
             symtable = InsertNode(symtable, id);
             SetType(symtable, id, DataTypeToNType(type));
@@ -595,7 +615,7 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
             symtable = InsertNode(symtable, id);
             SetType(symtable, id, DataTypeToNType(type));
         }else{
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
 
     }else if(astType == TYPE_ID || astType == TYPE_FUN_CALL){
@@ -604,7 +624,7 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
             char *idRight = GetId(temp);
             TNode *idRightTableNode = FindInSymlist(list, idRight);
             if(idRightTableNode == NULL){
-                return 3;
+                return ERROR_UNDEFINED;
             }
             SetIsUsed(idRightTableNode, idRight);
             GetType(idRightTableNode, idRight, &rightType);
@@ -615,7 +635,7 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
                 return error;
             }
             if(rightType == TYPE_VOID){
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }
     
@@ -627,49 +647,49 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, rightType);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == T_I32_N){
             if(rightType == TYPE_I32 || rightType == TYPE_I32_N){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, TYPE_I32_N);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == T_F64){
             if(rightType == TYPE_F64){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, rightType);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == T_F64_N){
             if(rightType == TYPE_F64 || rightType == TYPE_F64_N){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, TYPE_F64_N);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == T_U8){
             if(rightType == TYPE_U8){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, rightType);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == T_U8_N){
             if(rightType == TYPE_U8 || rightType == TYPE_U8_N){
                 symtable = InsertNode(symtable, id);
                 SetType(symtable, id, TYPE_U8_N);
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }
     }else if(astType == TYPE_FUN_CALL){
         NType rightType;
         AnalyzeFunctionCall(temp, list, &rightType);
     }else{
-        return 7;
+        return ERROR_TYPE_COMPABILITY;
     }
 
     if(node->type == TYPE_CON_DECL){
@@ -682,6 +702,7 @@ int AnalyzeVariableDeclaration(ASTNode *node, SymList *list){
     return 0;
 }
 
+//Analýza priradenia
 int AnalyzeAssignment(ASTNode *node, SymList *list){
     ASTNode *idNode = GetIdNode(node);
     char *id = GetId(idNode);
@@ -696,17 +717,17 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
         GetIsConstant(tableNode, id, &isConstant);
 
         if(isConstant){
-            return 5;
+            return ERROR_REDEFINITION;
         }
 
         if(tableNode == NULL){
-            return 3;
+            return ERROR_UNDEFINED;
         }
     }
 
     ASTNode *temp = GetNode(node);
     if(temp == NULL){
-        return -1;
+        return INTERNAL_ERROR;
     }
 
     ASTNodeType astType = GetNodeType(temp);
@@ -723,7 +744,7 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
         if(type == TYPE_I32_N || type == TYPE_F64_N || type == TYPE_U8_N){
             return 0;
         }else{
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
     }else if(astType == TYPE_OPERATOR || astType == TYPE_VALUE_I32 || astType == TYPE_VALUE_F64){
         DataType expType;
@@ -744,13 +765,13 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
                 if(f == floorf(f)){
                     return 0;
                 }
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(type == TYPE_F64 || type == TYPE_F64_N){
             if(expType == T_F64){
                 return 0;
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }
     }else if(astType == TYPE_ID || astType == TYPE_FUN_CALL){
@@ -759,7 +780,7 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
             char *idRight = GetId(temp);
             TNode *idRightTableNode = FindInSymlist(list, idRight);
             if(idRightTableNode == NULL){
-                return 3;
+                return ERROR_UNDEFINED;
             }
             SetIsUsed(idRightTableNode, idRight);
             GetType(idRightTableNode, idRight, &rightType);
@@ -770,7 +791,7 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
                 return error;
             }
             if(rightType == TYPE_VOID){
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }
 
@@ -787,15 +808,16 @@ int AnalyzeAssignment(ASTNode *node, SymList *list){
         }else if(type == TYPE_U8_N && rightType == TYPE_U8){
             return 0;
         }else{
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
     }else{
-        return 7;
+        return ERROR_TYPE_COMPABILITY;
     }
     
    return 0;
 }
 
+//Analýza kondície v if/else, while, hasNullId vracia true ak v kondicii je premenná s nullable typom
 int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
     int error;
     *hasNullId = false;
@@ -815,7 +837,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                 if(op == OP_EQ || op == OP_NEQ){
                     return 0;
                 }
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }else if(rightType == TYPE_ID){
                 if(op == OP_EQ || op == OP_NEQ){
                     DataType idType;
@@ -827,12 +849,12 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     if(idType == T_I32_N || idType == T_F64_N || idType == T_U8_N){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }else if(rightType == TYPE_NULL){
             if(leftType == TYPE_ID){
@@ -846,24 +868,24 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     if(idType == T_I32_N || idType == T_F64_N || idType == T_U8_N){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }else{
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
         }
 
         if(leftType == TYPE_STRING || rightType == TYPE_STRING){
-            return 7;
+            return ERROR_TYPE_COMPABILITY;
         }
 
         if(leftType == TYPE_ID){
             char *idLeft = GetId(leftOperand);
             TNode *leftTableNode = FindInSymlist(list, idLeft);
             if(leftTableNode == NULL){
-                return 3;
+                return ERROR_UNDEFINED;
             }
 
             SetIsUsed(leftTableNode, idLeft);
@@ -875,7 +897,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                 char *idRight = GetId(rightOperand);
                 TNode *rightTableNode = FindInSymlist(list, idRight);
                 if(rightTableNode == NULL){
-                    return 3;
+                    return ERROR_UNDEFINED;
                 }
 
                 SetIsUsed(rightTableNode, idRight);
@@ -889,7 +911,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if((leftNType == TYPE_F64 || leftNType == TYPE_F64_N) && (rightNType == TYPE_F64 || rightNType == TYPE_F64_N)){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }else{
                     if(leftNType == TYPE_I32 && rightNType == TYPE_I32){
@@ -897,7 +919,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(leftNType == TYPE_F64 && rightNType == TYPE_F64){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }
             }else{
@@ -921,7 +943,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(leftIsConst && leftIsKnown && rightDataType == T_F64){
                         return 0;
                     }
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }else{
                     if(leftNType == TYPE_I32 && rightDataType == T_I32){
                         return 0;
@@ -930,14 +952,14 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(leftIsConst && leftIsKnown && rightDataType == T_F64){
                         return 0;
                     }
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }
             }
         }else if(rightType == TYPE_ID){
             char *idRight = GetId(rightOperand);
             TNode *rightTableNode = FindInSymlist(list, idRight);
             if(rightTableNode == NULL){
-                return 3;
+                return ERROR_UNDEFINED;
             }
 
             SetIsUsed(rightTableNode, idRight);
@@ -949,7 +971,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                 char *idLeft = GetId(leftOperand);
                 TNode *leftTableNode = FindInSymlist(list, idLeft);
                 if(leftTableNode == NULL){
-                    return 3;
+                    return ERROR_UNDEFINED;
                 }
 
                 SetIsUsed(leftTableNode, idLeft);
@@ -963,7 +985,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if((rightNType == TYPE_F64 || rightNType == TYPE_F64_N) && (leftNType == TYPE_F64 || leftNType == TYPE_F64_N)){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }else{
                     if(rightNType == TYPE_I32 && leftNType == TYPE_I32){
@@ -971,7 +993,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(rightNType == TYPE_F64 && leftNType == TYPE_F64){
                         return 0;
                     }else{
-                        return 7;
+                        return ERROR_TYPE_COMPABILITY;
                     }
                 }
             }else{
@@ -995,7 +1017,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(rightIsConst && rightIsKnown && leftDataType == T_F64){
                         return 0;
                     }
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }else{
                     if(rightNType == TYPE_I32 && leftDataType == T_I32){
                         return 0;
@@ -1004,7 +1026,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
                     }else if(rightIsConst && rightIsKnown && leftDataType == T_F64){
                         return 0;
                     }
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }
             }
         }else if(leftType == TYPE_VALUE_I32 || leftType == TYPE_VALUE_F64){
@@ -1017,7 +1039,7 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
 
             float f = GetFloatValue(leftOperand);
             if(f != floorf(f)){
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
             return 0;
 
@@ -1031,18 +1053,18 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
 
             float f = GetFloatValue(rightOperand);
             if(f != floorf(f)){
-                return 7;
+                return ERROR_TYPE_COMPABILITY;
             }
             return 0;
         }
 
     }else if(type == TYPE_NULL){
-        return 7;
+        return ERROR_TYPE_COMPABILITY;
     }else if(type == TYPE_ID){
         char *id = GetId(node);
         TNode *idTableNode = FindInSymlist(list, id);
         if(idTableNode == NULL){
-            return 3;
+            return ERROR_UNDEFINED;
         }
         SetIsUsed(idTableNode, id);
         NType idType;
@@ -1058,12 +1080,13 @@ int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId){
     }else if(type == TYPE_VALUE_I32 || type == TYPE_VALUE_F64){
         return 0;
     }else{
-        return 7;
+        return ERROR_TYPE_COMPABILITY;
     }
 
     return 0;
 }
 
+//Analýza returnu, returnType je očakávaný návratový typ
 int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
     ASTNode *temp = GetNode(node);
     
@@ -1071,7 +1094,7 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
         if(temp == NULL && returnType == T_VOID){
             return 0;
         }
-        return 6;
+        return ERROR_BAD_RETURN;
     }
     int error = 0;
 
@@ -1081,7 +1104,7 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
         char *id = GetId(temp);
         TNode *symNode = FindInSymlist(list, id);
         if(symNode == NULL){
-            return 3;
+            return ERROR_UNDEFINED;
         }
 
         SetIsUsed(symNode, id);
@@ -1092,50 +1115,50 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
             if(returnType == T_I32 || returnType == T_I32_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else if(idType == TYPE_I32_N){
             if(returnType == T_I32_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else if(idType == TYPE_F64){
             if(returnType == T_F64 || returnType == T_F64_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else if(idType == TYPE_F64_N){
             if(returnType == T_F64_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else if(idType == TYPE_U8){
             if(returnType == T_U8 || returnType == T_U8_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else if(idType == TYPE_U8_N){
             if(returnType == T_U8_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }else{
-            return 4;
+            return ERROR_PARAMTERS;
         }
     }else if(type == TYPE_VALUE_I32){
         if(returnType == T_I32 || returnType == T_I32_N){
             return 0;
         }
-        return 4;
+        return ERROR_PARAMTERS;
     }else if(type == TYPE_VALUE_F64){
         if(returnType == T_F64 || returnType == T_F64_N){
             return 0;
         }
-        return 4;
+        return ERROR_PARAMTERS;
     }else if(type == TYPE_STRING){
         if(returnType == T_U8 || returnType == T_U8_N){
             return 0;
         }
-        return 4;
+        return ERROR_PARAMTERS;
     }else if(type == TYPE_OPERATOR){
         DataType expType;
         bool isKnown;
@@ -1148,33 +1171,34 @@ int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType){
             if(returnType == T_I32 || returnType == T_I32_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }
 
         if(expType == T_F64){
             if(returnType == T_F64 || returnType == T_F64_N){
                 return 0;
             }
-            return 4;
+            return ERROR_PARAMTERS;
         }
     }else if(type == TYPE_NULL){
         if(returnType == T_I32_N || returnType == T_F64_N || returnType == T_U8_N){
             return 0;
         }
-        return 4;
+        return ERROR_PARAMTERS;
     }else{
-        return 6;
+        return ERROR_BAD_RETURN;
     }
 
     return 0;
 }
 
+//Zistí či všetky premenné v danom bloku boli použité
 int CheckVariablesUsed(TNode *node){
     if(node == NULL){
         return 0;
     }
     if(!GetIsUsed(node)){
-        return 9;
+        return ERROR_VARIABLE_NOT_USED;
     }
     int error = 0;
     error = CheckVariablesUsed(GetLeftNode(node));
@@ -1185,9 +1209,10 @@ int CheckVariablesUsed(TNode *node){
     return error;
 }
 
+// Sémantická analýza, ak nastane error vracia chybový kód inak 0
 int SemanticAnalysis(ASTNode *root){
     if(root == NULL){
-        return 99;
+        return INTERNAL_ERROR;
     }
 
     ASTStack *stack = CreateStackAST();
@@ -1206,7 +1231,7 @@ int SemanticAnalysis(ASTNode *root){
         if(type != TYPE_FUN_DECL){
             FreeStackAST(stack);
             FreeTree(symtable);
-            return 10;
+            return ERROR_SEMANTIC_OTHERS;
         }
         error = AnalyzeFunDec(temp, &symtable);
         if(error){
@@ -1297,7 +1322,7 @@ int SemanticAnalysis(ASTNode *root){
                     currentNode = GetNode(currentNode);
                 }else{
                     FreeSemantics(stack, symlist);
-                    return 10;
+                    return ERROR_SEMANTIC_OTHERS;
                 }
                 break;
             case TYPE_RETURN:
@@ -1325,7 +1350,7 @@ int SemanticAnalysis(ASTNode *root){
                 }
                 if(symtable != NULL && !hasNullId){
                     FreeSemantics(stack, symlist);
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }
                 InsertTable(symlist, symtable);
                 PushAST(stack, GetElseNode(currentNode));
@@ -1346,7 +1371,7 @@ int SemanticAnalysis(ASTNode *root){
                 }
                 if(symtable != NULL && !hasNullId){
                     FreeSemantics(stack, symlist);
-                    return 7;
+                    return ERROR_TYPE_COMPABILITY;
                 }
                 InsertTable(symlist, symtable);
                 PushAST(stack, currentNode);
@@ -1384,7 +1409,7 @@ int SemanticAnalysis(ASTNode *root){
                 }
                 if(funReturnType != TYPE_VOID){
                     FreeSemantics(stack, symlist);
-                    return 4;
+                    return ERROR_PARAMTERS;
                 }
                 currentNode = PopAST(stack);
                 currentNode = GetCode(currentNode);
@@ -1407,258 +1432,3 @@ int SemanticAnalysis(ASTNode *root){
     return 0;
 }
 
-ASTNode* createAST(){
-    ASTNode *root = CreateAST();
-
-    ASTNode *temp2 = CreateCodeNode(root);
-    temp2 = CreateFunDeclNode(temp2);
-    CreateIdNode(temp2, "add");
-    CreateTypeNode(temp2, T_I32);
-    ASTNode *in = CreateCodeNode(temp2);
-    ASTNode *temp3 = CreateWhileNode(in);
-    temp3->type = TYPE_WHILE_CLOSED;
-    temp3->left->right = CreateAstNode(TYPE_VALUE_I32);
-
-    temp3->right = CreateAstNode(TYPE_CODE);
-    temp3->right->right = CreateAstNode(TYPE_RETURN);
-    temp3->right->right->right = CreateAstNode(TYPE_VALUE_I32);
-    //ASTNode *temp3 = CreateIfElseNode(in);
-    /*temp3->left->left = (ASTNode *)malloc(sizeof(ASTNode));
-    temp3->left->left->type = TYPE_ID;
-    temp3->left->left->data.str = strdup("aaaa");*/
-    /*temp3->left->right = CreateAstNode(TYPE_VALUE_I32);
-    ASTNode *temp4 = CreateIfNode(temp3);
-    ASTNode *temp5 = CreateElseNode(temp3);
-    temp4->left->type = TYPE_IF_CLOSED;
-    temp5->right->right->type = TYPE_ELSE_CLOSED;
-
-    temp4->left->left = CreateAstNode(TYPE_CODE);
-    temp4->left->left->right = CreateAstNode(TYPE_RETURN);
-    temp4->left->left->right->right = CreateAstNode(TYPE_VALUE_I32);
-
-    temp4->right->left = CreateAstNode(TYPE_CODE);
-    //temp4->right->left->right = CreateAstNode(TYPE_RETURN);
-    //temp4->right->left->right->right = CreateAstNode(TYPE_VALUE_I32);*/
-    
-    /*in = CreateCodeNode(in);
-    CreateReturnNode(in);
-    in->right->right = CreateAstNode(TYPE_VALUE_I32);*/
-
-
-    temp2 = CreateCodeNode(root);
-    temp2 = CreateFunDeclNode(temp2);
-    CreateIdNode(temp2, "main");
-    CreateTypeNode(temp2, T_VOID);
-
-
-    temp2 = CreateCodeNode(temp2);
-    ASTNode *funca = CreateFunCallNode(temp2);
-    CreateIdNode(funca, "add");
-
-    /*temp2 = CreateCodeNode(temp2);
-    ASTNode *var2 = CreateVarDeclNode(temp2);
-    CreateIdNode(var2, "_");
-    CreateTypeNode(var2, T_I32);
-    var2->right = CreateAstNode(TYPE_VALUE_I32);*/
-
-   /* temp2 = CreateCodeNode(temp2);
-    temp2->right = CreateAstNode(TYPE_ASSIGNMENT);
-    CreateIdNode(temp2->right, "_");
-    temp2->right->right = CreateAstNode(TYPE_ID);
-    temp2->right->right->data.str = "a";*/
-
-    /*ASTNode *temp = CreateCodeNode(root);
-    temp = CreateFunDeclNode(temp);
-    CreateIdNode(temp, "maian");
-    CreateParamNode(temp, "a");
-    CreateTypeNode(temp, T_F64);
-    CreateParamNode(temp, "b");
-    CreateTypeNode(temp, T_F64);
-    CreateParamNode(temp, "c");
-    CreateTypeNode(temp, T_F64);
-    CreateTypeNode(temp, T_I32);
-
-    temp3 = CreateCodeNode(temp);
-    ret = CreateReturnNode(temp3);*/
-
-    /*temp = CreateCodeNode(temp);
-    ASTNode *whilee = CreateWhileNode(temp);
-    whilee->type = TYPE_WHILE_CLOSED;*/
-
-    //var decl
-    /*temp = CreateCodeNode(temp);
-    ASTNode *var = CreateConDeclNode(temp);
-    CreateIdNode(var, "aa");*/
-    
-    /*CreateTypeNode(var, T_I32_N);
-    var->right = CreateAstNode(TYPE_OPERATOR);
-    var->right->right = CreateAstNode(TYPE_VALUE_I32);
-    var->right->left = CreateAstNode(TYPE_VALUE_I32);*/
-
-    /*temp = CreateCodeNode(temp);
-    ASTNode *var1 = CreateVarDeclNode(temp);
-    CreateIdNode(var1, "ab");*/
-    
-    /*CreateTypeNode(var1, T_I32_N);
-    var1->right = CreateAstNode(TYPE_OPERATOR);
-    var1->right->right = CreateAstNode(TYPE_VALUE_I32);
-    var1->right->left = CreateAstNode(TYPE_VALUE_I32);*/
-
-    /*temp = CreateCodeNode(temp);
-    ASTNode *var2 = CreateVarDeclNode(temp);
-    CreateIdNode(var2, "aa");*/
-    
-    /*CreateTypeNode(var2, T_I32_N);
-    var2->right = CreateAstNode(TYPE_OPERATOR);
-    var2->right->right = CreateAstNode(TYPE_VALUE_I32);
-    var2->right->left = CreateAstNode(TYPE_VALUE_I32);*/
-    /*ASTNode *fc = CreateFunCallNode(var);
-    CreateIdNode(fc, "max");
-    CreateArgumentNode(fc,"a");
-    CreateArgumentNode(fc,"a");
-    CreateArgumentNode(fc,"a");*/
-
-    /*temp = CreateCodeNode(temp);
-    ASTNode *fc1 = CreateFunCallNode(temp);
-    CreateIdNode(fc1, "max");
-    CreateArgumentNode(fc1,"a");
-    CreateArgumentNode(fc1,"a");
-    CreateArgumentNode(fc1,"a");*/
-
-
-    /*temp = CreateCodeNode(temp);
-    ASTNode *temp3 = CreateIfElseNode(temp);
-    temp3->left->left = (ASTNode *)malloc(sizeof(ASTNode));
-    temp3->left->left->type = TYPE_ID;
-    temp3->left->left->data.str = strdup("aaaa");
-    temp3->left->right = (ASTNode *)malloc(sizeof(ASTNode));
-    temp3->left->right->type = TYPE_ID;
-    temp3->left->right->data.str = strdup("b");
-    ASTNode *temp4 = CreateIfNode(temp3);
-    ASTNode *temp5 = CreateElseNode(temp3);
-    temp4->left->type = TYPE_IF_CLOSED;
-    temp5->right->right->type = TYPE_ELSE_CLOSED;*/
-
-    return root;
-}
-
-int TraverseAST(ASTNode *node){
-    int error = 0;
-    static int level = 0;
-    if(node == NULL){
-        level--;
-        return error;
-    }
-
-    ASTNodeType type = GetNodeType(node);
-
-    switch(type){
-        case TYPE_PROGRAM:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("PROGRAM\n");
-
-            error = TraverseAST(GetCode(node));
-            break;
-        case TYPE_CODE:
-            level++;
-            error = TraverseAST(GetNode(node));
-            error = TraverseAST(GetCode(node));
-            break;
-        case TYPE_FUN_DECL:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("FUNCTION DECLARATION\n");
-
-            error = TraverseAST(GetNode(node));
-            break;
-        case TYPE_VAR_DECL:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("VARIABLE DECLARATION\n");
-
-            level--;
-            break;
-        case TYPE_CON_DECL:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("CONSTANT DECLARATION\n");
-
-            level--;
-            break;
-        case TYPE_FUN_CALL:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("FUNCTION CALL\n");
-
-            level--;
-            break;
-        case TYPE_RETURN:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("RETURN\n");
-
-            level--;
-            break;
-        case TYPE_ASSIGNMENT:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("ASSIGNMENT\n");
-
-            level--;
-            break;
-        case TYPE_IF_ELSE:
-            /*for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("IF ELSE\n");*/
-
-            error = TraverseAST(node->right->left);
-            level++;
-            error = TraverseAST(node->right->right);
-            break;
-        case TYPE_WHILE_CLOSED:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("WHILE\n");
-
-            error = TraverseAST(GetNode(node));
-            break;
-        case TYPE_IF_CLOSED:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("IF\n");
-
-            error = TraverseAST(GetCode(node));
-            break;
-        case TYPE_ELSE_CLOSED:
-            for(int i = 0; i < level; i++){
-                printf("  ");
-            }
-            printf("ELSE\n");
-
-            error = TraverseAST(GetCode(node));
-            break;
-        default:
-            printf("DEFAULT\n");
-            break;
-    }
-
-    return error;
-}
-
-/*int main(){
-    ASTNode *root = createAST();
-    int a = TraverseAST(root);
-    printf("%d", a);
-    return 0;
-}*/

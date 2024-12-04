@@ -1,3 +1,8 @@
+/**
+ * Project: IFJ24 2024
+ * Robin Kurilla (xkuril03)
+ */
+
 #include "ast.h"
 #include <stdio.h>
 #include <stdlib.h>

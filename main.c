@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     }
     
     ASTNode* currentNode = tree;
-    TraverseASTCodeGen(currentNode);
+    CodeGen(currentNode);
     
     return returnCode;
 }

@@ -1,3 +1,8 @@
+/**
+ * Project: IFJ24 2024
+ * Robin Kurilla (xkuril03)
+ */
+
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
@@ -11,7 +16,8 @@ void createHeader();
 void createMain();
 void createFunction(char *function_id);
 void createFunctionCall(char* function_id);
-int TraverseASTCodeGen(ASTNode *node);
+void TraverseASTCodeGen(ASTNode *node);
+void CodeGen(ASTNode *node);
 char* WriteString(ASTNode* node);
 
 #endif

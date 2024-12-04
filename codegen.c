@@ -1,3 +1,8 @@
+/**
+ * Project: IFJ24 2024
+ * Robin Kurilla (xkuril03)
+ */
+
 /* TODO:    While - semi !
             Func. params - not done
             Func. return - not done
@@ -247,32 +252,6 @@ void CreateFunction(char *function_id)
     printf("PUSHFRAME\n");
 }
 
-void CreateFunctionCall(ASTNode *node) {
-    char *functionId = GetId(node->left);
-    if(!strcmp(functionId, "ifj.write")){
-        ASTNodeType type = GetNodeType(node->right);
-        if(type == TYPE_ARGUMENT){
-            char *id = GetId(node->right);
-            printf("WRITE LF@%s\n", id);
-        }else if(type == TYPE_NULL){
-            printf("WRITE nil@nil\n");
-        }else if(type == TYPE_VALUE_I32){
-            int value = node->right->data.i32;
-            printf("WRITE int@%d\n",value);
-        }else if(type == TYPE_VALUE_F64){
-            float value = node->right->data.f64;
-            printf("WRITE float@0x%fp+0\n",value);
-        }else if(type == TYPE_STRING){
-            char *string = WriteString(node->right);
-            printf("WRITE string@%s\n",string);
-        }
-    }
-    else
-    {
-        printf("CALL $%s\n", functionId);
-    }
-}
-
 void CreateVariable(char* var_id)
 {
     printf("DEFVAR LF@%s\n", var_id);
@@ -409,6 +388,63 @@ char* WriteString(ASTNode *node) {
     return results;
 }
 
+void CreateArguments(ASTNode *node){
+    if(node == NULL){
+        return;
+    }
+
+    ASTNodeType type = GetNodeType(node);
+    if(type == TYPE_NULL){
+        printf("PUSHS nil@nil\n");
+    }else if(type == TYPE_VALUE_I32){
+        printf("PUSHS int@%d\n", node->data.i32);
+    }else if(type == TYPE_VALUE_F64){
+        printf("PUSHS float@%f\n", node->data.f64);
+    }else if(type == TYPE_STRING){
+        printf("PUSHS string@%s\n", node->data.str);
+    }else if(type == TYPE_ARGUMENT){
+        printf("PUSHS LF@%s\n", node->data.str);
+    }
+
+    CreateArguments(node->right);
+}
+
+void CreateParams(ASTNode *node){
+    if(node == NULL){
+        return;
+    }
+    CreateParams(node->left);
+    printf("DEFVAR LF@%s\n", node->data.str);
+    printf("POPS LF@%s\n", node->data.str);
+}
+
+void CreateFunctionCall(ASTNode *node) {
+    char *functionId = GetId(node->left);
+    if(!strcmp(functionId, "ifj.write")){
+        ASTNodeType type = GetNodeType(node->right);
+        if(type == TYPE_ARGUMENT){
+            char *id = GetId(node->right);
+            printf("WRITE LF@%s\n", id);
+        }else if(type == TYPE_NULL){
+            printf("WRITE nil@nil\n");
+        }else if(type == TYPE_VALUE_I32){
+            int value = node->right->data.i32;
+            printf("WRITE int@%d\n",value);
+        }else if(type == TYPE_VALUE_F64){
+            float value = node->right->data.f64;
+            printf("WRITE float@0x%fp+0\n",value);
+        }else if(type == TYPE_STRING){
+            char *string = WriteString(node->right);
+            printf("WRITE string@%s\n",string);
+        }
+    }
+    else
+    {
+        CreateArguments(node->right);
+        printf("CALL $%s\n", functionId);
+    }
+}
+
 void CreateNonVariableParamsData(ASTNode data,int param)
 {
     if(data.type == TYPE_VALUE_I32)
@@ -443,7 +479,7 @@ void CreateExpression(ASTNode *node){
     else if(type == TYPE_VALUE_F64)
     {
         float value = node->data.f64;
-        printf("PUSHS float@0x%fp+0\n", value);
+        printf("PUSHS float@%a\n", value);
     }
     else if(type == TYPE_STRING)
     {
@@ -575,7 +611,7 @@ void CreateExpression(ASTNode *node){
         }
         else
         {
-            printf("CALL $%s\n", functionId);
+            CreateFunctionCall(node);
         }
     }
     else if(type == TYPE_OPERATOR)
@@ -595,34 +631,72 @@ void CreateExpression(ASTNode *node){
     }
 }
 
-void RelOperator(ASTNode *node)
+void CreateReturn(ASTNode *node){
+    if(node == NULL){
+        
+    }else{
+        CreateExpression(node);
+    }
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+}
+
+void RelOperator(ASTNode *node, int cond)
 {
-    ASTNodeType type = GetNodeType(node);
+    ASTNodeType type = GetNodeType(node->right);
     if(type == TYPE_VALUE_I32)
     {
-        int value = node->data.i32;
+        int value = node->right->data.i32;
         printf("PUSHS int@%d\n", value);
+        printf("PUSHS int@0\n");
+        printf("EQS\n");
+        printf("NOTS\n");
     }
     else if(type == TYPE_VALUE_F64)
     {
-        float value = node->data.f64;
-        printf("PUSHS float@%f\n", value);
+        float value = node->right->data.f64;
+        printf("PUSHS float@%a\n", value);
+        float f = 0.0;
+        printf("PUSHS float@%a\n", f);
+        printf("EQS\n");
+        printf("NOTS\n");
     }
     else if(type == TYPE_ID)
     {
-        char *id = GetId(node);
-        printf("PUSHS LF@%s\n", id);
+        char *id = GetId(node->right);
+        if(node->left == NULL){
+            printf("DEFVAR TF@%%type\n");
+            printf("TYPE TF@%%type LF@%s\n", id);
+            printf("PUSHS TF@%%type\n");
+            printf("PUSHS string@int\n");
+            printf("JUMPIFEQS %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            float f = 0.0;
+            printf("PUSHS float@%a\n", f);
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("JUMP %%%dend\n",cond);
+            printf("LABEL %%%d\n",cond);
+            printf("PUSHS LF@%s\n",id);
+            printf("PUSHS int@0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            printf("LABEL %%%dend\n",cond);
+    
+        }else{
+            //ID s NULL
+        }
+
     }
-    else if(type == TYPE_ARGUMENT)
+    else if(type == TYPE_NULL)
     {
-        char *id = GetId(node);
-        printf("PUSHS LF@%s\n", id);
+        printf("PUSHS bool@false\n");
     }
     else if (type==TYPE_REL_OPERATOR)
     {
-        CreateExpression(node->left);
-        CreateExpression(node->right);
-        Operator op = GetOperator(node);
+        CreateExpression(node->right->left);
+        CreateExpression(node->right->right);
+        Operator op = GetOperator(node->right);
         if (op == OP_EQ)
         {
             printf("EQS\n");
@@ -643,16 +717,16 @@ void RelOperator(ASTNode *node)
         else if (op == OP_GE)
         {
             printf("GTS\n");
-            CreateExpression(node->left);
-            CreateExpression(node->right);
+            CreateExpression(node->right->left);
+            CreateExpression(node->right->right);
             printf("EQS\n");
             printf("ORS\n");
         }
         else if (op == OP_LE)
         {
             printf("LTS\n");
-            CreateExpression(node->left);
-            CreateExpression(node->right);
+            CreateExpression(node->right->left);
+            CreateExpression(node->right->right);
             printf("EQS\n");
             printf("ORS\n");
         }
@@ -662,7 +736,7 @@ void RelOperator(ASTNode *node)
 void StartIfElse(ASTNode *node, int cond)
 {
     printf("CREATEFRAME\n");
-    RelOperator(node->left->right);
+    RelOperator(node->left, cond);
     printf("PUSHS bool@true\n");
     printf("JUMPIFNEQS $NOT$IF%d\n", cond);
     TraverseASTCodeGen(node->right->left);
@@ -676,7 +750,7 @@ void CreateWhile(ASTNode *node, int cond)
 {
     printf("CREATEFRAME\n");
     printf("LABEL $WHILE$START%d\n", cond);
-    RelOperator(node->left->right);
+    RelOperator(node->left, cond);
     printf("PUSHS bool@true\n");
     printf("JUMPIFEQS $WHILE$END%d\n", cond);
     TraverseASTCodeGen(node->right);
@@ -684,15 +758,14 @@ void CreateWhile(ASTNode *node, int cond)
     printf("LABEL $WHILE$END%d\n", cond);
 }
 
-int TraverseASTCodeGen(ASTNode *node){
+void TraverseASTCodeGen(ASTNode *node){
     int params = 1;
-    int error = 0;
     static int whileCond = 1;
     static int ifElseCond = 1;
     static int level = 0;
     if(node == NULL){
         level--;
-        return error;
+        return;
     }
 
     ASTNodeType type = GetNodeType(node);
@@ -700,23 +773,29 @@ int TraverseASTCodeGen(ASTNode *node){
     switch(type){
         case TYPE_PROGRAM:
             CreateHeader();
-            error = TraverseASTCodeGen(GetCode(node));
+            TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_CODE:
             level++;
-            error = TraverseASTCodeGen(GetNode(node));
-            error = TraverseASTCodeGen(GetCode(node));
+            TraverseASTCodeGen(GetNode(node));
+            TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_FUN_DECL:
             if(!strcmp(GetId(node->left), "main"))
             {
                 CreateMain();
+                TraverseASTCodeGen(GetNode(node));
+                printf("JUMP !END\n");
             }
             else
             {
                 CreateFunction(GetId(node->left));
+                CreateParams(node->left->left);
+                TraverseASTCodeGen(GetNode(node));
+                printf("POPFRAME\n");
+                printf("RETURN\n");
             }
-            error = TraverseASTCodeGen(GetNode(node));
+            
             break;
         case TYPE_VAR_DECL:
         case TYPE_CON_DECL:
@@ -726,20 +805,11 @@ int TraverseASTCodeGen(ASTNode *node){
             level--;
             break;
         case TYPE_FUN_CALL:
-            /*ASTNode *paramsNode = GetNode(node);
-            // TOTO AK NENI PARAMETER VARIABLE AK JE VARIABLE ASI TO BUDE INAK
-            while (paramsNode != NULL)
-            {
-                CreateNonVariableParams(params);
-                CreateNonVariableParamsData(*paramsNode, params);
-                params++;
-                paramsNode = GetArgNode(paramsNode);
-            }
-            CreateFunctionCall(GetId(node->left));*/
             CreateFunctionCall(node);
             level--;
             break;
         case TYPE_RETURN:
+            CreateReturn(node->right);
             level--;
             break;
         case TYPE_ASSIGNMENT:
@@ -750,24 +820,26 @@ int TraverseASTCodeGen(ASTNode *node){
         case TYPE_IF_ELSE:
             ifElseCond++;
             StartIfElse(node, ifElseCond);
-            error = TraverseASTCodeGen(node->left->right);
-            error = TraverseASTCodeGen(node->left->left);
             level++;
             break;
         case TYPE_WHILE_CLOSED:
             whileCond++;
             CreateWhile(node, whileCond);
-            error = TraverseASTCodeGen(GetNode(node));
+            TraverseASTCodeGen(GetNode(node));
             break;
         case TYPE_IF_CLOSED:
-            error = TraverseASTCodeGen(GetCode(node));
+            TraverseASTCodeGen(GetCode(node));
             break;
         case TYPE_ELSE_CLOSED:
-            error = TraverseASTCodeGen(GetCode(node));
+            TraverseASTCodeGen(GetCode(node));
             break;
         default:
             break;
     }
 
-    return error;
+}
+
+void CodeGen(ASTNode *node){
+    TraverseASTCodeGen(node);
+    printf("LABEL !END\n");
 }
