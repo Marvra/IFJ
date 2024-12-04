@@ -1,3 +1,9 @@
+/**
+ * @file lexer.c
+ * @author Martin Vrablec
+ * @brief  source file for lexical analysis, reades input file and creates list of tokens
+ * @todo
+ */
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,13 +15,22 @@
 #include "lexer.h"
 #include "error.h"
 
+
+/**
+ * @brief creates token list from input file characters
+ * @param file referance to input file
+ * @param list referance to token list
+ * @return int 0 if success, ERROR_LEXER if error
+ */
 int Lexer(FILE* file, TokenList* list)
 {
     Token* token = InitToken();
+
     Tokentype currType = TOKEN_UNKNOWN;
     State errorState = STATE_OK;
     list->firstToken = token;
 
+    // loop to read every character in file and end if token is EOF
     while (currType != TOKEN_EOF)
     {
         list->currToken = token;
@@ -35,12 +50,21 @@ int Lexer(FILE* file, TokenList* list)
     
 }
 
+
+/**
+ * @brief Implementation of fsm for lexical analysis, sets token to correct type
+ * @param file referance to input file
+ * @param token referance to token
+ * @return error state if error, ok state if success
+ */
 State FSM(FILE* file, Token* token)
 {
     char c;
     State state = STATE_START;
     State errorState = STATE_OK;
 
+    // reads input file characters until token is found
+    // token is determined based on if the folowing characters are valid for current state
     while(token->type == TOKEN_UNKNOWN)
     {
         c = getc(file);
@@ -98,6 +122,7 @@ State FSM(FILE* file, Token* token)
             break;
             // STRING END
 
+            // IMPORT START
             case STATE_PROLOG:
             case STATE_PROLOG_i:
             case STATE_PROLOG_m:
@@ -107,6 +132,7 @@ State FSM(FILE* file, Token* token)
             case STATE_PROLOG_t:
                 errorState = GetPrologTokenType(c, &state, token);
             break;
+            // IMPORT END
 
 
             // NULL TYPE START
@@ -219,26 +245,39 @@ State FSM(FILE* file, Token* token)
             return errorState;
         }
 
+        // token was found
         if(token->type != TOKEN_UNKNOWN) 
         {
+            // check if token is keyword
+            // if it is not the TOKEN_VARIABLE is its type
             if(token->type == TOKEN_VARIABLE)
             {
                 CheckKeyword(token);
             }
             else if(token->type == TOKEN_NULL_TYPE)
             {
+                // check if null type is correct
+                // ungetc beacause next character belongs to another token 
                 ungetc(c,file);
                 return CheckForNullType(token);
             }
 
+            // ungetc beacause next character belongs to another token 
             ungetc(c,file);
             return errorState;
         }
 
+        // stores character to token data one by one
         DataToToken(c, token);
     }
     return errorState;
 }
+
+/**
+ * @brief gets the first state of FSM
+ * @param c character from input file
+ * @return first state of FSM
+ */
 State GetFirstState(char c)
 {
     if(isalpha(c)) return STATE_VARIABLE;
@@ -272,6 +311,13 @@ State GetFirstState(char c)
     else return STATE_ERROR;
 }
 
+/**
+ * @brief check if token is possible to be null type token by one character at a time based on state, sets token type to null type if success (if it is really nulltype is check in fsm later)
+ * @param c character from input file
+ * @param state referance to state of FSM
+ * @param token referance to token
+ * @return state_error is returned if character is not correct, state_ok if success 
+ */
 State GetNullTypesTokenType(char c, State* state, Token* token)
 {
     switch (*state)
@@ -296,6 +342,13 @@ State GetNullTypesTokenType(char c, State* state, Token* token)
     return STATE_OK;
 }
 
+/**
+ * @brief check if token is float token by one character at a time based on state, sets token type to float if success
+ * @param c character from input file
+ * @param state referance to state of FSM
+ * @param token referance to token
+ * @return state_error is returned if character is not correct, state_ok if success 
+ */
 State GetFloatTokenType(char c, State* state, Token* token)
 {
     switch (*state)
@@ -329,6 +382,13 @@ State GetFloatTokenType(char c, State* state, Token* token)
     return STATE_OK;
 }
 
+/**
+ * @brief check if token is string token by one character at a time based on state, sets token type to string if success
+ * @param c character from input file
+ * @param state referance to state of FSM
+ * @param token referance to token
+ * @return state_error is returned if character is not correct, state_ok if success 
+ */
 State GetStringTokenType(char c, State* state, Token* token)
 {
     switch (*state)
@@ -362,6 +422,13 @@ State GetStringTokenType(char c, State* state, Token* token)
     return STATE_OK;
 }
 
+/**
+ * @brief check if token is import token by one character at a time based on state, sets token type to prolog if success
+ * @param c character from input file
+ * @param state referance to state of FSM
+ * @param token referance to token
+ * @return state_error is returned if character is not correct, state_ok if success 
+ */
 State GetPrologTokenType(char c, State* state, Token* token)
 {
     switch (*state)
@@ -402,6 +469,11 @@ State GetPrologTokenType(char c, State* state, Token* token)
 }
 
 
+/**
+ * @brief checks if token data is null typ and sets correct type to it 
+ * @param token referance to token
+ * @return state_error is returned if token data is not null type, state_ok if success
+ */
 State CheckForNullType(Token* token)
 {
     if(!strcmp(token->data, "?i32"))
@@ -422,6 +494,10 @@ State CheckForNullType(Token* token)
     return STATE_ERROR;
 }
 
+/**
+ * @brief checks if token data is keyword and sets correct type to it 
+ * @param token referance to token we are trying to determine type of
+ */
 void CheckKeyword(Token* token)
 {
     if(!strcmp(token->data, "const"))

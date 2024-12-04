@@ -1,3 +1,9 @@
+/**
+ * @file parser.c
+ * @author Martin Vrablec
+ * @brief  source file for top down parser, gets token list checks syntax using LL grammar and builds AST
+ * @todo
+ */
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,22 +20,33 @@
 NonTerminal lastNonTerminal = NON_TERMINAL_UNKOWN;
 ASTNode* temp = NULL;
 
+/**
+ * @brief Function for parsing token list, checks error codes of grammar rules, expresion parser. Builds AST
+ * @param tree pointer to AST
+ * @param list pointer to token list
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int Parser(ASTNode** tree, TokenList* list)
 {
     int errorExpr = 0;
     Token *saveToken = InitToken();
     Stack* stack = InitStack();
     Error error = 0;
+
+    // Create base ast
     ASTNode *ast = CreateAST(); 
-    ASTNode *root = ast; // potom sa bude posielat do semantiky
+    ASTNode *root = ast;
     ASTNode *baseCode = CreateCodeNode(ast);
     ASTNode *expr_root = NULL;
     Tokentype lastInteresingToken = TOKEN_UNKNOWN;
+
+    // Push start item to stack
     PushItem(stack, TOKEN_UNKNOWN, NON_T_BODY);
 
-
+    // looping until all rules are resolved
     while (!Empty(stack))
     {
+        // skipps whitespaces, comments and new lines
         if(list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT || list->currToken->type == TOKEN_EOL)
         {
             Token* nextToken = list->currToken->nextToken;
@@ -37,46 +54,45 @@ int Parser(ASTNode** tree, TokenList* list)
             continue;
         }
 
+        // top of stack is token so there needs to be checked what rule will follow
         if(Top(stack)->nonTerminal != NON_TERMINAL_UNKOWN)
         {
             error = LLGrammar(stack, list->currToken->type);
-
             if(error != 0)
             {
-                //printf("Error found in Parser (LLGrammar)! \n");
                 return ERROR_PARSER;
             }
 
         }
         Top(stack);
 
-        if(Top(stack)->nonTerminal == NON_T_EXPR) {
+        // top of the stack is nonterminal expression so we need to call expression parser
+        if(Top(stack)->nonTerminal == NON_T_EXPR) 
+        {
+            // pop  non terminal from stack
             Pop(stack);
             lastNonTerminal = NON_T_EXPR;
             errorExpr = expr_start(&expr_root, &list, Top(stack)->tokenType);
             if (errorExpr != 0) {
-                //printf("Error found in EXPRESION (expr_start)! \n");
                 return ERROR_PARSER;
             }
         }
 
+        // top of the stack is token we need to check if it is same as current token
         if(Top(stack)->tokenType != list->currToken->type)
         {
-            //printf("Error found in Parser (Bad top)! \n");
-            //PrintStack(stack);
-            //printf(" Top: %s\n Current: %s\n", TokenTypeString(Top(stack)->tokenType), TokenTypeString(list->currToken->type));
             return ERROR_PARSER;
         }
-        //PrintStack(stack);
-        //printf("Popping from stack : %s\n", TokenTypeString(list->currToken->type));
+
         Pop(stack);
 
+        // if token is interesting save it
         if(InterestingTokens(list->currToken->type))
         {
             lastInteresingToken = list->currToken->type;
         }
 
-        // NEMENIT NEJAKO FUNGUJE<3
+        // based on last interesting token build AST
         if (lastInteresingToken != TOKEN_UNKNOWN )
         {
             if(lastInteresingToken == TOKEN_CURLY_RIGHT_PAR && list->currToken->type == TOKEN_CURLY_RIGHT_PAR)
@@ -91,14 +107,13 @@ int Parser(ASTNode** tree, TokenList* list)
             }
         }
 
-        expr_root = NULL; // vycissti lebo potom dalsi expresion by sa ti zapisoval do toho isteho
-        // NEMENIT NEJAKO FUNGUJE<3
+        // clear expression root for another expression
+        expr_root = NULL;
 
-        Token* nextToken = list->currToken->nextToken;
-        list->currToken = nextToken;
+        //continue to next token
+        list->currToken = list->currToken->nextToken;
 
     }
-    //printf("Parser finished successfully\n");
     FreeStack(stack);
 
     exportASTToDot(root);
@@ -107,15 +122,24 @@ int Parser(ASTNode** tree, TokenList* list)
     return 0;
 }
 
+/**
+ * @brief calls functions which push nonterminal and tokens to stack based on ll grammar rules 
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int LLGrammar(Stack* stack, Tokentype type)
 {
     NonTerminal nonterminal = Top(stack)->nonTerminal;
     Error error = 0;
 
+    // gets nonterminal and calls functions based on that nonterminal until top of the stack is token or nonterminal expr
+    // if tokenType is unknown it means that it is nonterminal
     while (Top(stack)->tokenType == TOKEN_UNKNOWN && Top(stack)->nonTerminal != NON_T_EXPR)
     {
         lastNonTerminal = nonterminal;
-        Pop(stack); // pop pre neterminal na vrchu stacku 
+
+        Pop(stack);
         switch (nonterminal)
         {
             case NON_T_BODY:
@@ -177,6 +201,12 @@ int LLGrammar(Stack* stack, Tokentype type)
     return error;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <body>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalBodyPush(Stack* stack,Tokentype type)
 {
     // <body> -> CONST ID = @IMPORT(STRING); <after_body>
@@ -194,12 +224,17 @@ int NonTerminalBodyPush(Stack* stack,Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalBodyPush! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <after_body>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
 {
     // <after_body> -> PUB FN ID (<params>) <return_type> { <function_body> } <after_body>
@@ -224,12 +259,17 @@ int NonTerminalAfterBodyPush(Stack* stack, Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalAfterBodyPush! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <function_body>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 {
     // <function_body> -> <var_or_const> ID <declaration_continue>; <function_body>
@@ -259,7 +299,7 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_BARS);
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_LEFT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_if, NON_TERMINAL_UNKOWN);
     }
@@ -272,7 +312,7 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_CURLY_LEFT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_BARS);
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_LEFT_PAR, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_while, NON_TERMINAL_UNKOWN);
     }
@@ -281,7 +321,7 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_return, NON_TERMINAL_UNKOWN);
     }
     //<function_body> -> ε
@@ -289,12 +329,18 @@ int NonTerminalFunctionBodyPush(Stack* stack, Tokentype type)
 
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <dec
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type)
 {
     // <declaration_continue> -> : <type> = expression
     if(type == TOKEN_COLON)
     {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_TYPE);
         PushItem(stack, TOKEN_COLON, NON_TERMINAL_UNKOWN);
@@ -302,17 +348,22 @@ int NonTerminalDeclarationContinuePush(Stack* stack, Tokentype type)
     // <declaration_continue> -> = expression
     else if(type == TOKEN_ASSIGN)
     {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
     }
     else
     {
-        //printf("Error in NonTerminalDeclarationContinuePush! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <id_helper>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalIdHelper(Stack* stack, Tokentype type)
 {
     // <id_helper> -> ID <id_continue>;  <function_body>
@@ -328,27 +379,32 @@ int NonTerminalIdHelper(Stack* stack, Tokentype type)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_FUNCTION_BODY);
         PushItem(stack, TOKEN_SEMICOLON, NON_TERMINAL_UNKOWN);
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_UNDERSCORE, NON_TERMINAL_UNKOWN);
     }
     else
     {
-        //printf("Error in NonTerminalIdHelper! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <id_continue>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 {
     // <id_continue> -> = expression
     if(type == TOKEN_ASSIGN)
     {
-        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); // EXPRESION NESKOR zatial tam dam token_plus
+        PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
     }
-    // <id_continue> -> .ID(<params_enter>)    // BUILD IN FUNCTIONS IG IDK
+    // <id_continue> -> .ID(<params_enter>)
     else if(type == TOKEN_DOT)
     {
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
@@ -366,12 +422,17 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalIdContinuePush! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <params_enter>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalParamsEnterPush(Stack* stack, Tokentype type)
 {
     // <params_enter> -> <term> <next_params_enter>
@@ -384,6 +445,12 @@ int NonTerminalParamsEnterPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <next_params_enter>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type)
 {
     // <next_params_enter> -> , <params_enter>
@@ -396,6 +463,12 @@ int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <var_or_const>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalVarOrConstPush(Stack* stack, Tokentype type)
 {
     // <var_or_const> -> VAR
@@ -410,12 +483,17 @@ int NonTerminalVarOrConstPush(Stack* stack, Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalVarOrConstPush! \n");
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <params>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalParamsPush(Stack* stack, Tokentype type)
 {
     // <params> -> ID : <type> <next_params>
@@ -431,6 +509,12 @@ int NonTerminalParamsPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <next_params>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalNextParamsPush(Stack* stack, Tokentype type)
 {
     // <next_params> -> , <params>
@@ -444,6 +528,12 @@ int NonTerminalNextParamsPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <bars>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return 0 (because there can be epsilon) 
+ */
 int NonTerminalBarsPush(Stack* stack, Tokentype type)
 {
     // <bars> -> |ID|
@@ -458,6 +548,12 @@ int NonTerminalBarsPush(Stack* stack, Tokentype type)
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <return_type>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalReturnTypePush(Stack* stack, Tokentype type)
 {
     // <return_type> -> <type>
@@ -472,14 +568,17 @@ int NonTerminalReturnTypePush(Stack* stack, Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalReturnTypePush! \n");
-        //PrintStack(stack);
-        //printf("Got : %s \n", TokenTypeString(type));
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <type>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalTypePush(Stack* stack, Tokentype type)
 {
     // <type> -> i32
@@ -511,12 +610,17 @@ int NonTerminalTypePush(Stack* stack, Tokentype type)
     }
     else
     {
-        //printf("Error in NonTerminalTypePush! \n Got : %s \n Needed : %s \n", TokenTypeString(type), NonTerminalToString(stack->items[stack->top]->nonTerminal));
         return ERROR_PARSER;
     }
     return 0;
 }
 
+/**
+ * @brief Function for pushing items to stack for non terminal <term>
+ * @param stack pointer to stack
+ * @param type type of token
+ * @return error parser if token isnt based on ll grammar rules
+ */
 int NonTerminalTermPush(Stack* stack, Tokentype type)
 {
     // <term> -> ID
@@ -545,13 +649,20 @@ int NonTerminalTermPush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_null, NON_TERMINAL_UNKOWN);
     }
     else
-    {
-        //printf("Error in NonTerminalTermPush! \n");
+    {;
         return ERROR_PARSER;
     }
     return 0;
 }
 
+
+// --------------------------------- AST CREATION ---------------------------------
+
+/**
+ * @brief finds deepest code node in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest code node
+ */
 ASTNode* findDeepestCodeNode(ASTNode** ast) 
 {
     if ((*ast)->left == NULL) {
@@ -560,16 +671,27 @@ ASTNode* findDeepestCodeNode(ASTNode** ast)
         return findDeepestCodeNode(&(*ast)->left);
     }
 }
-// finds deepest code node and returns FunDec node
+
+/**
+ * @brief finds deepest function declaration node in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest function declaration node
+ */
 ASTNode* findDeepestFunDecNode(ASTNode** ast)
 {
     *ast = findDeepestCodeNode(&(*ast));
+
+    // check if current code node has function declaration 
     return (*ast)->right  == NULL ? *ast : (*ast)->right;
 }
 
 
-// MOZNO NEPOTREBUJEME BO CREATEPARAMNODE PREJDE UZ NA SPODOK PARAMS DANEJ FUNKCIE
-// ALE ASI POTREBUJEME KVOLI ZAPISU TYPE 
+
+/**
+ * @brief finds deepest param node in function declaration node in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest param node
+ */
 ASTNode* findDeepestParamNode(ASTNode** ast)
 {
     *ast = findDeepestFunDecNode(&(*ast));
@@ -582,8 +704,12 @@ ASTNode* findDeepestParamNode(ASTNode** ast)
         return findDeepestParamNode(&(*ast)->left);
     }
 }
-// MOZNO NEPOTREBUJEME BO CREATEPARAMNODE PREJDE UZ NA SPODOK PARAMS DANEJ FUNKCIE
 
+/**
+ * @brief finds deepest code node in functions is used as helper function for findDeepestFunctionBodyNode
+ * @param ast pointer to AST
+ * @return pointer to deepest function body node
+ */
 ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
 {
     if ((*ast)->left == NULL && (*ast)->right->type == TYPE_WHILE)
@@ -609,6 +735,11 @@ ASTNode* findDeepestFuncCodeNode(ASTNode** ast)
     return *ast;
 }
 
+/**
+ * @brief finds deepest code node in functions in ast tree, used in various functions for finding deepest nodes
+ * @param ast pointer to AST
+ * @return pointer to deepest function body node
+ */
 ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
 {
     *ast = findDeepestFunDecNode(&(*ast));
@@ -627,6 +758,11 @@ ASTNode* findDeepestFunctionBodyNode(ASTNode** ast)
     }
 }
 
+/**
+ * @brief finds deepest var node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest var node
+ */
 ASTNode* findDeepestVarNode(ASTNode** ast)
 {
     *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -645,6 +781,11 @@ ASTNode* findDeepestVarNode(ASTNode** ast)
     }
 }
 
+/**
+ * @brief finds deepest assignment node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest assignment node
+ */
 ASTNode* findDeepestAssignmentNode(ASTNode** ast)
 {
     *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -663,6 +804,11 @@ ASTNode* findDeepestAssignmentNode(ASTNode** ast)
     }
 }
 
+/**
+ * @brief finds deepest const node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest const node
+ */
 ASTNode* findDeepestConstNode(ASTNode** ast)
 {
     *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -681,6 +827,11 @@ ASTNode* findDeepestConstNode(ASTNode** ast)
     }
 }
 
+/**
+ * @brief finds deepest return node in functions in ast tree
+ * @param ast pointer to AST
+ * @return pointer to deepest return node
+ */
 ASTNode* findDeepestReturnNode(ASTNode** ast)
 {
     *ast = findDeepestFunctionBodyNode(&(*ast));
@@ -832,27 +983,6 @@ ASTNode* findFirstClosedIfNode(ASTNode** ast) {
 
 void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token, Token* saveToken)
 {
-    // if(lastNonTerminal == NON_T_ID_HELPER || lastNonTerminal == NON_T_ID_CONTINUE || lastNonTerminal == NON_T_PARAMS_ENTER || lastNonTerminal == NON_T_NEXT_PARAMS_ENTER)
-    // {
-    //     if(lastNonTerminal == NON_T_ID_HELPER)
-    //     {
-    //         *ast = findDeepestFunDecNode(&(*ast));
-    //     }
-    //     else if(lastNonTerminal == NON_T_ID_CONTINUE)
-    //     {
-    //         if (token->type == TOKEN_ASSIGN)
-    //         {
-    //             *ast = findDeepestParamNode(&(*ast));
-    //             (*ast)->right = *expr_root;
-    //         }
-    //         else if (token->type == TOKEN_DOT)
-    //         {
-    //             *ast = findDeepestParamNode(&(*ast));
-    //             (*ast)->right = *expr_root;
-    //         }
-            
-    //     }
-    // }
     switch (interestingToken)
     {
         case TOKEN_fn:
@@ -1021,7 +1151,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
                 saveToken->type = token->type;
                 saveToken->dataLength = token->dataLength;
             }
-            else if(token->type == TOKEN_LEFT_PAR) // DOROB FKN ARGUMENTY DPC
+            else if(token->type == TOKEN_LEFT_PAR)
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
                 *ast = CreateCodeNode(*ast); 
@@ -1064,7 +1194,7 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
             {
                 *ast = findDeepestFunctionBodyNode(&(*ast));
                 *ast = CreateCodeNode(*ast); 
-                *ast = CreateAssignemtNode(*ast);// create assignment node
+                *ast = CreateAssignemtNode(*ast);
                 *ast = CreateIdNode(*ast, saveToken->data);
                 saveToken = NULL;
             }
@@ -1092,7 +1222,12 @@ void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, To
     }
 }
 
-
+/**
+ * @brief converts token type to data type for AST building
+ * 
+ * @param type token type
+ * @return DataType data type
+ */
 DataType TokenTypeToDataType(Tokentype type)
 {
     switch (type)
@@ -1116,7 +1251,11 @@ DataType TokenTypeToDataType(Tokentype type)
     }
 }
 
-
+/**
+ * @brief checks if current token is interesting meaning ast is going to be build based on that type
+ * @param type type of current token
+ * @return 1 if token is interesting, 0 if not
+ */
 int InterestingTokens(Tokentype type)
 {
     switch (type)
@@ -1140,6 +1279,8 @@ int InterestingTokens(Tokentype type)
         case TOKEN_UNDERSCORE:
             return 1;
         case TOKEN_VARIABLE:
+            // im already hanfling variables in other cases in buildAST
+            // variables are interesting only if they are assignes/function calls
             return lastNonTerminal == NON_T_ID_HELPER ? 1 : 0;
         default:
             return 0;

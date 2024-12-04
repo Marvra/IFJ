@@ -1,3 +1,9 @@
+/**
+ * @file parser.h
+ * @author Martin Vrablec
+ * @brief  header file for top down parser, function declarations for LL grammar checks and for correct building of AST
+ * @todo
+ */
 #ifndef PARSER_H
 #define PARSER_H
 
@@ -6,7 +12,7 @@
 #include "ast.h"
 
 
-
+// Functions for parser
 int Parser(ASTNode** tree, TokenList* list);
 int LLGrammar(Stack* stack, Tokentype type);
 int NonTerminalBodyPush(Stack* stack, Tokentype type);
@@ -25,7 +31,7 @@ int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type);
 int NonTerminalAfterBodyPush(Stack* stack, Tokentype type);
 int NonTerminalTermPush(Stack* stack, Tokentype type);
 
-// building ast 
+// Functions for building AST
 void BuildAST(ASTNode** expr_root, ASTNode** ast, Tokentype interestingToken, Token* token, Token* saveToken);
 int InterestingTokens(Tokentype type);
 DataType TokenTypeToDataType(Tokentype type);
