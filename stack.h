@@ -1,7 +1,7 @@
 /**
  * @file stack.h
  * @author Martin Vrablec
- * @brief  header file for structure of stack used in top down parser, function declarations for stack operations, non terminal types ,stack hold info about non terminals and tokens
+ * @brief  header file for structure of stack used in top down parser, function declarations for stack operations, non terminal types ,stack holds info about non terminals and tokens
  * @todo
  */
 #ifndef STACK_H
