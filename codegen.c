@@ -382,6 +382,12 @@ char* WriteString(ASTNode *node) {
                     case '\\':
                         strcpy(concat_string, "\\092");  // Backslash escape
                         break;
+                    case 'r':
+                        strcpy(concat_string, "\\013");
+                        break;
+                    case 't':
+                        strcpy(concat_string, "\\009");
+                        break;
                     default:
                         // If not a special escape, output the original backslash and current char
                         strcpy(concat_string, "\\092");
