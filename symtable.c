@@ -1,3 +1,8 @@
+/**
+ * Project: IFJ24 2024
+ * Robin Kurilla (xkuril03)
+ */
+
 #include "symtable.h"
 #include "error.h"
 #include <stdio.h>
