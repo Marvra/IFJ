@@ -20,7 +20,11 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
   {'<', '<', '<', '#', '<', '<', '@'}   // $
 };
 
-// Prevadi tokeny na termy, viz. tabulka
+/**
+ * @brief conversion from token to term
+ * @param token pointer to token
+ * @return term of token
+ */
 precTableTerm_t expr_getTermFromToken(Token *token)
 {
   switch (token->type) {
@@ -50,7 +54,11 @@ precTableTerm_t expr_getTermFromToken(Token *token)
       return TERM_stackEnd;
   }
 }
-
+/**
+ * @brief getting index from term for precedence table
+ * @param term term of token
+ * @return index of term
+ */
 int getIndexFromTerm(precTableTerm_t term) {
   switch (term)
   {
@@ -73,6 +81,10 @@ int getIndexFromTerm(precTableTerm_t term) {
   }
 }
 
+/**
+ * @brief skippings white spaces
+ * @param list pointer to token list
+ */
 void skipWhitespaces(TokenList* list)
 {
   while (list->currToken->type == TOKEN_SPACE || list->currToken->type == TOKEN_COMMENT || list->currToken->type == TOKEN_EOL)
@@ -83,6 +95,11 @@ void skipWhitespaces(TokenList* list)
   return;
 }
 
+/**
+ * @brief check if current token is still token needed for experesion parsing 
+ * @param term term of token
+ * @return 1 if token doesnt belong to expression, 0 if token belongs to expression
+ */
 int checkForTop(TokenList *list, Tokentype topOnParserStack)
 {
   Token* tempToken = list->currToken; 
@@ -93,12 +110,14 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
     {
       Tokentype currType = tempToken->nextToken->type;
 
+      // skip whitespaces
       while (currType == TOKEN_SPACE || currType == TOKEN_COMMENT || currType == TOKEN_EOL)
       {
         tempToken = tempToken->nextToken;
         currType = tempToken->type;
       }
 
+      // token is not part of expression
       if (currType == TOKEN_CURLY_LEFT_PAR || currType == TOKEN_BAR)
       {
         return 1;
@@ -112,15 +131,24 @@ int checkForTop(TokenList *list, Tokentype topOnParserStack)
   return 0;
 }
 
+/**
+ * @brief checks if the current expresion isnt funcall, adds it as expression and ends expression
+ * @param list pointer to token list
+ * @param root pointer to AST node
+ * @param funcId pointer to id of variable
+ * @return 1 if its not function call, 0 if it is
+ */
 int checkForFunction(TokenList *list, ASTNode **root, char *funcId) 
 {
-  // if ifj.func()
+  // possible ifj . funcition call
   if (list->currToken->type == TOKEN_DOT) 
   {
-    strcat(funcId, list->currToken->data); // get dot
+    // get dot
+    strcat(funcId, list->currToken->data);
     list->currToken = list->currToken->nextToken;
     skipWhitespaces(list);
-    strcat(funcId, list->currToken->data); // get after fot
+    // get after fot
+    strcat(funcId, list->currToken->data);
     if (list->currToken->type != TOKEN_VARIABLE) 
     {
       return 1;
@@ -128,20 +156,21 @@ int checkForFunction(TokenList *list, ASTNode **root, char *funcId)
     list->currToken = list->currToken->nextToken;
     skipWhitespaces(list);
   }
-  // if func()
+  // possible function()
   if (list->currToken->type == TOKEN_LEFT_PAR)
   {
-    //CreateCodeNode(*root); // create code node
-    *root = CreateFunCallExpressionsNode(*root); // create function call node
-    *root = CreateIdNode(*root, funcId); // create id node
+    *root = CreateFunCallExpressionsNode(*root);
+    *root = CreateIdNode(*root, funcId);
 
     while (list->currToken != NULL) {
       list->currToken = list->currToken->nextToken;
       skipWhitespaces(list);
+      // its not function call
       if (list->currToken->type == TOKEN_RIGHT_PAR)
       {
         return 0;
       }
+      // get paramteres for function call
       else if (list->currToken->type == TOKEN_INTEGER || list->currToken->type == TOKEN_FLOAT || list->currToken->type == TOKEN_STRING || list->currToken->type == TOKEN_VARIABLE)
       {
         tokenToParameter(list->currToken, &(*root));
@@ -167,6 +196,31 @@ int checkForFunction(TokenList *list, ASTNode **root, char *funcId)
   return 1;
 }
 
+/**
+ * @brief conversion from token to parameter node for function call parameters
+ * @param token pointer to token
+ * @param node pointer to AST node
+ */
+void tokenToParameter(Token *token, ASTNode **node) 
+{
+  if (token->type == TOKEN_INTEGER)
+  {
+    CreateArgumentNodeI32(*node, atoi(token->data));
+  }
+  else if (token->type == TOKEN_FLOAT)
+  {
+    CreateArgumentNodeF64(*node, atof(token->data));
+  }
+  else if (token->type == TOKEN_STRING)
+  {
+    CreateArgumentNodeU8(*node, token->data);
+  }
+  else if (token->type == TOKEN_VARIABLE)
+  {
+    CreateArgumentNode(*node, token->data);
+  }
+}
+
 int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 {
   DLList* linked_list = DLLInit();
@@ -179,6 +233,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
 
   Token* curr_token = (*list)->currToken;
 
+  // if expression is null save null node to ast end expression check
   if((*list)->currToken->type == TOKEN_null)
   {
     (*root) = CreateAstNode(TYPE_NULL);
@@ -186,14 +241,13 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     skipWhitespaces(*list);
     return 0;
   }
+  // check for function call and calling function to create it 
   if ((*list)->currToken->type == TOKEN_VARIABLE) 
   {
-    // get function name
     funcId = strdup((*list)->currToken->data);
 
     (*list)->currToken = (*list)->currToken->nextToken;
     skipWhitespaces(*list);
-    //PrintToken((*list)->currToken);
     if ((*list)->currToken->type != TOKEN_DOT && (*list)->currToken->type != TOKEN_LEFT_PAR) 
     {
       (*list)->currToken = curr_token;
@@ -215,12 +269,11 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     skipWhitespaces(*list);
 
     currTerm = expr_getTermFromToken((*list)->currToken);
-
     incomingToken = getIndexFromTerm(currTerm);
     topToken = listTopIndex(*linked_list);
     tableSign = precTable[topToken][incomingToken];
 
-
+    // check if it isnt reduction used for end rules
     if (checkForTop(*list, topOnParserStack) && tableSign != '>')
     { 
       incomingToken = getIndexFromTerm(TERM_stackEnd);
@@ -228,10 +281,9 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
       tableSign = precTable[topToken][incomingToken];
     }
 
-    //DLLPrintTerms(linked_list);
-
     if(tableSign == '<')
     {
+      // shift to dll list 
       insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
       (*list)->currToken = (*list)->currToken->nextToken;
@@ -239,6 +291,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '>')
     {
+      // check for reduction rules
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
@@ -247,8 +300,10 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '=')
     {
+      // insert for brackets '(' = ')'
       insert(root, (*list)->currToken);
       DLLInsertLast(linked_list, currTerm);
+      // checks rule if expression is correct if not end with error
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
@@ -259,11 +314,13 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     }
     else if (tableSign == '#')
     {
+      // incorrect expression
       DLLDispose(linked_list);
       return 1;
     }
     else if (tableSign == '@')
     {
+      // checks rule if expression is correct if not end with error
       if(CheckRule(linked_list))
       {
         DLLDispose(linked_list);
@@ -276,6 +333,11 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
   return 0;
 }
 
+/**
+ * @brief check for reduction rules (E->i etc)
+ * @param type type of token
+ * @return 0 if rules was applied, 0 if expression is not correct
+ */
 int CheckRule(DLList* linked_list)
 {
   DLLData data1, data2, data3;
@@ -339,6 +401,11 @@ int CheckRule(DLList* linked_list)
   }
 }
 
+/**
+ * @brief check if dll list doesnt ned to be ended ()
+ * @param linked_list pointer to dll list
+ * @return 1 if list is not ended, 0 if list ineeds to be ended
+ */
 int CheckForEnd(DLList linked_list)
 {
   if(linked_list.lastElement->data->termType == TERM_stackEnd && linked_list.currentLength > 1)
@@ -363,11 +430,18 @@ int listTopIndex(DLList linked_list)
 
 // --------------------------------- AST CREATION ---------------------------------
 
-void insert(ASTNode **root, Token *curr_token) {
+/**
+ * @brief creating expression ast tree
+ * @param root pointer to ast node
+ * @param curr_token pointer to token
+ */
+void insert(ASTNode **root, Token *curr_token) 
+{
   if (expr_getTermFromToken(curr_token) == TERM_variable) 
   {
     ASTNode *new_node = NULL;
 
+    // creating correct ast nodes
     if (curr_token->type == TOKEN_INTEGER) 
     {
       new_node = CreateAstNode(TYPE_VALUE_I32);
@@ -389,6 +463,7 @@ void insert(ASTNode **root, Token *curr_token) {
       new_node->data.str = strdup(curr_token->data);
     }
 
+    // save term as most left node
     if (*root == NULL) 
     {
       *root = new_node;
@@ -403,9 +478,12 @@ void insert(ASTNode **root, Token *curr_token) {
       current->right = new_node;
     }
   } 
+  // creating for operators and relation operators
   else if (expr_getTermFromToken(curr_token) != TERM_leftBracket && expr_getTermFromToken(curr_token) != TERM_rightBracket)
   {
     ASTNode *new_node = NULL;
+
+    //creating correct ast nodes for operators
     if (curr_token->type == TOKEN_PLUS || curr_token->type == TOKEN_MINUS || curr_token->type == TOKEN_MUL || curr_token->type == TOKEN_DIV)
     {
       new_node = CreateAstNode(TYPE_OPERATOR);
@@ -424,6 +502,7 @@ void insert(ASTNode **root, Token *curr_token) {
       return;
     }
 
+    // new root if current precedance is bigger
     if (getAstPrecedance(*root) <= new_precedence) 
     {
       new_node->left = *root;
@@ -433,6 +512,7 @@ void insert(ASTNode **root, Token *curr_token) {
     {
       ASTNode *current = *root;
 
+      // save the operator with lower precadne to most right place
       while (current->right != NULL && getAstPrecedance(current->right) >= new_precedence) 
       {
         current = current->right;
@@ -443,26 +523,12 @@ void insert(ASTNode **root, Token *curr_token) {
     }
   }
 }
-void tokenToParameter(Token *token, ASTNode **node) 
-{
-  if (token->type == TOKEN_INTEGER)
-  {
-    CreateArgumentNodeI32(*node, atoi(token->data));
-  }
-  else if (token->type == TOKEN_FLOAT)
-  {
-    CreateArgumentNodeF64(*node, atof(token->data));
-  }
-  else if (token->type == TOKEN_STRING)
-  {
-    CreateArgumentNodeU8(*node, token->data);
-  }
-  else if (token->type == TOKEN_VARIABLE)
-  {
-    CreateArgumentNode(*node, token->data);
-  }
-}
 
+/**
+ * @brief get precedence of ast node 
+ * @param root pointer to ast node
+ * @return precedence of ast node
+ */
 int getAstPrecedance(ASTNode *root)
 {
   if (root->type == TYPE_OPERATOR || root->type == TYPE_REL_OPERATOR)
@@ -489,20 +555,30 @@ int getAstPrecedance(ASTNode *root)
   return -1;
 }
 
+/**
+ * @brief getting precedence of term
+ * @param term term from dll list for terms
+ * @return precedence of term
+ */
 int getTermPrecedence(precTableTerm_t term) 
 {
-    switch (term) {
-        case TERM_plusMinus:
-            return 1;
-        case TERM_mulDiv:
-            return 2;
-        case TERM_relational:
-            return 3;
-        default:
-            return -1;
-    }
+  switch (term) {
+    case TERM_plusMinus:
+      return 1;
+    case TERM_mulDiv:
+      return 2;
+    case TERM_relational:
+      return 3;
+    default:
+      return -1;
+  }
 }
 
+/**
+ * @brief getting precedence of token
+ * @param type type of token
+ * @return precedence of token
+ */
 int getTokenPrecedance(Tokentype type)
 {
   switch (type)
@@ -525,6 +601,11 @@ int getTokenPrecedance(Tokentype type)
   }
 }
 
+/**
+ * @brief conversion from token to operator
+ * @param type type of token
+ * @return operator from token
+ */
 Operator getOperatorFromToken(Tokentype type)
 {
   switch (type)

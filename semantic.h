@@ -9,6 +9,23 @@
 #include "ast.h"
 #include "symtable.h"
 
+NType DataTypeToNType(DataType type);
+DataType NTypeToDataType(NType type);
+void FreeSemantics(ASTStack *stack, SymList *list);
+void AddBuiltInFunctionsToSymtable(TNode **symtable);
+int LookForReturnNodes(ASTNode *node);
+int AnalyzeFunDec(ASTNode *node, TNode **symtable);
+int CheckForMainFunction(TNode **symtable);
+TNode* GetFunctionSymtable(ASTNode *node, DataType *retType);
+TNode* FindInSymlist(SymList *list, char *id);
+TNode* GetBlockSymtable(ASTNode *node, SymList *list, int *error);
+int AnalyzeExpression(ASTNode *node, SymList *list, DataType *expType, bool *isKnown);
+int AnalyzeFunctionCall(ASTNode *node, SymList *list, NType *type);
+int AnalyzeVariableDeclaration(ASTNode *node, SymList *list);
+int AnalyzeAssignment(ASTNode *node, SymList *list);
+int AnalyzeCondition(ASTNode *node, SymList *list, bool *hasNullId);
+int AnalyzeReturnNode(ASTNode *node, SymList *list, DataType returnType);
+int CheckVariablesUsed(TNode *node);
 // Sémantická analýza, ak nastane error vracia chybový kód inak 0
 int SemanticAnalysis(ASTNode *root);
 
