@@ -241,7 +241,7 @@ int expr_start(ASTNode **root, TokenList **list, Tokentype topOnParserStack)
     skipWhitespaces(*list);
     return 0;
   }
-  // check for function call and calling function to create it 
+  // check for function call and calling function to create correct ast nodes for it 
   if ((*list)->currToken->type == TOKEN_VARIABLE) 
   {
     funcId = strdup((*list)->currToken->data);
