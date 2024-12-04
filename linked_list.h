@@ -1,3 +1,10 @@
+/**
+ * @file lexer.c
+ * @author Jaroslav Doktor
+ * @brief  header file for dll implementation of linked list used in expression parsing
+ * @todo
+ */
+
 #ifndef LINKED_LIST_H
 #define LINKED_LIST_H
 
@@ -58,7 +65,5 @@ void DLLDispose(DLList*);
 int DLLInsertLast(DLList*, precTableTerm_t);
 
 DLLData DLLDeleteLast(DLList *);
-
-void DLLPrintTerms(DLList *);
 
 #endif

@@ -1,6 +1,18 @@
+/**
+ * @file lexer.c
+ * @author Jaroslav Doktor
+ * @brief  source file for dll implementation of linked list used in expression parsing
+ * @todo
+ */
+
 #include "linked_list.h"
 
-DLList* DLLInit() {
+/**
+ * @brief Initialize linked list
+ * @return pointer to linked list
+ */
+DLList* DLLInit() 
+{
     DLList* list = malloc(sizeof(DLList) * 1);
 
 	list->firstElement = NULL;
@@ -10,9 +22,14 @@ DLList* DLLInit() {
     return list;
 }
 
-void DLLDispose( DLList *list ) {
+/**
+ * @brief clear linked list
+ */
+void DLLDispose( DLList *list )
+{
 	DLLElementPtr tempElement;
-    while (list->firstElement != NULL) {
+    while (list->firstElement != NULL)
+    {
         tempElement = list->firstElement;
         list->firstElement = list->firstElement->nextElement;
         free(tempElement);
@@ -22,20 +39,29 @@ void DLLDispose( DLList *list ) {
     list->currentLength = 0;
 }
 
-int DLLInsertLast( DLList *list, precTableTerm_t termType) {
+/**
+ * @brief Insert new element at the end of the list
+ */
+int DLLInsertLast( DLList *list, precTableTerm_t termType)
+{
 	DLLElementPtr newElement = malloc(sizeof(DLLElementPtr) * 1);
-    if (newElement == NULL) {
+    if (newElement == NULL)
+    {
         return -1;
-    } else {
+    }
+    else
+    {
         newElement->data = malloc(sizeof(DLLData) * 1);
         newElement->data->termType = termType;
         newElement->nextElement = NULL;
         newElement->previousElement = list->lastElement;
 
-        if (list->firstElement == NULL) {
+        if (list->firstElement == NULL) 
+        {
             list->firstElement = newElement;
         }
-        if (list->lastElement != NULL) {
+        if (list->lastElement != NULL) 
+        {
             list->lastElement->nextElement = newElement;
         }
         
@@ -45,20 +71,30 @@ int DLLInsertLast( DLList *list, precTableTerm_t termType) {
     return 0;
 }
 
+/**
+ * @brief Delete last element from the list
+ */
 DLLData DLLDeleteLast( DLList *list ) {
-    if(list->lastElement == NULL) {
+    if(list->lastElement == NULL)
+    {
         return NULL;
     }
+
     DLLData data = list->lastElement->data;
-	if (list->lastElement != NULL) {
-        if (list->firstElement == list->lastElement) {
+
+	if (list->lastElement != NULL)
+    {
+        if (list->firstElement == list->lastElement)
+        {
             DLLElementPtr tempElement;
             tempElement = list->lastElement;
             list->firstElement = NULL;
             list->lastElement = NULL;
             free(tempElement);
             list->currentLength -= 1;
-        } else {
+        } 
+        else
+        {
             DLLElementPtr tempElement;
             tempElement = list->lastElement;
             list->lastElement = list->lastElement->previousElement;
@@ -68,47 +104,4 @@ DLLData DLLDeleteLast( DLList *list ) {
         }
     }
     return data;
-}
-
-void DLLPrintTerms(DLList *list) {
-    if (list == NULL || list->firstElement == NULL) {
-        printf("List is empty\n");
-        return;
-    }
-
-    DLLElementPtr current = list->firstElement;
-    printf("List Terms: ");
-    while (current != NULL) {
-        switch(current->data->termType) {
-            case TERM_plusMinus:
-                printf("PlusMinus ");
-                break;
-            case TERM_mulDiv:
-                printf("MulDiv ");
-                break;
-            case TERM_leftBracket:
-                printf("LeftBracket ");
-                break;
-            case TERM_rightBracket:
-                printf("RightBracket ");
-                break;
-            case TERM_relational:
-                printf("Relational ");
-                break;
-            case TERM_variable:
-                printf("Variable ");
-                break;
-            case TERM_stackEnd:
-                printf("StackEnd ");
-                break;
-            case NO_TERM_E:
-                printf("NoTermE ");
-                break;
-            default:
-                printf("Unknown ");
-                break;
-        }
-        current = current->nextElement;
-    }
-    printf("\n");
 }
