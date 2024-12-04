@@ -404,7 +404,7 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_UNKNOWN, NON_T_EXPR); 
         PushItem(stack, TOKEN_ASSIGN, NON_TERMINAL_UNKOWN);
     }
-    // <id_continue> -> .ID(<params_enter>)
+    // <id_continue> -> .ID(<arguments>)
     else if(type == TOKEN_DOT)
     {
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
@@ -413,7 +413,7 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
         PushItem(stack, TOKEN_VARIABLE, NON_TERMINAL_UNKOWN);
         PushItem(stack, TOKEN_DOT, NON_TERMINAL_UNKOWN);
     }
-    // <id_continue> -> (<params_enter>)
+    // <id_continue> -> (<arguments>)
     else if(type == TOKEN_LEFT_PAR)
     {
         PushItem(stack, TOKEN_RIGHT_PAR, NON_TERMINAL_UNKOWN);
@@ -428,38 +428,38 @@ int NonTerminalIdContinuePush(Stack* stack, Tokentype type)
 }
 
 /**
- * @brief Function for pushing items to stack for non terminal <params_enter>
+ * @brief Function for pushing items to stack for non terminal <arguments>
  * @param stack pointer to stack
  * @param type type of token
  * @return 0 (because there can be epsilon) 
  */
 int NonTerminalParamsEnterPush(Stack* stack, Tokentype type)
 {
-    // <params_enter> -> <term> <next_params_enter>
+    // <arguments> -> <term> <next_arguments>
     if(type == TOKEN_INTEGER || type == TOKEN_FLOAT || type == TOKEN_STRING || type == TOKEN_VARIABLE || type == TOKEN_null)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_NEXT_PARAMS_ENTER);
         PushItem(stack, TOKEN_UNKNOWN, NON_T_TERM);
     }
-    // <params_enter> -> ε
+    // <arguments> -> ε
     return 0;
 }
 
 /**
- * @brief Function for pushing items to stack for non terminal <next_params_enter>
+ * @brief Function for pushing items to stack for non terminal <next_arguments>
  * @param stack pointer to stack
  * @param type type of token
  * @return 0 (because there can be epsilon) 
  */
 int NonTerminalNextParamsEnterPush(Stack* stack, Tokentype type)
 {
-    // <next_params_enter> -> , <params_enter>
+    // <next_arguments> -> , <arguments>
     if(type == TOKEN_COMMA)
     {
         PushItem(stack, TOKEN_UNKNOWN, NON_T_PARAMS_ENTER);
         PushItem(stack, TOKEN_COMMA, NON_TERMINAL_UNKOWN);
     }
-    // <next_params_enter> -> ε
+    // <next_arguments> -> ε
     return 0;
 }
 

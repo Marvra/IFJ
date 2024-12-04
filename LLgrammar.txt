@@ -1,57 +1,40 @@
-<body> -> <eol> <body>
 <body> -> CONST ID = IMPORT(STRING); <after_body>
-
-<after_body> -> <eol> <after_body>
-<after_body> -> PUB FN ID (<params>) <return_type> <eol> { <function_body> } <after_body>
+<after_body> -> PUB FN ID (<params>) <return_type> { <function_body> } <after_body>
 <after_body> -> EOF
-
 <function_body> -> <var_or_const> ID <declaration_continue> <function_body>
 <function_body> -> <id_helper>
-<function_body> -> IF (expression) <bars> <eol> {<function_body>} ELSE {<function_body>} <function_body>
-<function_body> -> WHILE (expression) <bars> <eol> {<function_body>} <function_body>
+<function_body> -> IF (expression) <bars> {<function_body>} ELSE {<function_body>} <function_body>
+<function_body> -> WHILE (expression) <bars> {<function_body>} <function_body>
 <function_body> -> RETURN expression; <function_body>
-<function_body> -> <eol> <function_body>
+<function_body> -> <function_body>
 <function_body> -> ε
-
 <declaration_continue> -> : <type> = expression;
 <declaration_continue> -> = expression;
-
 <id_helper> -> ID <id_continue>;  <function_body>
 <id_helper> -> _ = expression;  <function_body>
-
 <id_continue> -> = expression
-<id_continue> -> .ID(<params_enter>)
-<id_continue> -> (<params_enter>)
-
-<params_enter> -> <term> <next_params_enter>
-<params_enter> -> ε
-<next_params_enter> -> , <next_params_enter>
-<next_param_enter> -> ε
-
+<id_continue> -> .ID(<arguments>)
+<id_continue> -> (<arguments>)
+<arguments> -> <term> <next_arguments>
+<arguments> -> ε
+<next_arguments> -> , <arguments>
+<next_arguments> -> ε
 <var_or_const> -> VAR
 <var_or_const> -> CONST
-
 <bars> -> |ID|
 <bars> -> ε
-
 <params> -> ε
 <params> -> ID : <type> <next_params>
 <next_params> -> , <params>
 <next_params> -> ε
-
-<eol> -> EOL <eol>
-<eol> -> ε
-
 <return_type> -> <type>
 <return_type> -> VOID
-
 <type> -> INT
 <type> -> FLOAT
 <type> -> STRING 
 <type> -> INT_NULL
 <type> -> FLOAT_NULL
 <type> -> STRING_NULL 
-
 <term> -> ID
 <term> -> NULL
 <term> -> VALUE_INT
