@@ -17,36 +17,34 @@ int main(int argc, char *argv[])
     int returnCode = 0;
     ASTNode* tree = NULL;
 
+    //LEXICAL ANALYSIS
     returnCode = Lexer(stdin ,list);
     list->currToken = list->firstToken;
 
     if(returnCode != 0)
     {
-        //printf("Error in lexer : %d\n", returnCode);
         return returnCode;
     }
 
-    //printf("STARTING PARSER\n");
+    // SYNATX ANALYSIS
     returnCode = Parser(&tree,list);
 
     if(returnCode != 0)
     {
-        //printf("Error in Parser : %d\n", returnCode);
         return returnCode;
     }
     freeTokenList(list);
 
     // SMEMANTIC ANALYSIS
-
-    //printf("STARTING SEMANTIC ANALYSIS\n");
     returnCode = SemanticAnalysis(tree);
 
     if(returnCode != 0)
     {
-        //printf("Error in Semantic : %d\n", returnCode);
         return returnCode;
     }
     
+
+    // CODE GENERATION
     ASTNode* currentNode = tree;
     CodeGen(currentNode);
     

@@ -51,9 +51,4 @@ ASTNode* findDeepestWhileNodeHelp(ASTNode** ast);
 ASTNode* findFirstClosedIfNode(ASTNode** ast);
 ASTNode* findFirstClosedIfNodeHelp(ASTNode** ast); 
 
-void exportASTToDot(ASTNode* root);
-void printDotAST(ASTNode* node, FILE* file);
-
-void PrintStack(Stack* stack);
-
 #endif

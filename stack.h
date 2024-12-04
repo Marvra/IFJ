@@ -52,7 +52,5 @@ void ResizeStack(Stack* stack);
 void Push(Stack* stack, StackItem* item); 
 void PushItem(Stack* stack, Tokentype type, NonTerminal nonTerminal); 
 void FreeStack(Stack* stack);
-void PrintStack(Stack* stack);
-char* NonTerminalToString(NonTerminal nonTerminal);
 
 #endif

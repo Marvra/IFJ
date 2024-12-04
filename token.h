@@ -84,6 +84,5 @@ void freeToken(Token* token);
 void freeTokenList(TokenList* list);
 void PrintTokenList(TokenList* list);
 void PrintToken(Token* token);
-char* TokenTypeString(Tokentype type);
 
 #endif
